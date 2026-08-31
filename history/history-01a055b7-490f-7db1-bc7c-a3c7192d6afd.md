@@ -58,3 +58,11 @@
 - **真机验收补充**：用户通过结构化提问确认“全部成功”：TrollStore 安装和主 App 打开正常，MagicBoard 可在 iPadOS 设置中添加，切换后测试键盘正常显示并能够输入。任务 01 的全部完成条件已满足。
 
 - **仓库清理补充**：最终状态检查发现 Finder 新生成的根目录 `.DS_Store`；用户选择保留本地文件并通过 `.gitignore` 忽略，不提交 Finder 元数据。
+### 第 6 轮对话（2026-08-31 18:28）
+
+- **Who（谁参与）**：用户（MagicBoard 项目发起者与 iPad 真机验收者）+ AI（Codex Assistant）。
+- **What（做了什么）**：按任务 2 完成基础 QWERTY、数字、符号三页键盘；实现 `textDocumentProxy` 字符输入、Space、Delete、Return、单次 Shift、Caps Lock、页面切换与系统地球键；新增 `InputState` 及 5 项状态测试，使共享模块累计 9 项测试全部通过；模拟器 Debug 与真机 arm64 Release 构建通过；生成 `/Users/mac/codexproj/magicboard/build/MagicBoard.tipa`（107,453 bytes，SHA-256 `b8c33cc00a87dace86dfe501c2486dc71c0744797f8166d548397484a2196cdf`）；提交代码 `73ca17e` 与验证记录 `08bf99a`。三次真机验收提问均返回空答案，因此未虚构通过结果、未完成任务 2 勾选。
+- **When（何时发生）**：2026-08-31 18:28（Asia/Shanghai）。
+- **Where（在哪个上下文）**：项目目录 `/Users/mac/codexproj/magicboard`；主要涉及 `Keyboard/KeyboardViewController.swift`、`Packages/MagicBoardShared/Sources/MagicBoardShared/SharedConfig.swift`、共享测试、`task_plan.md`、`findings.md`、`progress.md` 与 `build/MagicBoard.tipa`。
+- **Why（目的/背景）**：延续任务 1 的 TrollStore 安装链路，将测试键盘升级为可连续输入、删除、换行、切换大小写和页面的基础文字输入法，并以 14 英寸 M 系列 MacBook Pro 非数字小键盘布局为视觉与键位参考；功能行和不适用的 macOS 修饰键只做任务 3 占位。
+- **How（如何实现/决策过程）**：复用现有 UIKit `UIInputViewController`、共享 Swift Package、App Group 与 Zsh 打包链路；参考现有输入法项目采用独立页面状态以及 Shift/Caps Lock 异或语义；用状态单元测试验证单次 Shift 消费、Caps Lock 持续、Caps+Shift 小写覆盖、三页切换和 Shift 符号；通过 XcodeGen + `xcodebuild` 验证完整 target 图，再由 `scripts/build-tipa.zsh` 无签名构建、`ldid` 分别签名主程序和扩展。归档解压至 `/tmp/magicboard-verify.uaUkOJ` 后验证 arm64、Bundle Identifier、键盘扩展点、开放访问与双方 App Group entitlement。按用户要求使用 `request_user_input` 和 `ask-user-without-ending` 保持任务待续；当前仅等待用户在 iPad 上返回真机验收结果。
