@@ -60,3 +60,10 @@
 - Corrected research metadata: TrollStore is MIT; KeyboardKit's local LICENSE is closed-source.
 - Confirmed local `ldid` 2.1.5_1 is already installed and TrollStore upstream preserves per-binary entitlements applied by `ldid`.
 - Phase 2 is complete. Next: confirm the deterministic pre-signing policy, then start the project scaffold.
+
+## 2026-08-31 — Implementation prerequisites completed
+
+- Confirmed deterministic signing: build with code signing disabled, then use local `ldid` to sign the host and keyboard executables separately with target-specific entitlements.
+- Queried the required CodeGraph server; it reported that the project was not initialized.
+- User authorized `codegraph init` and chose to commit the generated `.codegraph/.gitignore`; the local database remains ignored.
+- Phase 1 and Phase 2 are complete. Phase 3 begins after indexing the project.

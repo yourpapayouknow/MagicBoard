@@ -17,13 +17,14 @@ Build a traceable iPadOS project containing the MagicBoard host app, keyboard ex
 - Device acceptance: user-operated TrollStore installation and iPad Settings verification with results returned for iteration.
 - Keyboard open access: `RequestsOpenAccess = true`; installation guidance must require “Allow Full Access” and explain the privacy boundary.
 - Approved references: 11 shallow clones covering TrollStore, project generation, packaging, and seven real keyboard implementations.
-- Exact test-device versions and final `ldid` signing policy are not yet confirmed.
+- Signing policy: unsigned Xcode device build followed by separate local `ldid` signing of host and keyboard executables with target-specific entitlements.
+- Exact test-device patch versions remain an acceptance-stage input.
 
 ## Phases
 
 ### Phase 1 — Requirements and design alignment
 
-**Status:** in_progress
+**Status:** complete
 
 - Complete the eight-section `design-md` interview, one section per user reply.
 - Confirm technical stack, identifiers, deployment target, device/TrollStore environment, inputs/outputs, and exact success checks.
@@ -40,7 +41,7 @@ Build a traceable iPadOS project containing the MagicBoard host app, keyboard ex
 
 ### Phase 3 — Project scaffolding and configuration
 
-**Status:** pending
+**Status:** in_progress
 
 - Create host app, keyboard extension, and shared module targets.
 - Configure bundle identifiers, extension `Info.plist`, shared configuration mechanism, and entitlements.
@@ -86,6 +87,7 @@ Build a traceable iPadOS project containing the MagicBoard host app, keyboard ex
 | Direct Readability extraction of Apple's “Creating a custom keyboard” page failed with a stale browser tab (HTTP 422) | 1 | The companion Apple open-access page loaded successfully and directly answers the pending shared-container question; do not repeat the failed extraction |
 | `RequestsOpenAccess` prompt returned empty answers | 1–3 | Keep the Info.plist value unresolved and continue only read-only reference work |
 | Reference-clone authorization prompt returned empty answers | 1–3 | Do not clone any repository until the user explicitly approves a shortlist |
+| CodeGraph status reported the project was not initialized | 1 | User authorized `codegraph init`; generated database is locally ignored and `.codegraph/.gitignore` will be committed |
 
 ## Completion checklist
 
