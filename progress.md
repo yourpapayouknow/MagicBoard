@@ -67,3 +67,21 @@
 - Queried the required CodeGraph server; it reported that the project was not initialized.
 - User authorized `codegraph init` and chose to commit the generated `.codegraph/.gitignore`; the local database remains ignored.
 - Phase 1 and Phase 2 are complete. Phase 3 begins after indexing the project.
+
+## 2026-08-31 — Scaffold implementation started
+
+- Added XcodeGen app/keyboard targets, explicit Info.plists and App Group entitlements, a local shared Swift Package with four tests, SwiftUI installation UI, UIKit test keyboard, and a Zsh `.tipa` builder.
+- Plist validation, project generation, target/scheme discovery, and all four shared-package tests passed.
+- First simulator build failed in `KeyboardViewController.swift` with exit 65; verbose output was truncated before the compiler diagnostic, so no code fix has been attempted yet.
+
+## 2026-08-31 — Local build and TrollStore package completed
+
+- Captured direct evidence of a Swift 6.1 IRGen crash in `bldkbd()` and removed the associated-value key layout that triggered it; the replacement uses explicit UIKit rows and preserves text, space, delete, return, and system globe-key behavior.
+- Rebuilt the complete app for arm64 iOS and both simulator architectures successfully.
+- Re-ran the shared package suite: 4 tests passed, 0 failed.
+- Made `project.yml` the single source of truth for host/keyboard Info.plists, App Group entitlements, Bundle Identifiers, and iPad-only device targeting.
+- Added and verified the Zsh packaging flow: unsigned Xcode build, staged payload, per-binary `ldid` signing, metadata checks, and archive integrity checks.
+- Generated `build/MagicBoard.tipa` (89,158 bytes), SHA-256 `61df9ac965dd78bbe380e0a1df96d88c7552eda43be8d4af2f8aea97aa42acb3`.
+- Verified both Mach-O executables are arm64, both signed entitlements contain `group.com.iwmei.magicboard`, the keyboard extension point is `com.apple.keyboard-service`, and `RequestsOpenAccess` is true.
+- Reindexed CodeGraph: 6 files, 58 nodes, 109 edges; structural inspection confirmed the host and keyboard both load `BoardTheme` through `SharedConfig`.
+- Phase 3 through Phase 5 are complete. Phase 6 requires the user's TrollStore installation and iPad Settings/keyboard UI acceptance evidence.

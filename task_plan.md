@@ -41,7 +41,7 @@ Build a traceable iPadOS project containing the MagicBoard host app, keyboard ex
 
 ### Phase 3 — Project scaffolding and configuration
 
-**Status:** in_progress
+**Status:** complete
 
 - Create host app, keyboard extension, and shared module targets.
 - Configure bundle identifiers, extension `Info.plist`, shared configuration mechanism, and entitlements.
@@ -49,14 +49,14 @@ Build a traceable iPadOS project containing the MagicBoard host app, keyboard ex
 
 ### Phase 4 — Minimal native test UI
 
-**Status:** pending
+**Status:** complete
 
 - Implement the approved host app and test-keyboard interface using `DESIGN.md`.
 - Add focused tests for shared/configuration logic and inspect built extension metadata.
 
 ### Phase 5 — Build and `.tipa` packaging
 
-**Status:** pending
+**Status:** complete
 
 - Build with the confirmed signing/TrollStore strategy.
 - Add a Zsh packaging script that produces `MagicBoard.tipa` reproducibly.
@@ -64,7 +64,7 @@ Build a traceable iPadOS project containing the MagicBoard host app, keyboard ex
 
 ### Phase 6 — Device installation and acceptance
 
-**Status:** pending
+**Status:** in_progress
 
 - Install through TrollStore on the user-authorized iPad.
 - Verify app launch, keyboard availability in Settings, enabling/switching, and visible test keyboard UI.
@@ -88,16 +88,21 @@ Build a traceable iPadOS project containing the MagicBoard host app, keyboard ex
 | `RequestsOpenAccess` prompt returned empty answers | 1–3 | Keep the Info.plist value unresolved and continue only read-only reference work |
 | Reference-clone authorization prompt returned empty answers | 1–3 | Do not clone any repository until the user explicitly approves a shortlist |
 | CodeGraph status reported the project was not initialized | 1 | User authorized `codegraph init`; generated database is locally ignored and `.codegraph/.gitignore` will be committed |
+| First iOS Simulator build exited 65 in `KeyboardViewController.swift`; full output truncation hid the diagnostic | 1 | Re-run once with identical inputs and filter compiler `error:`/`warning:` lines before changing code |
+| Swift 6.1 IRGen crashed while emitting `bldkbd()` | 2 | Replaced associated-value key arrays and higher-order mapping with explicit UIKit row construction; simulator and device builds then passed |
+| Local `xattr` rejected the unsupported recursive `-r` option | 1 | Used Zsh recursive globbing and cleared attributes one staged item at a time |
+| XcodeGen regenerated both entitlements as empty dictionaries | 1–2 | Moved the App Group into `project.yml` under each target's documented `entitlements.properties` source of truth |
+| XcodeGen regenerated the keyboard Info.plist without `NSExtension` | 1 | Moved all host and keyboard Info.plist properties into `project.yml`, then verified the generated plists before rebuilding |
 
 ## Completion checklist
 
-- [ ] MagicBoard host app target exists
-- [ ] Keyboard extension target exists
-- [ ] Shared module/configuration exists
-- [ ] Bundle identifiers and keyboard `Info.plist` are verified
-- [ ] Shared container or confirmed equivalent is verified
-- [ ] TrollStore entitlements are verified
-- [ ] Zsh build/package script produces `MagicBoard.tipa`
+- [x] MagicBoard host app target exists
+- [x] Keyboard extension target exists
+- [x] Shared module/configuration exists
+- [x] Bundle identifiers and keyboard `Info.plist` are verified
+- [x] Shared container or confirmed equivalent is verified
+- [x] TrollStore entitlements are verified
+- [x] Zsh build/package script produces `MagicBoard.tipa`
 - [ ] TrollStore installs the artifact successfully
 - [ ] iPadOS Settings can add MagicBoard
 - [ ] Switching keyboards displays the approved test UI

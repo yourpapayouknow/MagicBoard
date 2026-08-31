@@ -1,0 +1,106 @@
+name: MagicBoard
+
+options:
+  bundleIdPrefix: com.iwmei
+  deploymentTarget:
+    iOS: "16.0"
+  developmentLanguage: zh-Hans
+  generateEmptyDirectories: true
+  xcodeVersion: "16.3"
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    TARGETED_DEVICE_FAMILY: "2"
+    CURRENT_PROJECT_VERSION: "1"
+    MARKETING_VERSION: "0.1.0"
+
+packages:
+  MagicBoardShared:
+    path: Packages/MagicBoardShared
+
+targets:
+  MagicBoard:
+    type: application
+    platform: iOS
+    sources:
+      - path: App
+        excludes:
+          - Info.plist
+          - MagicBoard.entitlements
+    info:
+      path: App/Info.plist
+      properties:
+        CFBundleDisplayName: MagicBoard
+        LSRequiresIPhoneOS: true
+        UIApplicationSupportsIndirectInputEvents: true
+        UILaunchScreen: {}
+        UIRequiresFullScreen: false
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+    entitlements:
+      path: App/MagicBoard.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.iwmei.magicboard
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.iwmei.magicboard
+        PRODUCT_NAME: MagicBoard
+        INFOPLIST_FILE: App/Info.plist
+        CODE_SIGN_ENTITLEMENTS: App/MagicBoard.entitlements
+        TARGETED_DEVICE_FAMILY: "2"
+    dependencies:
+      - target: MagicBoardKeyboard
+        embed: true
+      - package: MagicBoardShared
+
+  MagicBoardKeyboard:
+    type: app-extension
+    platform: iOS
+    sources:
+      - path: Keyboard
+        excludes:
+          - Info.plist
+          - MagicBoardKeyboard.entitlements
+    info:
+      path: Keyboard/Info.plist
+      properties:
+        CFBundleDisplayName: MagicBoard Keyboard
+        NSExtension:
+          NSExtensionAttributes:
+            IsASCIICapable: true
+            PrefersRightToLeft: false
+            PrimaryLanguage: zh-Hans
+            RequestsOpenAccess: true
+          NSExtensionPointIdentifier: com.apple.keyboard-service
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).KeyboardViewController
+    entitlements:
+      path: Keyboard/MagicBoardKeyboard.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.iwmei.magicboard
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.iwmei.magicboard.keyboard
+        PRODUCT_NAME: MagicBoardKeyboard
+        INFOPLIST_FILE: Keyboard/Info.plist
+        CODE_SIGN_ENTITLEMENTS: Keyboard/MagicBoardKeyboard.entitlements
+        APPLICATION_EXTENSION_API_ONLY: "YES"
+        SKIP_INSTALL: "YES"
+        TARGETED_DEVICE_FAMILY: "2"
+    dependencies:
+      - package: MagicBoardShared
+
+schemes:
+  MagicBoard:
+    build:
+      targets:
+        MagicBoard: all
+    run:
+      config: Debug
+    archive:
+      config: Release
