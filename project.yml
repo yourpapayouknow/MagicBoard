@@ -12,8 +12,8 @@ settings:
   base:
     SWIFT_VERSION: "6.0"
     TARGETED_DEVICE_FAMILY: "2"
-    CURRENT_PROJECT_VERSION: "1"
-    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "2"
+    MARKETING_VERSION: "0.2.0"
 
 packages:
   MagicBoardShared:
@@ -32,6 +32,8 @@ targets:
       path: App/Info.plist
       properties:
         CFBundleDisplayName: MagicBoard
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         LSRequiresIPhoneOS: true
         UIApplicationSupportsIndirectInputEvents: true
         UILaunchScreen: {}
@@ -70,6 +72,8 @@ targets:
       path: Keyboard/Info.plist
       properties:
         CFBundleDisplayName: MagicBoard Keyboard
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         NSExtension:
           NSExtensionAttributes:
             IsASCIICapable: true

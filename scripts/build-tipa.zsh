@@ -86,9 +86,15 @@ chksign "$keyboard_binary" "${build_dir}/keyboard-entitlements.plist"
 
 readonly host_id=$(plutil -extract CFBundleIdentifier raw "$staged_app/Info.plist")
 readonly keyboard_id=$(plutil -extract CFBundleIdentifier raw "$staged_app/PlugIns/MagicBoardKeyboard.appex/Info.plist")
+readonly host_version=$(plutil -extract CFBundleShortVersionString raw "$staged_app/Info.plist")
+readonly keyboard_version=$(plutil -extract CFBundleShortVersionString raw "$staged_app/PlugIns/MagicBoardKeyboard.appex/Info.plist")
+readonly host_build=$(plutil -extract CFBundleVersion raw "$staged_app/Info.plist")
+readonly keyboard_build=$(plutil -extract CFBundleVersion raw "$staged_app/PlugIns/MagicBoardKeyboard.appex/Info.plist")
 readonly open_access=$(plutil -extract NSExtension.NSExtensionAttributes.RequestsOpenAccess raw "$staged_app/PlugIns/MagicBoardKeyboard.appex/Info.plist")
 [[ "$host_id" == "com.iwmei.magicboard" ]] || fail "主 App Bundle ID 不匹配"
 [[ "$keyboard_id" == "com.iwmei.magicboard.keyboard" ]] || fail "键盘 Bundle ID 不匹配"
+[[ "$host_version" == "$keyboard_version" ]] || fail "主 App 与键盘版本不匹配"
+[[ "$host_build" == "$keyboard_build" ]] || fail "主 App 与键盘构建号不匹配"
 [[ "$open_access" == "true" ]] || fail "RequestsOpenAccess 未启用"
 
 (
@@ -100,4 +106,4 @@ unzip -tq "$artifact" >/dev/null
 unzip -Z1 "$artifact" | rg -q '^Payload/MagicBoard[.]app/Info[.]plist$' || fail "tipa 缺少主 App Info.plist"
 unzip -Z1 "$artifact" | rg -q '^Payload/MagicBoard[.]app/PlugIns/MagicBoardKeyboard[.]appex/Info[.]plist$' || fail "tipa 缺少键盘 Info.plist"
 
-print -r -- "生成完成：$artifact"
+print -r -- "生成完成：$artifact（${host_version} (${host_build})）"

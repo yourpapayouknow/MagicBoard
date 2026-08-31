@@ -96,6 +96,8 @@ Build a traceable iPadOS project containing the MagicBoard host app, keyboard ex
 | `apply_patch` rejected a combined delete/add of `KeyboardViewController.swift` | 1 | The file remained unchanged; replace it in separate patch operations and verify compilation immediately |
 | Independent archive inspection targeted the packaging script's already-cleaned staging directory | 1 | Extracted the finished `.tipa` into a fresh temporary directory and inspected the archive contents there |
 | Safety policy rejected automatic removal of the temporary verification directory | 1 | Kept the isolated read-only directory `/tmp/magicboard-verify.uaUkOJ`; no project or artifact file was affected |
+| Device screenshot still showed the Task 01 test keyboard after a Task 02 overwrite install | 1 | Matched the screenshot's status label and four-row structure to the old source; confirmed the new archive contains Task 02-only function-row symbols, isolating the issue to old extension registration/process state rather than the new layout source |
+| XcodeGen generated `1.0 (1)` for both old and new packages despite project build settings | 1 | XcodeGen source confirmed these are generator defaults; explicitly mapped both targets' plist versions to `MARKETING_VERSION`/`CURRENT_PROJECT_VERSION`, bumped Task 02 to `0.2.0 (2)`, and added package-time host/extension version parity checks |
 
 ## Completion checklist
 

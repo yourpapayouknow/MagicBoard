@@ -127,3 +127,13 @@
 - Verified ZIP integrity, arm64 Mach-O host/extension binaries, Bundle Identifiers, `com.apple.keyboard-service`, and `RequestsOpenAccess = true` from a fresh archive extraction.
 - Verified both embedded executables carry the `group.com.iwmei.magicboard` App Group entitlement.
 - Local Phase 10 checks are complete; on-device TrollStore installation and behavioral acceptance remain.
+
+## 2026-08-31 — Task 02 stale-extension diagnosis and versioned rebuild
+
+- Inspected the user's device screenshot and matched its visible status label and four-row structure exactly to the Task 01 controller; the current Task 02 source no longer contains those elements.
+- Verified the existing Task 02 archive binary contains new-only function-row assets (`sun.min`, `playpause.fill`, and `arrow.left.and.right`), proving the screenshot was rendered by the old installed extension.
+- Inspected TrollStore's local source: overwrite installation replaces the full app bundle and registers embedded plugins, while Refresh App Registrations re-registers all TrollStore apps and resprings.
+- Found that XcodeGen's Info.plist generator defaults to `1.0 (1)` unless version keys are explicitly provided; this made Task 01 and Task 02 indistinguishable in TrollStore.
+- Mapped both target plists to the shared build settings, bumped Task 02 to `0.2.0 (2)`, and added package checks requiring host/extension version parity.
+- Re-ran 9 shared tests successfully and generated `build/MagicBoard.tipa` (107,459 bytes), SHA-256 `461fda52c3b4898299558716c87cc2c95176549d9867c88b075612657179cb1d`.
+- Fresh extraction verified both host and extension are arm64 and report `0.2.0 (2)`; device installation and refreshed screenshot remain pending.
