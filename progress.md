@@ -85,3 +85,10 @@
 - Verified both Mach-O executables are arm64, both signed entitlements contain `group.com.iwmei.magicboard`, the keyboard extension point is `com.apple.keyboard-service`, and `RequestsOpenAccess` is true.
 - Reindexed CodeGraph: 6 files, 58 nodes, 109 edges; structural inspection confirmed the host and keyboard both load `BoardTheme` through `SharedConfig`.
 - Phase 3 through Phase 5 are complete. Phase 6 requires the user's TrollStore installation and iPad Settings/keyboard UI acceptance evidence.
+
+## 2026-08-31 — Device acceptance completed
+
+- User confirmed through the structured acceptance prompt that TrollStore installation succeeded.
+- User confirmed MagicBoard could be added in iPadOS Settings.
+- User confirmed switching to MagicBoard displayed the test keyboard and its input controls worked normally.
+- All Task 01 completion checks are now satisfied.

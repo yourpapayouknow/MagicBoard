@@ -54,3 +54,5 @@
 - **Where（在哪个上下文）**：工作目录 `/Users/mac/codexproj/magicboard`；核心文件为 `project.yml`、`App/`、`Keyboard/`、`Packages/MagicBoardShared/`、`scripts/build-tipa.zsh`、`task_plan.md` 和 `progress.md`；构建产物位于被 Git 忽略的 `build/`。
 - **Why（目的/背景）**：完成任务 01 的本地可验证部分，并把主 App、可添加的系统键盘扩展、App Group 配置共享及 TrollStore `.tipa` 安装链连成可重复构建流程，为 iPad 真机验收提供交付物。
 - **How（如何实现/决策过程）**：以 `project.yml` 作为 Info.plist、entitlement、Bundle Identifier 和 iPad-only 目标设置的单一事实来源；使用禁用 Xcode 签名的 arm64 Release 构建，再以 `ldid` 分别签主 App 和扩展；脚本校验归档、Bundle ID、扩展点、完全访问和两份 App Group。模拟器双架构与真机 arm64 构建均成功，共享模块 4/4 测试通过；CodeGraph 重建后为 6 files、58 nodes、109 edges，并确认主 App 与键盘均通过 `SharedConfig.ldthm()` 使用共享主题。剩余工作是用户通过 TrollStore 安装、在 iPadOS 设置添加/完全访问、切换键盘并回传界面结果。
+
+- **真机验收补充**：用户通过结构化提问确认“全部成功”：TrollStore 安装和主 App 打开正常，MagicBoard 可在 iPadOS 设置中添加，切换后测试键盘正常显示并能够输入。任务 01 的全部完成条件已满足。

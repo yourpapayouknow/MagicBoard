@@ -64,7 +64,7 @@ Build a traceable iPadOS project containing the MagicBoard host app, keyboard ex
 
 ### Phase 6 — Device installation and acceptance
 
-**Status:** in_progress
+**Status:** complete
 
 - Install through TrollStore on the user-authorized iPad.
 - Verify app launch, keyboard availability in Settings, enabling/switching, and visible test keyboard UI.
@@ -103,6 +103,6 @@ Build a traceable iPadOS project containing the MagicBoard host app, keyboard ex
 - [x] Shared container or confirmed equivalent is verified
 - [x] TrollStore entitlements are verified
 - [x] Zsh build/package script produces `MagicBoard.tipa`
-- [ ] TrollStore installs the artifact successfully
-- [ ] iPadOS Settings can add MagicBoard
-- [ ] Switching keyboards displays the approved test UI
+- [x] TrollStore installs the artifact successfully
+- [x] iPadOS Settings can add MagicBoard
+- [x] Switching keyboards displays the approved test UI
