@@ -50,3 +50,13 @@
 - Searched GitHub keyboard topics and inspected licenses, activity, adoption signals, and target structures.
 - Expanded and approved an 11-repository set with seven real keyboard implementations; analysis remains capped below the 20-repository limit.
 - Next: commit these decisions, add `/refrence` to `.gitignore`, shallow-clone the approved repositories, and produce `/refrence/refrence.md` before implementation.
+
+## 2026-08-31 — Reference analysis completed
+
+- Added and committed `/refrence/` to `.gitignore` before cloning.
+- Shallow-cloned all 11 approved repositories successfully.
+- Verified each local clone's HEAD, license, target files, entitlements, keyboard Info.plist, deployment target, project-generation approach, and relevant controller/build structure.
+- Created `/refrence/refrence.md` with per-repository reusable methods, MagicBoard integration approach, borrowing level, license boundaries, and the final combined design.
+- Corrected research metadata: TrollStore is MIT; KeyboardKit's local LICENSE is closed-source.
+- Confirmed local `ldid` 2.1.5_1 is already installed and TrollStore upstream preserves per-binary entitlements applied by `ldid`.
+- Phase 2 is complete. Next: confirm the deterministic pre-signing policy, then start the project scaffold.

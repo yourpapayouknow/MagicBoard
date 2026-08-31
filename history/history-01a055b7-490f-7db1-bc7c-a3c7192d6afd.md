@@ -41,3 +41,5 @@
 - **Where（在哪个上下文）**：项目 `/Users/mac/codexproj/magicboard`；研究结果写入 `findings.md`，决策同步到 `task_plan.md` 和 `progress.md`。
 - **Why（目的/背景）**：补齐 Keyboard Extension 权限策略，并满足从多个成熟键盘实现中选择最契合结构、避免从零重复造轮子的要求。
 - **How（如何实现/决策过程）**：使用 `request_user_input` 确认完全访问；使用 `autocli gh` 与 `gh api` 只读检索。优先保留有明确许可证、真实 host/extension 结构、App Group、共享模块或 iPad 适配价值的项目；无许可证、仅应用内键盘、iOS 26 专用或引入无关响应式架构的候选被排除。用户最终授权将 11 个仓库浅克隆到被忽略的 `/refrence`；GPL 与非标准许可证项目只分析、不复制实现。
+
+- **补充进展**：11 个仓库全部浅克隆成功，并对本地 HEAD、许可证、Info.plist、entitlements、App Group、共享 Package、控制器和打包脚本进行复核。生成 `/Users/mac/codexproj/magicboard/refrence/refrence.md`。最终采用 XcodeGen/HushType 工程骨架、Dictus/Hamster 共享配置、azooKey iPad 尺寸思路、Tasty UIKit 触控原则，以及 TrollStore/Geranium 交叉验证的 `ldid`/Payload 打包链；不引入完整第三方输入引擎或 UI 框架。

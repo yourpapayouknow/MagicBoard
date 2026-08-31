@@ -31,7 +31,7 @@ Build a traceable iPadOS project containing the MagicBoard host app, keyboard ex
 
 ### Phase 2 — Reference implementation research
 
-**Status:** in_progress
+**Status:** complete
 
 - Add `/refrence` to `.gitignore`.
 - Clone no more than 20 relevant repositories into `/refrence`.
