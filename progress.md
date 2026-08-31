@@ -119,3 +119,11 @@
 - Generated the Xcode project and built the complete host app plus keyboard extension for the iPad simulator successfully.
 - Rechecked CodeGraph after implementation: 6 files, 93 nodes, and 96 edges; the controller routes text emission through `InputState` before calling the document proxy.
 - Phase 9 is complete. Phase 10 proceeds with the arm64 TrollStore package and on-device acceptance.
+
+## 2026-08-31 — Task 02 TrollStore package generated
+
+- Built the complete Release app and keyboard extension for generic iOS arm64 from source commit `73ca17e`.
+- Generated `build/MagicBoard.tipa` (107,453 bytes), SHA-256 `b8c33cc00a87dace86dfe501c2486dc71c0744797f8166d548397484a2196cdf`.
+- Verified ZIP integrity, arm64 Mach-O host/extension binaries, Bundle Identifiers, `com.apple.keyboard-service`, and `RequestsOpenAccess = true` from a fresh archive extraction.
+- Verified both embedded executables carry the `group.com.iwmei.magicboard` App Group entitlement.
+- Local Phase 10 checks are complete; on-device TrollStore installation and behavioral acceptance remain.

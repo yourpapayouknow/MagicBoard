@@ -94,6 +94,8 @@ Build a traceable iPadOS project containing the MagicBoard host app, keyboard ex
 | XcodeGen regenerated both entitlements as empty dictionaries | 1–2 | Moved the App Group into `project.yml` under each target's documented `entitlements.properties` source of truth |
 | XcodeGen regenerated the keyboard Info.plist without `NSExtension` | 1 | Moved all host and keyboard Info.plist properties into `project.yml`, then verified the generated plists before rebuilding |
 | `apply_patch` rejected a combined delete/add of `KeyboardViewController.swift` | 1 | The file remained unchanged; replace it in separate patch operations and verify compilation immediately |
+| Independent archive inspection targeted the packaging script's already-cleaned staging directory | 1 | Extracted the finished `.tipa` into a fresh temporary directory and inspected the archive contents there |
+| Safety policy rejected automatic removal of the temporary verification directory | 1 | Kept the isolated read-only directory `/tmp/magicboard-verify.uaUkOJ`; no project or artifact file was affected |
 
 ## Completion checklist
 
