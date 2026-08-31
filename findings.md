@@ -21,11 +21,20 @@
 
 ## Unresolved technical decisions
 
-- Technical stack and minimum iPadOS version.
+- Minimum iPadOS deployment target and exact test-device version.
 - Bundle identifier namespace and App Group identifier.
 - Xcode/project-generation strategy.
 - TrollStore/signing/toolchain constraints and device connection workflow.
 - Exact reference repositories to clone and adapt.
+
+## Confirmed technical direction
+
+- Local toolchain: Xcode 16.3 (16E140), Apple Swift 6.1.
+- Host app: SwiftUI.
+- Keyboard extension: UIKit through `UIInputViewController`.
+- Shared implementation: Swift module.
+- Acceptance environment family: iPadOS 16.x with TrollStore 2.
+- No XcodeGen, Mise, `idevice_id`, or `pymobiledevice3` executable was detected in `PATH` during the baseline probe.
 
 ## Research safety
 

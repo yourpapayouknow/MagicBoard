@@ -16,3 +16,12 @@
 - Created `DESIGN.md` from the confirmed answers.
 - Validated `DESIGN.md` with `npx --yes @google/design.md lint DESIGN.md`: 0 errors, 0 warnings, 0 infos.
 - Next: align technical stack and device/TrollStore constraints before reference research or implementation.
+
+## 2026-08-31 — Technical alignment started
+
+- Detected Xcode 16.3 and Swift 6.1 locally.
+- Confirmed SwiftUI for the host app, UIKit/`UIInputViewController` for the keyboard extension, and Swift for the shared module.
+- Confirmed the acceptance environment family as iPadOS 16.x with TrollStore 2.
+- Bundle Identifier selection returned empty through three direct prompts and one blocker-handling prompt.
+- No Xcode project, reference clone, identifier, or implementation change was made while the identifier remains unresolved.
+- Next: obtain a non-empty Bundle Identifier decision through `request_user_input`, then continue technical alignment.

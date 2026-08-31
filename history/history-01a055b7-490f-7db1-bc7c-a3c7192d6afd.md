@@ -21,3 +21,5 @@
 - **Where（在哪个上下文）**：项目 `/Users/mac/codexproj/magicboard`，涉及 `DESIGN.md`、`findings.md`、`progress.md` 和本历史文件。
 - **Why（目的/背景）**：完成新前端项目在开始 UI 实现前必须具备的完整设计系统，同时让长任务通过原生提问工具保持连续。
 - **How（如何实现/决策过程）**：严格按 `design-md` 固定顺序一次只确认一个章节；默认主题采用青色主调与橙色强调并支持语义主题自定义；使用 SF Pro／苹方、自适应 iPad 布局、半透明玻璃层次、连续圆角；任务 01 只定义安装引导、主题预览与测试键盘状态，避免扩张为完整输入引擎或主题编辑器。
+
+- **补充进展**：`DESIGN.md` 经 `npx --yes @google/design.md lint DESIGN.md` 校验，结果为 0 errors、0 warnings、0 infos。随后检测本机为 Xcode 16.3、Swift 6.1；用户通过提问工具确认 SwiftUI 主 App、UIKit 键盘扩展、Swift 共享模块，以及 iPadOS 16.x + TrollStore 2 验收环境。Bundle Identifier 的三次直接提问及一次阻塞处理提问均返回空答案，因此没有写入任何标识或开始工程实现。

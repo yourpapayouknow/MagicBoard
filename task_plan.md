@@ -8,7 +8,9 @@ Build a traceable iPadOS project containing the MagicBoard host app, keyboard ex
 
 - The repository starts empty and will use an Apple-native implementation.
 - Product mood: restrained native iPadOS utility for TrollStore/iPad power users.
-- Bundle identifiers, deployment target, implementation language/UI framework, signing model, test-device iPadOS/TrollStore versions, and remaining design-system sections are not yet confirmed.
+- Implementation stack: SwiftUI host app, UIKit `UIInputViewController` keyboard extension, and a shared Swift module.
+- Acceptance environment: iPadOS 16.x with TrollStore 2; exact device model and OS/TrollStore patch versions remain pending.
+- Bundle identifiers, exact deployment target, project-generation strategy, and signing model are not yet confirmed.
 
 ## Phases
 
@@ -65,6 +67,9 @@ Build a traceable iPadOS project containing the MagicBoard host app, keyboard ex
 | Error | Attempt | Resolution |
 |---|---:|---|
 | Initial `git status` failed because the empty directory was not a repository | 1 | Initialized Git and created an empty baseline commit before project changes |
+| Technical-stack prompt returned an empty answer | 1–2 | Retried with shorter options; the third prompt confirmed SwiftUI + UIKit |
+| Device-environment prompt returned an empty answer | 1 | Retried once and confirmed iPadOS 16.x + TrollStore 2 |
+| Bundle-ID prompt returned empty answers | 1–3 | Escalated to a blocker-handling prompt as required; that prompt also returned empty, so no identifier was chosen |
 
 ## Completion checklist
 
