@@ -49,4 +49,60 @@ final class SharedConfigTests: XCTestCase {
 
         XCTAssertTrue(SharedConfig.dgst(defaults: defaults).available)
     }
+
+    // 验证单次 Shift 消费
+    func testshft() {
+        var state = InputState()
+        state.tglshft()
+
+        XCTAssertEqual(state.emit("a"), "A")
+        XCTAssertFalse(state.shifted)
+        XCTAssertEqual(state.emit("b"), "b")
+    }
+
+    // 验证 Caps Lock 持续
+    func testcaps() {
+        var state = InputState()
+        state.tglcaps()
+
+        XCTAssertEqual(state.emit("a"), "A")
+        XCTAssertEqual(state.emit("b"), "B")
+        XCTAssertTrue(state.capsLocked)
+    }
+
+    // 验证 Caps Lock 与 Shift 异或
+    func testcapshft() {
+        var state = InputState(capsLocked: true)
+        state.tglshft()
+
+        XCTAssertEqual(state.emit("a"), "a")
+        XCTAssertEqual(state.emit("b"), "B")
+        XCTAssertTrue(state.capsLocked)
+    }
+
+    // 验证页面切换状态
+    func testpages() {
+        var state = InputState(shifted: true, capsLocked: true)
+        state.setpage(.numbers)
+
+        XCTAssertEqual(state.page, .numbers)
+        XCTAssertFalse(state.shifted)
+        XCTAssertTrue(state.capsLocked)
+        XCTAssertEqual(state.emit("1"), "1")
+
+        state.setpage(.symbols)
+        XCTAssertEqual(state.page, .symbols)
+
+        state.setpage(.letters)
+        XCTAssertEqual(state.emit("c"), "C")
+    }
+
+    // 验证 Shift 替代字符
+    func testshftalt() {
+        var state = InputState(shifted: true)
+
+        XCTAssertEqual(state.emit("1", alternate: "!", letter: false), "!")
+        XCTAssertFalse(state.shifted)
+        XCTAssertEqual(state.emit("2", alternate: "@", letter: false), "2")
+    }
 }

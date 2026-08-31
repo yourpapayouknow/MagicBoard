@@ -92,3 +92,30 @@
 - User confirmed MagicBoard could be added in iPadOS Settings.
 - User confirmed switching to MagicBoard displayed the test keyboard and its input controls worked normally.
 - All Task 01 completion checks are now satisfied.
+
+## 2026-08-31 — Task 02 started
+
+- Re-read the existing `DESIGN.md`; its adaptive native test-keyboard rules apply without changes.
+- Restored `task_plan.md`, `findings.md`, and `progress.md`; the session catch-up script reported no unsynchronized work.
+- Verified a clean Git worktree before Task 02 changes.
+- Used CodeGraph to confirm the current input path is `bldkbd → mkrow → mktext → puttxt → textDocumentProxy` and that the keyboard controller is the minimal UI change surface.
+- Confirmed the 14-inch M-series MacBook Pro non-numpad QWERTY layout as the reference. Unsupported function/system keys are disabled placeholders for Task 03.
+- Phase 7 is complete; Phase 8 begins with a testable input state model.
+
+## 2026-08-31 — Task 02 input model completed
+
+- Added `BoardPage` and `InputState` to the existing shared module without introducing a dependency.
+- Defined physical-keyboard case behavior as `shifted != capsLocked`; single Shift is consumed only after a letter output, while Caps Lock persists.
+- Added tests for single Shift, Caps Lock, Caps+Shift lowercase override, and letter/number/symbol page transitions.
+- Ran `swift test --package-path Packages/MagicBoardShared`: 8 tests passed, 0 failed.
+- Phase 8 is complete; Phase 9 begins with the MacBook Pro-inspired UIKit layout and proxy action wiring.
+
+## 2026-08-31 — Task 02 keyboard implementation completed
+
+- Replaced the Task 01 test rows with letter, number, and symbol pages modeled after the non-numpad 14-inch MacBook Pro typing area.
+- Wired text, Space, Delete, Return, Shift, Caps Lock, page switching, and the system next-keyboard selector through `UIInputViewController` and `textDocumentProxy`.
+- Kept the function row and unsupported macOS modifier keys disabled as explicit Task 03 placeholders.
+- Added Shift alternate-symbol coverage; the shared package now passes 9 tests with 0 failures.
+- Generated the Xcode project and built the complete host app plus keyboard extension for the iPad simulator successfully.
+- Rechecked CodeGraph after implementation: 6 files, 93 nodes, and 96 edges; the controller routes text emission through `InputState` before calling the document proxy.
+- Phase 9 is complete. Phase 10 proceeds with the arm64 TrollStore package and on-device acceptance.

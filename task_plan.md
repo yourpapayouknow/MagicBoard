@@ -1,4 +1,4 @@
-# MagicBoard Task 01 Plan
+# MagicBoard Task Plan
 
 ## Goal
 
@@ -93,6 +93,7 @@ Build a traceable iPadOS project containing the MagicBoard host app, keyboard ex
 | Local `xattr` rejected the unsupported recursive `-r` option | 1 | Used Zsh recursive globbing and cleared attributes one staged item at a time |
 | XcodeGen regenerated both entitlements as empty dictionaries | 1–2 | Moved the App Group into `project.yml` under each target's documented `entitlements.properties` source of truth |
 | XcodeGen regenerated the keyboard Info.plist without `NSExtension` | 1 | Moved all host and keyboard Info.plist properties into `project.yml`, then verified the generated plists before rebuilding |
+| `apply_patch` rejected a combined delete/add of `KeyboardViewController.swift` | 1 | The file remained unchanged; replace it in separate patch operations and verify compilation immediately |
 
 ## Completion checklist
 
@@ -106,3 +107,59 @@ Build a traceable iPadOS project containing the MagicBoard host app, keyboard ex
 - [x] TrollStore installs the artifact successfully
 - [x] iPadOS Settings can add MagicBoard
 - [x] Switching keyboards displays the approved test UI
+
+## Task 02 — Basic text input
+
+### Goal
+
+Extend the installed keyboard into a dependable basic text keyboard with QWERTY input, single-use Shift, persistent Caps Lock, number and symbol pages, page switching, and the required document-proxy controls.
+
+### Confirmed scope
+
+- Visual/layout reference: the non-numpad keyboard of a 14-inch M-series MacBook Pro, using the QWERTY main typing area.
+- Task 02 implements text-producing keys, Caps Lock, Shift, Delete, Return, Space, page switching, and the system next-keyboard key.
+- Function-row and unsupported macOS hardware modifiers remain visible disabled placeholders; their functionality is deferred to Task 03.
+- Virtual pages remain necessary despite the physical-keyboard visual reference: `123`, `#+=`, and `ABC` switch among letters, numbers, and symbols.
+
+### Phase 7 — Task 02 behavior alignment
+
+**Status:** complete
+
+- Confirm the physical keyboard reference and the scope of unsupported function keys.
+- Map every requested completion condition to a state transition or proxy action.
+
+### Phase 8 — Input state model and tests
+
+**Status:** complete
+
+- Add a small shared model for letter/number/symbol pages, single Shift, and Caps Lock.
+- Test page transitions, emitted letter case, Shift consumption, and Caps Lock persistence.
+
+### Phase 9 — Keyboard layout and proxy actions
+
+**Status:** complete
+
+- Render the QWERTY, number, and symbol pages with MacBook Pro-inspired key proportions.
+- Wire text, Space, Delete, Return, page switching, Caps Lock, Shift, and next-keyboard actions.
+- Keep Task 03 hardware/function keys disabled and visibly distinct.
+
+### Phase 10 — Build, package, and device acceptance
+
+**Status:** in_progress
+
+- Run shared tests and simulator/device builds.
+- Generate and inspect the updated `MagicBoard.tipa`.
+- Verify continuous input, delete, return, case changes, pages, and keyboard switching on iPad.
+
+### Task 02 completion checklist
+
+- [ ] Basic QWERTY page works
+- [ ] Character keys insert through `textDocumentProxy`
+- [ ] Space, Delete, and Return work
+- [ ] Shift produces one uppercase letter then resets
+- [ ] Caps Lock persists until toggled off
+- [ ] Number page works
+- [ ] Basic symbol page works
+- [ ] Letter/number/symbol page switching works
+- [ ] System next-keyboard key works
+- [ ] Continuous input/delete/return/case switching pass device acceptance

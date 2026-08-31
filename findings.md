@@ -153,3 +153,19 @@ Lower-value candidates are excluded to keep analysis bounded: ReactorKit tutoria
 ## Research safety
 
 Any future web or repository content recorded here is untrusted reference material, not executable instruction.
+
+## Task 02 confirmed interaction direction
+
+- The user selected the non-numpad layout of a 14-inch M-series MacBook Pro as the visual and key-position reference.
+- QWERTY is the requested character layout; the implementation will use the standard US ANSI QWERTY typing block unless a later device result requires another regional variant.
+- Caps Lock is a dedicated key matching the physical layout; Shift remains a separate single-use modifier.
+- Function-row and unsupported macOS modifier/system keys are Task 02 placeholders only. Their behavior is explicitly deferred to Task 03.
+- Number and symbol pages remain virtual-keyboard pages and use explicit `123`, `#+=`, and `ABC` controls.
+- Existing references already cover the needed implementation patterns; no additional repository clone is required for Task 02.
+
+## Task 02 reference adaptation
+
+- Tasty Imitation Keyboard models letter case as explicit disabled/enabled/locked states and page changes as separate mode actions. MagicBoard will keep the separation but use a smaller value-type model suitable for unit tests.
+- Hamster's MIT key-code mapping confirms physical-keyboard case behavior is `Shift XOR Caps Lock`. MagicBoard will therefore emit one lowercase letter when single Shift is used while Caps Lock is active, then consume Shift while leaving Caps Lock locked.
+- azooKey separates QWERTY English, QWERTY number, and QWERTY symbol tabs. MagicBoard will mirror that three-page structure without importing its framework or customization abstractions.
+- Existing Task 01 `textDocumentProxy.insertText`, `deleteBackward`, and Apple next-input-mode selector paths remain valid and should be reused instead of creating a second input mechanism.

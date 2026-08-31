@@ -34,6 +34,66 @@ public struct BoardTheme: Codable, Equatable, Sendable {
     )
 }
 
+// 表示键盘输入页面
+public enum BoardPage: Equatable, Sendable {
+    case letters
+    case numbers
+    case symbols
+}
+
+// 管理页面与大小写状态
+public struct InputState: Equatable, Sendable {
+    public private(set) var page: BoardPage
+    public private(set) var shifted: Bool
+    public private(set) var capsLocked: Bool
+
+    // 创建默认输入状态
+    public init(page: BoardPage = .letters, shifted: Bool = false, capsLocked: Bool = false) {
+        self.page = page
+        self.shifted = shifted
+        self.capsLocked = capsLocked
+    }
+
+    // 判断字母输出大小写
+    public var uppercase: Bool {
+        shifted != capsLocked
+    }
+
+    // 切换单次 Shift
+    public mutating func tglshft() {
+        shifted.toggle()
+    }
+
+    // 切换 Caps Lock
+    public mutating func tglcaps() {
+        capsLocked.toggle()
+        shifted = false
+    }
+
+    // 切换输入页面
+    public mutating func setpage(_ page: BoardPage) {
+        self.page = page
+        shifted = false
+    }
+
+    // 生成字符并消费 Shift
+    public mutating func emit(
+        _ value: String,
+        alternate: String? = nil,
+        letter: Bool = true
+    ) -> String {
+        guard page == .letters else { return value }
+        let output: String
+        if letter {
+            output = uppercase ? value.uppercased() : value.lowercased()
+        } else {
+            output = shifted ? (alternate ?? value) : value
+        }
+        shifted = false
+        return output
+    }
+}
+
 // 表示共享容器诊断
 public struct GroupState: Equatable, Sendable {
     public let available: Bool
