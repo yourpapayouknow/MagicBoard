@@ -81,7 +81,7 @@
 - Re-ran the shared package suite: 4 tests passed, 0 failed.
 - Made `project.yml` the single source of truth for host/keyboard Info.plists, App Group entitlements, Bundle Identifiers, and iPad-only device targeting.
 - Added and verified the Zsh packaging flow: unsigned Xcode build, staged payload, per-binary `ldid` signing, metadata checks, and archive integrity checks.
-- Generated `build/MagicBoard.tipa` (89,158 bytes), SHA-256 `61df9ac965dd78bbe380e0a1df96d88c7552eda43be8d4af2f8aea97aa42acb3`.
+- Generated `build/MagicBoard.tipa` (89,158 bytes), final HEAD rebuild SHA-256 `f8f908f279b275f18b35e2f788a1fa4ab0b337b62d13c655e60c49300549e8ce`.
 - Verified both Mach-O executables are arm64, both signed entitlements contain `group.com.iwmei.magicboard`, the keyboard extension point is `com.apple.keyboard-service`, and `RequestsOpenAccess` is true.
 - Reindexed CodeGraph: 6 files, 58 nodes, 109 edges; structural inspection confirmed the host and keyboard both load `BoardTheme` through `SharedConfig`.
 - Phase 3 through Phase 5 are complete. Phase 6 requires the user's TrollStore installation and iPad Settings/keyboard UI acceptance evidence.

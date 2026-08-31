@@ -49,7 +49,7 @@
 ### 第 5 轮对话（2026-08-31 14:02）
 
 - **Who（谁参与）**：用户（MagicBoard 项目发起者与 iPad 真机验收操作者）+ AI（Codex Assistant）。
-- **What（做了什么）**：用户要求继续此前中断的任务。AI 完成 MagicBoard 主 App、Keyboard Extension、本地 Swift Package 共享模块、XcodeGen 工程配置、App Group entitlement、键盘扩展 Info.plist、SwiftUI 安装引导、UIKit 测试键盘和 `scripts/build-tipa.zsh`。修复 Swift 6.1 编译器 IRGen 崩溃、当前 macOS `xattr` 参数差异，以及 XcodeGen 覆盖 plist/entitlement 的单一配置源问题。最终生成 `/Users/mac/codexproj/magicboard/build/MagicBoard.tipa`，大小 89,158 bytes，SHA-256 为 `61df9ac965dd78bbe380e0a1df96d88c7552eda43be8d4af2f8aea97aa42acb3`。
+- **What（做了什么）**：用户要求继续此前中断的任务。AI 完成 MagicBoard 主 App、Keyboard Extension、本地 Swift Package 共享模块、XcodeGen 工程配置、App Group entitlement、键盘扩展 Info.plist、SwiftUI 安装引导、UIKit 测试键盘和 `scripts/build-tipa.zsh`。修复 Swift 6.1 编译器 IRGen 崩溃、当前 macOS `xattr` 参数差异，以及 XcodeGen 覆盖 plist/entitlement 的单一配置源问题。最终从 Git HEAD 生成 `/Users/mac/codexproj/magicboard/build/MagicBoard.tipa`，大小 89,158 bytes，SHA-256 为 `f8f908f279b275f18b35e2f788a1fa4ab0b337b62d13c655e60c49300549e8ce`。
 - **When（何时发生）**：2026-08-31 14:02（Asia/Shanghai）。
 - **Where（在哪个上下文）**：工作目录 `/Users/mac/codexproj/magicboard`；核心文件为 `project.yml`、`App/`、`Keyboard/`、`Packages/MagicBoardShared/`、`scripts/build-tipa.zsh`、`task_plan.md` 和 `progress.md`；构建产物位于被 Git 忽略的 `build/`。
 - **Why（目的/背景）**：完成任务 01 的本地可验证部分，并把主 App、可添加的系统键盘扩展、App Group 配置共享及 TrollStore `.tipa` 安装链连成可重复构建流程，为 iPad 真机验收提供交付物。
