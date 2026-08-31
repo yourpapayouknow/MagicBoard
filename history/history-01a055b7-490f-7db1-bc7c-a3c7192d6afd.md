@@ -66,3 +66,12 @@
 - **Where（在哪个上下文）**：项目目录 `/Users/mac/codexproj/magicboard`；主要涉及 `Keyboard/KeyboardViewController.swift`、`Packages/MagicBoardShared/Sources/MagicBoardShared/SharedConfig.swift`、共享测试、`task_plan.md`、`findings.md`、`progress.md` 与 `build/MagicBoard.tipa`。
 - **Why（目的/背景）**：延续任务 1 的 TrollStore 安装链路，将测试键盘升级为可连续输入、删除、换行、切换大小写和页面的基础文字输入法，并以 14 英寸 M 系列 MacBook Pro 非数字小键盘布局为视觉与键位参考；功能行和不适用的 macOS 修饰键只做任务 3 占位。
 - **How（如何实现/决策过程）**：复用现有 UIKit `UIInputViewController`、共享 Swift Package、App Group 与 Zsh 打包链路；参考现有输入法项目采用独立页面状态以及 Shift/Caps Lock 异或语义；用状态单元测试验证单次 Shift 消费、Caps Lock 持续、Caps+Shift 小写覆盖、三页切换和 Shift 符号；通过 XcodeGen + `xcodebuild` 验证完整 target 图，再由 `scripts/build-tipa.zsh` 无签名构建、`ldid` 分别签名主程序和扩展。归档解压至 `/tmp/magicboard-verify.uaUkOJ` 后验证 arm64、Bundle Identifier、键盘扩展点、开放访问与双方 App Group entitlement。按用户要求使用 `request_user_input` 和 `ask-user-without-ending` 保持任务待续；当前仅等待用户在 iPad 上返回真机验收结果。
+
+### 第 7 轮对话（2026-08-31 18:31）
+
+- **Who（谁参与）**：用户（MagicBoard 项目发起者与 iPad 真机验收者）+ AI（Codex Assistant）。
+- **What（做了什么）**：向用户说明任务 2 的真机验收标准，覆盖安装与启用、QWERTY 连续输入、Space/Delete/Return、单次 Shift、Caps Lock、Caps+Shift、数字页、符号页、三页往返和系统地球键，并给出可直接复制执行的输入序列和预期结果。
+- **When（何时发生）**：2026-08-31 18:31（Asia/Shanghai）。
+- **Where（在哪个上下文）**：项目 `/Users/mac/codexproj/magicboard`，待验收产物 `/Users/mac/codexproj/magicboard/build/MagicBoard.tipa`，验收环境为用户的 TrollStore iPad。
+- **Why（目的/背景）**：用户询问“验收标准是？”，需要把任务 2 的抽象完成条件转换为明确、可观察、可报告的通过标准。
+- **How（如何实现/决策过程）**：将每项需求映射为一个独立测试动作和唯一预期结果；要求全部项目通过才完成任务 2，任何失败均记录所在步骤、实际输出与可见现象后继续排查，不以本地构建成功替代真机行为验收。
