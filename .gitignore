@@ -2,3 +2,4 @@
 /build/
 /MagicBoard.xcodeproj/
 /Packages/MagicBoardShared/.build/
+.DS_Store
