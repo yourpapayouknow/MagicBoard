@@ -35,6 +35,61 @@
 - Shared implementation: Swift module.
 - Acceptance environment family: iPadOS 16.x with TrollStore 2.
 - No XcodeGen, Mise, `idevice_id`, or `pymobiledevice3` executable was detected in `PATH` during the baseline probe.
+- Bundle IDs: `com.iwmei.magicboard`, `com.iwmei.magicboard.keyboard`, and App Group `group.com.iwmei.magicboard`.
+- Minimum deployment target: iPadOS 16.0.
+- Project generation: install Homebrew XcodeGen and keep `project.yml` as the reproducible source.
+- Shared code: local Swift Package.
+- Device acceptance: the user will install and operate the `.tipa` on iPad, then return results or screenshots for iteration.
+- XcodeGen 2.46.0 is now installed from the Homebrew core bottle and reports successfully from `PATH`.
+
+## Reference search notes
+
+- GitHub CLI search is available through `autocli gh`.
+- This local GitHub CLI exposes repository JSON field `fullName`, not `nameWithOwner`.
+- Exact repository queries `TrollStore template xcode` and `TrollStore tipa build` returned no repositories, so the search must broaden to known TrollStore projects and code-level packaging markers.
+- Broad TrollStore/Swift search surfaced current, source-available app candidates including `c22dev/Geranium`, `DevelopCubeLab/BatteryInfo`, `DevelopCubeLab/AnimationSpeed`, `JJTech0130/ValidationRelay`, and archived `leminlimez/Helium`; packaging/build files need code-level inspection before selection.
+- Custom-keyboard search surfaced `milangit03/custom-keyboard-extension-swift`, a small UIKit keyboard-extension sample; its age and low adoption mean it is only a structural candidate until inspected.
+- Code search for both `tipa` and `Payload` mostly surfaced Theos post-package scripts such as `OwnGoalStudio/TrollVNC/devkit/after-package.sh`; these may inform archive renaming but are not yet suitable Xcode build references.
+- Repository search for the exact words `TrollStore opa334` returned no result; the known upstream URL must be queried directly rather than inferred from search ranking.
+- Direct repository inspection confirms `opa334/TrollStore` is the active upstream installer project (main branch, 22k+ stars) and explicitly supports permanently installing IPAs with arbitrary entitlements; it is the primary source for accepted packaging/signing behavior.
+- `c22dev/Geranium` is an active GPL-3.0 Swift TrollStore utility with an Xcode-oriented app implementation; it is a candidate for build/entitlement layout, but its GPL license prevents copying code into a differently licensed project without adopting compatible terms.
+- `autocli gh` blocks jq pipe expressions in external CLI arguments; native `gh api` is required for filtered public repository-tree inspection.
+- Native `gh api --jq` uses jq string escaping, so file-extension filters must use `[.]` rather than `\.` in embedded regular expressions.
+- `opa334/TrollStore` contains project-specific Makefiles and entitlements but no Xcode project; it is authoritative for TrollStore behavior, not a direct scaffold for this Swift/Xcode app.
+- `c22dev/Geranium` contains `Geranium.xcodeproj`, app entitlements, `entitlements.plist`, and `ipabuild.sh`, making it a strong packaging/entitlement candidate subject to license-safe adaptation.
+- Geranium's `ipabuild.sh` demonstrates the essential Xcode/TrollStore chain: device build with `CODE_SIGNING_ALLOWED=NO`, copy the `.app`, remove signatures/provisioning, apply entitlements with `ldid`, create `Payload`, and zip to `.tipa`.
+- Geranium's script cannot be copied directly: it is Bash (project policy requires Zsh), is GPL-3.0, contains project-specific root-helper steps, and sets `CONFIGURATION=Release` while invoking an Xcode Debug build. MagicBoard should adapt only the verified packaging sequence and correct these mismatches.
+- TrollStore upstream uses Theos/Makefiles and `ldid` in its own installer build; it reinforces `ldid` as the relevant signing tool but does not provide an Xcode keyboard-extension packaging template.
+- Geranium's elevated entitlements include many private capabilities unrelated to MagicBoard plus one normal `com.apple.security.application-groups` array. Copying its private/root entitlements would unnecessarily weaken the app and is rejected.
+- MagicBoard should use minimal target-specific entitlements: the confirmed App Group for the host and keyboard, with no `platform-application`, no `no-sandbox`, and no filesystem-wide exceptions unless direct device evidence later proves a strictly necessary addition.
+- `milangit03/custom-keyboard-extension-swift` is unarchived but has no declared license and only one star. Its default branch is `main`; a mistaken `master` tree request returned 404 and will not be repeated.
+- That keyboard sample repository contains only `DemoKeyboard.swift`, a zip archive, and README; it lacks a visible project/Info.plist structure and is unlikely to satisfy the requested scaffold reference needs.
+- Exact repository search for `UIInputViewController Swift keyboard` returned no results, so the next search should use broader known keyboard-library/sample terms or Apple's official extension documentation.
+- Direct inspection confirms `KeyboardKit/KeyboardKit` is an active Swift/SwiftUI custom-keyboard framework with a nonstandard/"Other" license; it is useful for conceptual keyboard behavior but should not be added as a dependency for the minimal UIKit task.
+- `imfuxiao/Hamster` is an active MIT-licensed iOS input-method project with substantial adoption. It is the strongest candidate for host/keyboard/App Group structure, although MagicBoard must isolate only the small structural pieces relevant to Task 01 rather than import its full Rime engine.
+- Hamster's tree confirms the exact architecture needed here: host app target, keyboard extension target, separate target entitlements and Info.plists, shared local Swift packages, and a `UIInputViewController` subclass.
+- KeyboardKit's demo also has host/keyboard targets and a keyboard `Info.plist`, but its current demo is SwiftUI/framework-centric and licensing is nonstandard; it is a comparison source rather than a planned dependency.
+- Hamster uses only the App Group entitlement in the keyboard target while the host target carries the same App Group plus unrelated iCloud/push capabilities; MagicBoard should retain only the shared App Group in both targets.
+- Hamster's keyboard `Info.plist` provides the relevant extension keys: `NSExtensionPointIdentifier = com.apple.keyboard-service`, a module-qualified principal class, `PrimaryLanguage = zh-Hans`, `IsASCIICapable`, `PrefersRightToLeft`, and `RequestsOpenAccess`.
+- Both Hamster and KeyboardKit request open access. Whether App Group sharing requires the user to enable Full Access must be verified against Apple's documentation before MagicBoard fixes this privacy/security behavior.
+- Installed `autocli google search` expects a positional search keyword rather than the skill document's `--query` example.
+- Apple search results identify three primary sources: “Configuring open access for a custom keyboard,” “Creating a custom keyboard,” and the archived App Extension Programming Guide.
+- Apple's result text states that `RequestsOpenAccess = true` is required when a keyboard needs network access or needs to write to a shared group container; this links App Group theme sharing to the user's Full Access choice.
+- Apple's open-access documentation clarifies the more precise boundary: with Full Access off, a keyboard retains read-only access to the containing app's shared containers but cannot write there or access the network.
+- Therefore Task 01 can keep `RequestsOpenAccess = false`: the host app writes the theme/configuration into the App Group, and the keyboard extension only reads it. This satisfies one-way configuration sharing while avoiding a Full Access privacy prompt. Bidirectional writes or networking would require an explicit later scope decision.
+- Direct GitHub code searches for `ldid` and `signApp` within TrollStore returned no indexed hits; installer signing behavior should be located from the repository tree/source rather than guessed from search.
+- TrollStore's tree locates the install path in `TrollStore/TSApplicationsManager.m` and `TSInstallationController.m`, with signing machinery under `Exploits/fastPathSign`; these are the correct upstream files to inspect.
+- `yonaskolb/XcodeGen` is active, MIT-licensed, and widely adopted. It is the appropriate primary reference for the authorized `project.yml` workflow and should be included in the candidate clone list.
+- TrollStore's application manager reports that an app must either already carry the fake CoreTrust signature or TrollStore must have `ldid` installed; signing failure is surfaced explicitly. This supports pre-signing MagicBoard's app and extension binaries with `ldid` during packaging for deterministic entitlements.
+- XcodeGen upstream documents the authorized Homebrew install, `project.yml` default spec, local packages/targets mapping, and `xcodegen generate`; its schema can directly represent the three-target/project-package structure.
+
+## Proposed reference shortlist
+
+- `opa334/TrollStore` — authoritative installer, entitlement, and signing behavior; inspect/adapt concepts only because its license is nonstandard.
+- `yonaskolb/XcodeGen` — MIT source and schema examples for the reproducible project file.
+- `imfuxiao/Hamster` — MIT host app, keyboard extension, App Group, Info.plist, and local Swift Package structure.
+- `c22dev/Geranium` — GPL-3.0 Xcode-to-`.tipa`/`ldid` process reference; do not copy source unless MagicBoard adopts a compatible license.
+- Rejected: `milangit03/custom-keyboard-extension-swift` (no declared license, incomplete structure) and KeyboardKit as a dependency (nonstandard license and unnecessary framework weight for Task 01).
 
 ## Research safety
 

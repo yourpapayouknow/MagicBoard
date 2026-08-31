@@ -25,3 +25,20 @@
 - Bundle Identifier selection returned empty through three direct prompts and one blocker-handling prompt.
 - No Xcode project, reference clone, identifier, or implementation change was made while the identifier remains unresolved.
 - Next: obtain a non-empty Bundle Identifier decision through `request_user_input`, then continue technical alignment.
+
+## 2026-08-31 — Technical alignment completed
+
+- Confirmed the identifier suite, iPadOS 16.0 target, XcodeGen strategy, local Swift Package, and user-operated iPad acceptance flow.
+- Authorized Homebrew installation of XcodeGen; installation has not run yet.
+- Started GitHub reference discovery through the `autocli gh` passthrough.
+- The first two repository searches failed before returning results because this `gh` version does not support JSON field `nameWithOwner`; corrected future queries to use `fullName`.
+
+## 2026-08-31 — Reference shortlist prepared
+
+- Compared TrollStore upstream, Geranium packaging, Hamster's app/keyboard/App Group structure, KeyboardKit's demo, and XcodeGen upstream.
+- Narrowed the proposed clone list to four repositories and documented license/adaptation boundaries in `findings.md`.
+- Confirmed through Apple documentation that a non-Full-Access keyboard can read, but cannot write, the containing app's shared group container.
+- `RequestsOpenAccess` selection returned empty three times and remains unresolved.
+- Reference-clone authorization returned empty three times; no repository was cloned.
+- Installed the explicitly authorized XcodeGen 2.46.0 Homebrew formula and verified its version.
+- Next: obtain non-empty answers for the reference shortlist and `RequestsOpenAccess`; then add `/refrence` to `.gitignore`, clone approved repositories, and write `/refrence/refrence.md` before implementation.

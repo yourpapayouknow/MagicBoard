@@ -23,3 +23,12 @@
 - **How（如何实现/决策过程）**：严格按 `design-md` 固定顺序一次只确认一个章节；默认主题采用青色主调与橙色强调并支持语义主题自定义；使用 SF Pro／苹方、自适应 iPad 布局、半透明玻璃层次、连续圆角；任务 01 只定义安装引导、主题预览与测试键盘状态，避免扩张为完整输入引擎或主题编辑器。
 
 - **补充进展**：`DESIGN.md` 经 `npx --yes @google/design.md lint DESIGN.md` 校验，结果为 0 errors、0 warnings、0 infos。随后检测本机为 Xcode 16.3、Swift 6.1；用户通过提问工具确认 SwiftUI 主 App、UIKit 键盘扩展、Swift 共享模块，以及 iPadOS 16.x + TrollStore 2 验收环境。Bundle Identifier 的三次直接提问及一次阻塞处理提问均返回空答案，因此没有写入任何标识或开始工程实现。
+
+### 第 3 轮对话（2026-08-31 11:49）
+
+- **Who（谁参与）**：用户（MagicBoard 项目发起者）+ AI（Codex Assistant）。
+- **What（做了什么）**：用户说明此前忘记回答并要求继续。通过提问工具确认主 App/键盘/App Group 标识为 `com.iwmei.magicboard`、`com.iwmei.magicboard.keyboard`、`group.com.iwmei.magicboard`，最低系统为 iPadOS 16.0，使用 Homebrew XcodeGen、本地 Swift Package，以及用户在 iPad 端操作 TrollStore 并回传验收结果。AI 安装并验证 XcodeGen 2.46.0；使用 GitHub/Apple 官方资料筛选 TrollStore、XcodeGen、Hamster、Geranium 四个参考候选。`RequestsOpenAccess` 和参考仓库克隆授权均连续三次返回空答案，未写入工程或克隆仓库。
+- **When（何时发生）**：2026-08-31 11:49（Asia/Shanghai）。
+- **Where（在哪个上下文）**：`/Users/mac/codexproj/magicboard`；只修改 `task_plan.md`、`findings.md`、`progress.md` 和本历史文件；系统侧新增 Homebrew formula `/opt/homebrew/Cellar/xcodegen/2.46.0`。
+- **Why（目的/背景）**：完成从零项目在编码前所需的技术边界对齐与参考实现筛选，避免猜测键盘权限、TrollStore 签名和工程结构。
+- **How（如何实现/决策过程）**：使用原生提问工具逐项确认；通过 `autocli gh`/`gh api`读取 GitHub 元数据与关键源码，通过 Apple 官方文档确认共享容器权限；排除无许可证样例和不必要依赖；将 GPL Geranium 限定为流程参考。对提问工具的空答案执行最多三次重试，未获授权的克隆与 Info.plist 改动均未执行。

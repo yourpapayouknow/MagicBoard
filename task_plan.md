@@ -10,7 +10,12 @@ Build a traceable iPadOS project containing the MagicBoard host app, keyboard ex
 - Product mood: restrained native iPadOS utility for TrollStore/iPad power users.
 - Implementation stack: SwiftUI host app, UIKit `UIInputViewController` keyboard extension, and a shared Swift module.
 - Acceptance environment: iPadOS 16.x with TrollStore 2; exact device model and OS/TrollStore patch versions remain pending.
-- Bundle identifiers, exact deployment target, project-generation strategy, and signing model are not yet confirmed.
+- Bundle identifiers: `com.iwmei.magicboard`, `com.iwmei.magicboard.keyboard`, and `group.com.iwmei.magicboard`.
+- Deployment target: iPadOS 16.0.
+- Project generation: XcodeGen 2.46.0 from Homebrew with a versioned `project.yml`.
+- Shared code: local Swift Package.
+- Device acceptance: user-operated TrollStore installation and iPad Settings verification with results returned for iteration.
+- `RequestsOpenAccess`, exact test-device versions, reference-clone authorization, and final `ldid` signing policy are not yet confirmed.
 
 ## Phases
 
@@ -70,6 +75,15 @@ Build a traceable iPadOS project containing the MagicBoard host app, keyboard ex
 | Technical-stack prompt returned an empty answer | 1–2 | Retried with shorter options; the third prompt confirmed SwiftUI + UIKit |
 | Device-environment prompt returned an empty answer | 1 | Retried once and confirmed iPadOS 16.x + TrollStore 2 |
 | Bundle-ID prompt returned empty answers | 1–3 | Escalated to a blocker-handling prompt as required; that prompt also returned empty, so no identifier was chosen |
+| `gh search repos` rejected JSON field `nameWithOwner` | 1 | CLI listed `fullName` as the supported equivalent; subsequent searches will use that field |
+| `autocli gh api --jq` rejected jq pipe expressions as shell operators | 1 | Use the installed native `gh api` for read-only GitHub API queries that require jq pipes |
+| Native `gh api --jq` rejected regex escapes such as `\.` inside a jq string | 1 | Replace backslash-dot regexes with jq-safe character classes such as `[.]` |
+| Keyboard sample tree query used nonexistent `master` branch | 1 | Repository metadata confirmed default branch `main`; query that branch next |
+| `autocli google search --query` was rejected by the installed version | 1 | CLI usage shows a positional `<keyword>` argument; use the verified local signature |
+| Second `autocli google search` lost its local Chrome-extension daemon connection | 1 | The first official-doc query already returned the needed Apple sources; read those URLs directly instead of repeating the failing search |
+| Direct Readability extraction of Apple's “Creating a custom keyboard” page failed with a stale browser tab (HTTP 422) | 1 | The companion Apple open-access page loaded successfully and directly answers the pending shared-container question; do not repeat the failed extraction |
+| `RequestsOpenAccess` prompt returned empty answers | 1–3 | Keep the Info.plist value unresolved and continue only read-only reference work |
+| Reference-clone authorization prompt returned empty answers | 1–3 | Do not clone any repository until the user explicitly approves a shortlist |
 
 ## Completion checklist
 
