@@ -42,3 +42,11 @@
 - Reference-clone authorization returned empty three times; no repository was cloned.
 - Installed the explicitly authorized XcodeGen 2.46.0 Homebrew formula and verified its version.
 - Next: obtain non-empty answers for the reference shortlist and `RequestsOpenAccess`; then add `/refrence` to `.gitignore`, clone approved repositories, and write `/refrence/refrence.md` before implementation.
+
+## 2026-08-31 — Expanded reference set approved
+
+- Confirmed `RequestsOpenAccess = true`; Task 01 must guide the user to enable Full Access and must communicate that the keyboard can write shared data and access the network entitlement surface.
+- User requested more real keyboard implementations rather than approving the original four-repository set.
+- Searched GitHub keyboard topics and inspected licenses, activity, adoption signals, and target structures.
+- Expanded and approved an 11-repository set with seven real keyboard implementations; analysis remains capped below the 20-repository limit.
+- Next: commit these decisions, add `/refrence` to `.gitignore`, shallow-clone the approved repositories, and produce `/refrence/refrence.md` before implementation.

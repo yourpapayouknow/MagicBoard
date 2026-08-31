@@ -32,3 +32,12 @@
 - **Where（在哪个上下文）**：`/Users/mac/codexproj/magicboard`；只修改 `task_plan.md`、`findings.md`、`progress.md` 和本历史文件；系统侧新增 Homebrew formula `/opt/homebrew/Cellar/xcodegen/2.46.0`。
 - **Why（目的/背景）**：完成从零项目在编码前所需的技术边界对齐与参考实现筛选，避免猜测键盘权限、TrollStore 签名和工程结构。
 - **How（如何实现/决策过程）**：使用原生提问工具逐项确认；通过 `autocli gh`/`gh api`读取 GitHub 元数据与关键源码，通过 Apple 官方文档确认共享容器权限；排除无许可证样例和不必要依赖；将 GPL Geranium 限定为流程参考。对提问工具的空答案执行最多三次重试，未获授权的克隆与 Info.plist 改动均未执行。
+
+### 第 4 轮对话（2026-08-31 13:29）
+
+- **Who（谁参与）**：用户（MagicBoard 项目发起者）+ AI（Codex Assistant）。
+- **What（做了什么）**：用户再次要求继续并补答。用户确认键盘扩展启用完全访问，即 `RequestsOpenAccess=true`。针对原四仓库清单，用户要求加入更多真实键盘实现；AI 检索并分析 GitHub topic、许可证、维护状态、Target/App Group/Swift Package 结构，最终形成并获批 11 个参考仓库，其中 7 个为真实键盘项目。
+- **When（何时发生）**：2026-08-31 13:29（Asia/Shanghai）。
+- **Where（在哪个上下文）**：项目 `/Users/mac/codexproj/magicboard`；研究结果写入 `findings.md`，决策同步到 `task_plan.md` 和 `progress.md`。
+- **Why（目的/背景）**：补齐 Keyboard Extension 权限策略，并满足从多个成熟键盘实现中选择最契合结构、避免从零重复造轮子的要求。
+- **How（如何实现/决策过程）**：使用 `request_user_input` 确认完全访问；使用 `autocli gh` 与 `gh api` 只读检索。优先保留有明确许可证、真实 host/extension 结构、App Group、共享模块或 iPad 适配价值的项目；无许可证、仅应用内键盘、iOS 26 专用或引入无关响应式架构的候选被排除。用户最终授权将 11 个仓库浅克隆到被忽略的 `/refrence`；GPL 与非标准许可证项目只分析、不复制实现。

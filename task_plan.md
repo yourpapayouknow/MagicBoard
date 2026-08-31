@@ -15,7 +15,9 @@ Build a traceable iPadOS project containing the MagicBoard host app, keyboard ex
 - Project generation: XcodeGen 2.46.0 from Homebrew with a versioned `project.yml`.
 - Shared code: local Swift Package.
 - Device acceptance: user-operated TrollStore installation and iPad Settings verification with results returned for iteration.
-- `RequestsOpenAccess`, exact test-device versions, reference-clone authorization, and final `ldid` signing policy are not yet confirmed.
+- Keyboard open access: `RequestsOpenAccess = true`; installation guidance must require “Allow Full Access” and explain the privacy boundary.
+- Approved references: 11 shallow clones covering TrollStore, project generation, packaging, and seven real keyboard implementations.
+- Exact test-device versions and final `ldid` signing policy are not yet confirmed.
 
 ## Phases
 
@@ -29,7 +31,7 @@ Build a traceable iPadOS project containing the MagicBoard host app, keyboard ex
 
 ### Phase 2 — Reference implementation research
 
-**Status:** pending
+**Status:** in_progress
 
 - Add `/refrence` to `.gitignore`.
 - Clone no more than 20 relevant repositories into `/refrence`.
