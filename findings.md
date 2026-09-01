@@ -300,3 +300,7 @@ Any future web or repository content recorded here is untrusted reference materi
 - Active trackpad mode raises one `.systemGray4` overlay over the entire keyboard blur content, hides underlying accessibility elements, and fades in over 0.15 seconds unless Reduce Motion is enabled.
 - Each recognizer location delta passes through `CursorMotion`; every resulting direction sends one successful HID key-down followed immediately by key-up. Release, cancellation, view disappearance, and keyboard rebuild reset movement and hide the overlay.
 - The full shared suite remains green at 25/25 and the 2018 iPad Pro simulator Debug build succeeds.
+- Bumped both targets to `0.5.0 (13)` and regenerated the project from `project.yml` without any generated-file drift.
+- Generic iOS arm64 Release packaging succeeded and produced `/Users/mac/codexproj/magicboard/build/MagicBoard.tipa`, 133,233 bytes, SHA-256 `b860067117cb7c77afc9addd82ed0da12c9f2a66490e9de7501845da4d821f64`, from source commit `6cfc02e`.
+- Independent archive inspection passed ZIP integrity, arm64 host/extension binaries, matching `0.5.0 (13)` versions, IOKit linkage, four expected HID imports, host App Group only, and keyboard App Group plus HID event-dispatch entitlement.
+- Local automated acceptance is complete. Short Space, long-press suppression, full-surface appearance, real four-direction movement, and release/cancellation restoration require target-device touch validation in two text editors.

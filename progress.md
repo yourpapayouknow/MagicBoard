@@ -291,3 +291,12 @@
 - Added the uninterrupted dynamic light-gray overlay covering the complete keyboard extension surface during active cursor mode; release/cancellation restores the underlying accepted keyboard immediately.
 - Wired dominant-axis cursor steps to paired left/right/up/down HID events and added cleanup to rebuild and disappearance lifecycles.
 - Re-ran 25 shared tests successfully and completed the 2018 iPad Pro simulator Debug build. Phase 24 continues with versioning, Release packaging, archive verification, and target-device acceptance.
+
+## 2026-09-02 — Task 05 local validation completed
+
+- Bumped the app and extension to `0.5.0 (13)` and regenerated the Xcode project.
+- Final design lint reported 0 findings; all 25 shared tests and the 2018 iPad Pro simulator Debug build passed.
+- Generic arm64 Release packaging and all built-in entitlement/version checks passed.
+- Independently verified ZIP integrity, arm64 binaries, host/extension version parity, IOKit linkage, HID imports, and least-privilege entitlement placement.
+- Artifact: `/Users/mac/codexproj/magicboard/build/MagicBoard.tipa`, 133,233 bytes, SHA-256 `b860067117cb7c77afc9addd82ed0da12c9f2a66490e9de7501845da4d821f64`, source commit `6cfc02e`.
+- Phase 24 now awaits target-iPad touch acceptance in two text editors.

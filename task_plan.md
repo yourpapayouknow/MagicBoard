@@ -377,5 +377,5 @@ Preserve ordinary Space input while adding a native-keyboard-style long-press dr
 - [x] Release and cancellation always restore the normal Space state in the implementation lifecycle
 - [x] Active mode presents one full-keyboard native-style trackpad surface and restores every key afterward
 - [ ] Existing text, Shift, Delete, down-drag, Esc, and arrow behavior remains intact
-- [ ] `DESIGN.md` lint and all automated builds/tests pass
+- [x] `DESIGN.md` lint and all automated builds/tests pass
 - [ ] A regenerated `.tipa` passes target-device acceptance in two text editors
