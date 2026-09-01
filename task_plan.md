@@ -245,9 +245,21 @@ Repair touch semantics without changing the accepted six-row Mac keyboard visual
 
 ### Phase 16 — Visual validation and repackaging
 
-**Status:** in_progress
+**Status:** complete
 
 - Add focused checks for visual interpolation endpoints where practical.
 - Re-run `DESIGN.md` lint, all shared tests, simulator Debug, and arm64 Release.
 - Re-inspect the fixed layout/style baseline outside the new transient overlay.
 - Regenerate `MagicBoard.tipa` and report the new SHA-256 and implementation commit.
+
+### Down-drag visual completion checklist
+
+- [x] Active drag interpolates the two legend layers over 0–24 pt
+- [x] Success and cancellation restore the accepted static legend in 120 ms
+- [x] Static key layout, style, mappings, and six-row structure remain unchanged
+- [x] `DESIGN.md` lint reports 0 findings
+- [x] Shared module tests pass (20/20)
+- [x] 2018 iPad Pro simulator Debug build succeeds
+- [x] arm64 Release host and keyboard extension build succeeds
+- [x] `MagicBoard.tipa` is regenerated and structurally verified
+- [ ] Target-device motion appearance matches the supplied three reference frames

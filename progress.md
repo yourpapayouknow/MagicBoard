@@ -231,3 +231,12 @@
 - Re-ran all 20 shared tests successfully and visually confirmed the static six-row keyboard remains unchanged after installing the updated Debug build.
 - Recorded a Simulator drag and inspected its keyboard crop; mouse bridging did not expose reliable mid-touch frames, so final motion timing remains a target-device visual acceptance item.
 - Phase 15 is complete. Phase 16 proceeds with final lint, baseline comparison, Release packaging, and artifact inspection.
+
+## 2026-09-01 — Down-drag visual validation completed
+
+- Re-ran `DESIGN.md` lint with 0 errors, 0 warnings, and 0 infos.
+- Re-ran the complete shared package suite: 20 tests passed, 0 failed.
+- Confirmed the only lines removed from the accepted controller baseline are superseded event-path statements; no layout, typography, color, icon, alignment, symbol-map, or six-row structure definition was removed or rewritten.
+- Rebuilt the generic iOS Release with the existing `ldid` TrollStore packaging flow; both host and keyboard extension are arm64 and retain `group.com.iwmei.magicboard`.
+- Verified ZIP integrity and regenerated `/Users/mac/codexproj/magicboard/build/MagicBoard.tipa`, version `0.2.2 (11)`, 121,836 bytes, SHA-256 `dab6ec42cc5aa55be52038a0aa34906685863bd3eae45f04d37bdbf98182b25c`, from implementation commit `31efbc5`.
+- All locally automatable checks are complete. Target-device visual comparison against the three supplied motion frames remains the final acceptance item.
