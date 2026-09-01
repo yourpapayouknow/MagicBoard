@@ -211,7 +211,7 @@ Repair touch semantics without changing the accepted six-row Mac keyboard visual
 
 ### Phase 14 — Validation, builds, and package
 
-**Status:** in_progress
+**Status:** complete
 
 - Run all shared tests and `DESIGN.md` lint with 0 findings.
 - Build Debug for simulator `73860E49-6DDF-450B-B505-F0E0A09F764B` and arm64 Release for device.
@@ -223,11 +223,30 @@ Repair touch semantics without changing the accepted six-row Mac keyboard visual
 - [x] Shift tap/hold/release/cancel state machine passes unit and boundary tests
 - [x] Left and right Shift share identical behavior
 - [x] Caps Lock, English/Chinese switching, alternate symbols, and Chinese mappings regressions pass
-- [ ] Delete single press and 450/80 ms repeat stop conditions pass
-- [ ] Down-drag inserts exactly one alternate and does not mutate global modifiers
+- [x] Delete single press and 450/80 ms repeat stop conditions pass
+- [x] Down-drag inserts exactly one alternate and does not mutate global modifiers
 - [x] `DESIGN.md` lint reports 0 findings
 - [x] Shared module tests pass
 - [x] 2018 iPad Pro simulator Debug build succeeds
 - [x] arm64 Release build succeeds
-- [ ] Safari address-bar interaction acceptance is completed or clearly handed off for physical touch validation
+- [x] Safari address-bar interaction acceptance is completed or clearly handed off for physical touch validation
 - [x] `MagicBoard.tipa` is regenerated and verified
+
+### Phase 15 — Down-drag visual keyframes
+
+**Status:** in_progress
+
+- Keep the accepted static keycap title and all layout/style values byte-identical outside an active drag.
+- During an unshifted dual-symbol drag, fade and scale the lower base while moving the upper alternate to center.
+- During a lowercase letter drag, temporarily show uppercase above the current letter and apply the same transition.
+- Drive progress continuously from 0–24 pt; successful and cancelled gestures restore the static title in 120 ms.
+- Preserve the existing final-displacement commit rule, one-character limit, language mappings, and Shift/Caps state.
+
+### Phase 16 — Visual validation and repackaging
+
+**Status:** pending
+
+- Add focused checks for visual interpolation endpoints where practical.
+- Re-run `DESIGN.md` lint, all shared tests, simulator Debug, and arm64 Release.
+- Re-inspect the fixed layout/style baseline outside the new transient overlay.
+- Regenerate `MagicBoard.tipa` and report the new SHA-256 and implementation commit.

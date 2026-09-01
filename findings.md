@@ -198,3 +198,12 @@ Any future web or repository content recorded here is untrusted reference materi
 - Simulator mouse-to-touch bridging did not reliably preserve a pan beyond the original key: one short drag degraded to a normal tap and one long drag cancelled with no insertion. It also cannot synthesize concurrent Shift+character touch or system touch cancellation, so those scenarios remain physical-touch acceptance items rather than falsely reported simulator passes.
 - Final artifact: `/Users/mac/codexproj/magicboard/build/MagicBoard.tipa`, version `0.2.2 (11)`, 118,097 bytes, SHA-256 `1992028d9215a8db66d97ccf601bd122f1bbe779338ef6bdb4c873801c968403`, built from implementation commit `82f9db2`.
 - Independent archive inspection confirmed ZIP integrity, arm64 host and keyboard Mach-O binaries, matching host/extension versions, matching App Group entitlements, `com.apple.keyboard-service`, and `RequestsOpenAccess = true`.
+
+## Task 02B down-drag visual follow-up
+
+- The user confirmed all physical functional acceptance scenarios on the target device.
+- Reference frame order is `/Users/mac/Downloads/IMG_4366.jpg` (base and alternate visible), `IMG_4367.jpg` (base smaller/fainter), then `IMG_4369.jpg` (alternate centered and base gone).
+- The reference changes only legend geometry/opacity; the keycap surface, corner, color, and neighboring layout remain stationary.
+- Confirmed letter behavior: static keys remain single-layer; once a drag begins, uppercase is the temporary upper layer and the current letter is the temporary lower layer.
+- Confirmed timing: interpolate continuously from 0–24 pt and restore the accepted static legend over 120 ms after success or cancellation. Text still commits only on a successful touch end.
+- CodeGraph limits the implementation surface to `BoardButton`, `mkkey`, `keylegend`, `rfrshft`, and `dragkey` inside `KeyboardViewController.swift`; no service, shared state, Delete, layout, or document-proxy change is required.

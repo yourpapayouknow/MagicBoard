@@ -206,3 +206,12 @@
 - Final artifact is `/Users/mac/codexproj/magicboard/build/MagicBoard.tipa`, version `0.2.2 (11)`, 118,097 bytes, SHA-256 `1992028d9215a8db66d97ccf601bd122f1bbe779338ef6bdb4c873801c968403`.
 - Artifact implementation commit is `82f9db2`.
 - All local automated acceptance items are complete. Physical touch validation remains for held multi-touch Shift, Delete hold/exit/cancel, and drag exit/cancel because Simulator mouse automation cannot faithfully synthesize those inputs.
+
+## 2026-09-01 — Task 02B physical acceptance and visual follow-up
+
+- User confirmed all functional Shift, Delete, down-drag, cancellation, and regression scenarios pass on the target device.
+- User supplied three cropped keyframes showing the lower legend shrinking/fading while the upper alternate moves to center.
+- Inspected all three images at original resolution and used CodeGraph to confirm only transient character-key presentation needs to change.
+- Confirmed letters use uppercase/current-letter temporary layers and all gestures use continuous 0–24 pt progress plus a 120 ms restoration.
+- Added the confirmed transient feedback rule to the existing `DESIGN.md`; static visual tokens and keyboard structure remain unchanged.
+- Phase 14 is complete. Phase 15 begins with transient overlay implementation.
