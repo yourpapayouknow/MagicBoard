@@ -255,3 +255,20 @@ Any future web or repository content recorded here is untrusted reference materi
 - iOS 16.0, 16.4, 17.0, and 18.2 extracted system entitlement sets all show `com.apple.private.hid.client.event-dispatch` as the stable injection privilege. Several dispatching services do not also carry monitor/filter/manager privileges, which supports selecting only event-dispatch for MagicBoard.
 - Both the installed iPhoneOS and iPhoneSimulator 18.4 SDK stubs export the four required symbols, so the same target can compile for simulator and arm64 device without conditional symbol lookup.
 - Selected entitlement baseline: add only `com.apple.private.hid.client.event-dispatch = true` to the keyboard extension. The host app does not create or dispatch HID events and therefore should not receive this privilege.
+
+## Task 04 implementation and local validation
+
+- Added `Keyboard/HIDBridge.h` and `.m` as the single private-IOKit boundary, with one lazily shared `IOHIDEventSystemClient`, a serial dispatch queue, active-key tracking, paired key-down/key-up APIs, and release-all cleanup.
+- `HIDBridge` creates standard page `0x07` keyboard events, applies TrollVNC's verified sender ID `0x8000000817319371`, dispatches through IOKit, and releases each event. It has no Dopamine, Bootstrap, Substrate, `dlopen`, `dlsym`, hook, or compatibility path.
+- Existing Esc and arrow key positions/weights are unchanged. Only their `KeyKind`, enabled state, functional color, accessibility labels, and touch handlers changed; Ctrl, Option, Command, Tab, and F1–F12 remain disabled placeholders.
+- HID keys send down on `.touchDown` and up on touch-up-inside, touch-up-outside, cancel, or drag-exit. Rebuild, disappearance, and controller destruction release any active HID keys.
+- `project.yml` now links the native IOKit SDK, configures the Objective-C bridging header, and adds event-dispatch only to the keyboard target. The checked-in keyboard entitlement matches it.
+- The packaging script now rejects a host binary carrying HID dispatch and rejects a keyboard binary missing it.
+- All 20 existing shared tests passed. The full arm64 iPad simulator Debug build passed, including Swift/Objective-C bridging and IOKit linking.
+- Generic iOS arm64 Release build and TrollStore packaging passed as version `0.4.0 (12)`.
+- Final local artifact: `/Users/mac/codexproj/magicboard/build/MagicBoard.tipa`, 126,212 bytes, SHA-256 `93681916a6c0e9e666e3ecbb477dcd674b603a937da4be469adf6453ad28d279`.
+- Independent inspection confirmed ZIP integrity, arm64 host and keyboard binaries, matching versions, matching App Group, keyboard HID dispatch `true`, host HID dispatch absent, IOKit linkage, and all four expected undefined IOKit symbols in the keyboard executable.
+- Local compilation proves client creation is callable but cannot prove the entitled client succeeds inside a TrollStore keyboard extension; that check and foreground-app behavior remain target-device acceptance items.
+- The existing `DESIGN.md` explicitly defines enabled functional keys as accent-role controls and disabled placeholders as reduced-emphasis controls; enabling only the five implemented HID keys follows that state model without introducing a new visual token or moving any key.
+- `npx @google/design.md lint DESIGN.md` completed with 0 errors, 0 warnings, and 0 infos.
+- Post-write CodeGraph indexing is healthy with 8 files, 136 nodes, and 298 edges, including the two C/Objective-C HID files.

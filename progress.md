@@ -264,3 +264,16 @@
 - Verified both device and simulator SDK stubs export the selected private IOKit symbols.
 - Used CodeGraph to constrain local source changes to the existing placeholder specs and controller routing; no shared state or host-app service is affected.
 - Phase 17 is complete. Phase 18 starts with the independent Objective-C `HIDBridge` and paired down/up lifecycle.
+
+## 2026-09-02 — Task 04 implementation and package completed
+
+- Added the independent `HIDBridge` Objective-C module, direct IOKit link, Swift bridge header, five HID usage mappings, paired touch lifecycle, active-key deduplication, and release-all cleanup.
+- Enabled only Esc and the four direction keys; retained all Task 03 positions and weights and left the remaining placeholders disabled.
+- Added only `com.apple.private.hid.client.event-dispatch` to the keyboard target and extended package validation to enforce keyboard-only privilege placement.
+- Bumped the package to `0.4.0 (12)`.
+- Re-ran 20 shared tests successfully and built the full simulator Debug target successfully.
+- Built and signed the arm64 Release package successfully; independent archive, Mach-O, version, entitlement, IOKit-link, and imported-symbol checks all passed.
+- Artifact: `/Users/mac/codexproj/magicboard/build/MagicBoard.tipa`, 126,212 bytes, SHA-256 `93681916a6c0e9e666e3ecbb477dcd674b603a937da4be469adf6453ad28d279`.
+- Phases 18 and 19 are complete. Phase 20 requires target-device installation and tests in two foreground apps plus an Esc-aware app.
+- Re-read the accepted `DESIGN.md`; functional-key state styling already covers the five newly enabled keys, so no design-file change was required.
+- Ran the design lint with 0 findings and confirmed the post-write CodeGraph index is healthy.

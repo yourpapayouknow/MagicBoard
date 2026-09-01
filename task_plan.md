@@ -288,7 +288,7 @@ Add one native TrollStore HID event path for Esc and the four arrow keys while p
 
 ### Phase 18 — HIDBridge model and tests
 
-**Status:** in_progress
+**Status:** complete
 
 - Add one independent `HIDBridge` module with a minimal supported-key model for Esc and four arrows.
 - Cover HID usage mappings and paired key-down/key-up dispatch behavior with focused tests where the private API boundary permits deterministic local verification.
@@ -296,7 +296,7 @@ Add one native TrollStore HID event path for Esc and the four arrow keys while p
 
 ### Phase 19 — Keyboard routing and TrollStore entitlements
 
-**Status:** pending
+**Status:** complete
 
 - Route the existing Esc and arrow layout keys through `HIDBridge` without changing their accepted position, size, or touch area.
 - Configure the minimum verified host/extension entitlements in `project.yml` and the checked-in entitlement plists.
@@ -304,7 +304,7 @@ Add one native TrollStore HID event path for Esc and the four arrow keys while p
 
 ### Phase 20 — Build, package, and device acceptance
 
-**Status:** pending
+**Status:** in_progress
 
 - Run shared tests, simulator compilation where supported, and generic arm64 Release packaging.
 - Inspect the final `.tipa`, binary architectures, Info.plists, and exported entitlements.
@@ -312,12 +312,12 @@ Add one native TrollStore HID event path for Esc and the four arrow keys while p
 
 ### Task 04 completion checklist
 
-- [ ] TrollVNC HID keyboard-event source and adaptation notes are recorded
-- [ ] Independent `HIDBridge` exists
-- [ ] Required TrollStore entitlements are configured and package-verified
+- [x] TrollVNC HID keyboard-event source and adaptation notes are recorded
+- [x] Independent `HIDBridge` exists
+- [x] Required TrollStore entitlements are configured and package-verified
 - [ ] `IOHIDEventSystemClient` creation succeeds on the target device
-- [ ] Esc sends paired HID key down/up events
-- [ ] Left, Right, Up, and Down send paired HID key down/up events
+- [x] Esc sends paired HID key down/up events
+- [x] Left, Right, Up, and Down send paired HID key down/up events
 - [ ] Two foreground apps accept all four directions as physical-keyboard navigation
 - [ ] An app with hardware Esc support recognizes Esc
-- [ ] The HID path uses no Dopamine, Bootstrap, Substrate, compatibility layer, or runtime hook
+- [x] The HID path uses no Dopamine, Bootstrap, Substrate, compatibility layer, or runtime hook
