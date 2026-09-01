@@ -45,6 +45,9 @@ public struct InputState: Equatable, Sendable {
     public private(set) var language: BoardLang
     public private(set) var shifted: Bool
     public private(set) var capsLocked: Bool
+    private var shftheld: Bool
+    private var shftstart: Bool
+    private var shftused: Bool
 
     // 创建默认输入状态
     public init(
@@ -55,6 +58,9 @@ public struct InputState: Equatable, Sendable {
         self.language = language
         self.shifted = shifted
         self.capsLocked = capsLocked
+        shftheld = false
+        shftstart = false
+        shftused = false
     }
 
     // 判断字母输出大小写
@@ -65,6 +71,29 @@ public struct InputState: Equatable, Sendable {
     // 切换单次 Shift
     public mutating func tglshft() {
         shifted.toggle()
+    }
+
+    // 开始 Shift 触摸
+    public mutating func shftdown() {
+        guard !shftheld else { return }
+        shftheld = true
+        shftstart = shifted
+        shftused = false
+        shifted = true
+    }
+
+    // 完成 Shift 触摸
+    public mutating func shftup() {
+        guard shftheld else { return }
+        shifted = !shftstart && !shftused
+        rstshft()
+    }
+
+    // 取消 Shift 触摸
+    public mutating func shftcncl() {
+        guard shftheld else { return }
+        shifted = shftstart
+        rstshft()
     }
 
     // 切换 Caps Lock
@@ -89,8 +118,29 @@ public struct InputState: Equatable, Sendable {
         } else {
             output = shifted ? (alternate ?? value) : value
         }
-        shifted = false
+        if shftheld {
+            shftused = true
+        } else {
+            shifted = false
+        }
         return output
+    }
+
+    // 生成下拖替代字符
+    public mutating func dragout(
+        _ value: String,
+        alternate: String? = nil,
+        letter: Bool = true
+    ) -> String {
+        if shftheld { shftused = true }
+        return letter ? value.uppercased() : (alternate ?? value)
+    }
+
+    // 清理 Shift 触摸记录
+    private mutating func rstshft() {
+        shftheld = false
+        shftstart = false
+        shftused = false
     }
 }
 

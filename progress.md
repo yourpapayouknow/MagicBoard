@@ -164,3 +164,11 @@
 - Added boundary tests for Shift touch-down/up/cancel, latched Shift re-press, held multi-character input, Caps Lock XOR behavior, Chinese alternate symbols, and modifier-independent drag output.
 - Ran the shared suite and received the expected compile failures for the four not-yet-implemented transition APIs; no pre-existing test failure appeared before those missing members.
 - Next: implement the minimum shared state fields and transitions, then rerun the full shared suite.
+
+## 2026-09-01 — Task 02B shared state completed
+
+- Added touch-start, touch-start-state, and held-input tracking to the existing `InputState` value type.
+- Added `shftdown`, `shftup`, `shftcncl`, and `dragout` transitions without changing language or Caps Lock APIs.
+- Preserved ordinary one-shot Shift behavior when no Shift touch is active and kept held Shift active across multiple emitted characters until release.
+- Ran the complete shared package suite: 20 tests passed, 0 failed.
+- Phase 11 and Phase 12 are complete. Phase 13 begins with controller event wiring and lifecycle cleanup.

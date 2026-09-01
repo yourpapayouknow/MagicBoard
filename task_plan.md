@@ -184,7 +184,7 @@ Repair touch semantics without changing the accepted six-row Mac keyboard visual
 
 ### Phase 11 — Baseline and impact analysis
 
-**Status:** in_progress
+**Status:** complete
 
 - Verify clean Git baseline at `2881955`, version `0.2.2 (11)`, and the accepted `DESIGN.md` constraints.
 - Use CodeGraph to map current Shift, Delete, character emission, Caps Lock, and language-toggle flows before editing.
@@ -192,7 +192,7 @@ Repair touch semantics without changing the accepted six-row Mac keyboard visual
 
 ### Phase 12 — Shared Shift state machine and tests
 
-**Status:** pending
+**Status:** complete
 
 - Add the minimum shared state transitions needed for tap, hold, character consumption, release, and cancellation.
 - Cover left/right-equivalent behavior, repeated taps, held input/no-input cases, Caps Lock interaction, alternate symbols, and Chinese replacements.
@@ -200,7 +200,7 @@ Repair touch semantics without changing the accepted six-row Mac keyboard visual
 
 ### Phase 13 — Touch handlers for Shift, Delete, and down-drag
 
-**Status:** pending
+**Status:** in_progress
 
 - Reuse existing key construction and document-proxy paths; add only gesture/touch behavior.
 - Stop Delete repeat on release, cancel, boundary exit, and extension disappearance/deinitialization.
@@ -217,9 +217,9 @@ Repair touch semantics without changing the accepted six-row Mac keyboard visual
 
 ### Task 02B completion checklist
 
-- [ ] Shift tap/hold/release/cancel state machine passes unit and boundary tests
+- [x] Shift tap/hold/release/cancel state machine passes unit and boundary tests
 - [ ] Left and right Shift share identical behavior
-- [ ] Caps Lock, English/Chinese switching, alternate symbols, and Chinese mappings regressions pass
+- [x] Caps Lock, English/Chinese switching, alternate symbols, and Chinese mappings regressions pass
 - [ ] Delete single press and 450/80 ms repeat stop conditions pass
 - [ ] Down-drag inserts exactly one alternate and does not mutate global modifiers
 - [ ] `DESIGN.md` lint reports 0 findings
