@@ -103,6 +103,7 @@ Build a traceable iPadOS project containing the MagicBoard host app, keyboard ex
 | Task 02B simulator Debug build rejected direct UIKit access from `Timer` Sendable closures | 1 | Swift 6 correctly identified MainActor isolation; hop timer callbacks explicitly to `@MainActor` and recheck the owned timer before deleting |
 | Task 02B simulator Debug build rejected `Timer?` access from nonisolated controller `deinit` | 2 | The timer is confined to the main RunLoop; mark only this stored property `nonisolated(unsafe)` so deinit can invalidate it without weakening other UIKit isolation |
 | Final entitlement inspection used a dotted `plutil -extract` key path that split the entitlement key incorrectly | 1 | The archive and package-time PlistBuddy checks already passed; read the exported entitlement plists with `/usr/libexec/PlistBuddy` for the independent verification |
+| Down-drag visual Debug build inferred local `27 / 22` reset scale as `Int` | 1 | Give the local scale an explicit `CGFloat` type; the interpolation expression already inferred correctly from its `CGFloat` progress operand |
 
 ## Completion checklist
 
@@ -234,7 +235,7 @@ Repair touch semantics without changing the accepted six-row Mac keyboard visual
 
 ### Phase 15 — Down-drag visual keyframes
 
-**Status:** in_progress
+**Status:** complete
 
 - Keep the accepted static keycap title and all layout/style values byte-identical outside an active drag.
 - During an unshifted dual-symbol drag, fade and scale the lower base while moving the upper alternate to center.
@@ -244,7 +245,7 @@ Repair touch semantics without changing the accepted six-row Mac keyboard visual
 
 ### Phase 16 — Visual validation and repackaging
 
-**Status:** pending
+**Status:** in_progress
 
 - Add focused checks for visual interpolation endpoints where practical.
 - Re-run `DESIGN.md` lint, all shared tests, simulator Debug, and arm64 Release.

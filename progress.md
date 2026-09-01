@@ -215,3 +215,19 @@
 - Confirmed letters use uppercase/current-letter temporary layers and all gestures use continuous 0–24 pt progress plus a 120 ms restoration.
 - Added the confirmed transient feedback rule to the existing `DESIGN.md`; static visual tokens and keyboard structure remain unchanged.
 - Phase 14 is complete. Phase 15 begins with transient overlay implementation.
+
+## 2026-09-01 — Down-drag visual implementation pass 1
+
+- Added transient upper/lower UILabel storage to character buttons and interactive progress handling to the existing pan recognizer.
+- Added endpoint restoration for lowercase/uppercase letters, unshifted/shifted symbols, success, and cancellation without changing static configuration.
+- Shared tests remained green at 20/20.
+- Simulator compilation found one isolated type-inference error where `27 / 22` became `Int` in a local reset scale; next pass will type that value as `CGFloat`.
+
+## 2026-09-01 — Down-drag visual implementation completed
+
+- Corrected the reset scale to explicit `CGFloat`; the requested 2018 simulator Debug build then succeeded.
+- Added gesture-instance guards so rapid consecutive drags cannot be disrupted by an earlier 120 ms completion.
+- Added Reduce Motion behavior: interactive drag remains, reset becomes immediate.
+- Re-ran all 20 shared tests successfully and visually confirmed the static six-row keyboard remains unchanged after installing the updated Debug build.
+- Recorded a Simulator drag and inspected its keyboard crop; mouse bridging did not expose reliable mid-touch frames, so final motion timing remains a target-device visual acceptance item.
+- Phase 15 is complete. Phase 16 proceeds with final lint, baseline comparison, Release packaging, and artifact inspection.

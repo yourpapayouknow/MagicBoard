@@ -207,3 +207,7 @@ Any future web or repository content recorded here is untrusted reference materi
 - Confirmed letter behavior: static keys remain single-layer; once a drag begins, uppercase is the temporary upper layer and the current letter is the temporary lower layer.
 - Confirmed timing: interpolate continuously from 0–24 pt and restore the accepted static legend over 120 ms after success or cancellation. Text still commits only on a successful touch end.
 - CodeGraph limits the implementation surface to `BoardButton`, `mkkey`, `keylegend`, `rfrshft`, and `dragkey` inside `KeyboardViewController.swift`; no service, shared state, Delete, layout, or document-proxy change is required.
+- The implementation creates overlay labels only after the pan recognizer begins, derives localized content from the existing `KeySpec.output/alternate`, and leaves the accepted UIButton title underneath for exact restoration.
+- Progress clamps at `translationY / 24`; the lower layer scales linearly from 1.0 to 0.55 while fading from 1.0 to 0.0, and the upper layer moves from 22% of key height above center to center. Dual-symbol upper legends interpolate from the accepted 22-point dual size to the accepted 27-point single size.
+- Reset animation targets the actual current static state: lowercase/uppercase letters, unshifted dual symbols, or shifted single symbols. An overlay identity guard prevents an old animation completion from removing a newer gesture's labels.
+- Reduce Motion disables the 120 ms reset animation while preserving gesture progress and output behavior.

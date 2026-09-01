@@ -68,6 +68,8 @@ private struct KeySpec {
 // 保存按键描述
 private final class BoardButton: UIButton {
     var spec: KeySpec?
+    var dragupper: UILabel?
+    var draglower: UILabel?
 }
 
 // 管理键盘扩展界面
@@ -77,6 +79,8 @@ final class KeyboardViewController: UIInputViewController {
     private var state = InputState()
     private var height: NSLayoutConstraint?
     private var buttons: [BoardButton] = []
+    private let dragdist: CGFloat = 24
+    private let dragreset: TimeInterval = 0.12
     // 仅由主 RunLoop 触摸生命周期访问
     nonisolated(unsafe) private var deltimer: Timer?
 
@@ -512,6 +516,9 @@ final class KeyboardViewController: UIInputViewController {
                 continue
             }
             button.configuration = config
+            if button.dragupper != nil {
+                button.titleLabel?.alpha = 0
+            }
         }
     }
 
@@ -575,16 +582,141 @@ final class KeyboardViewController: UIInputViewController {
 
     // 处理字符键下拖
     @objc private func dragkey(_ sender: UIPanGestureRecognizer) {
-        guard
-            sender.state == .ended,
-            sender.translation(in: sender.view).y >= 24,
-            let button = sender.view as? BoardButton,
-            let spec = button.spec
-        else { return }
+        guard let button = sender.view as? BoardButton, let spec = button.spec else { return }
+        let distance = max(sender.translation(in: button).y, 0)
 
-        let output = state.dragout(spec.output, alternate: spec.alternate, letter: spec.letter)
-        textDocumentProxy.insertText(output)
-        rfrshft()
+        switch sender.state {
+        case .began:
+            begdrag(button, spec: spec)
+            upddrag(button, spec: spec, distance: distance)
+        case .changed:
+            if button.dragupper == nil { begdrag(button, spec: spec) }
+            upddrag(button, spec: spec, distance: distance)
+        case .ended:
+            if distance >= dragdist {
+                let output = state.dragout(spec.output, alternate: spec.alternate, letter: spec.letter)
+                textDocumentProxy.insertText(output)
+                rfrshft()
+            }
+            rstdrag(button, spec: spec, animated: !UIAccessibility.isReduceMotionEnabled)
+        case .cancelled, .failed:
+            rstdrag(button, spec: spec, animated: !UIAccessibility.isReduceMotionEnabled)
+        default:
+            break
+        }
+    }
+
+    // 创建下拖临时图例
+    private func begdrag(_ button: BoardButton, spec: KeySpec) {
+        clrdrag(button)
+        let upper = mkdraglbl(
+            spec.letter ? spec.output.uppercased() : (spec.alternate ?? spec.output),
+            size: spec.letter ? 27 : (spec.alternate == nil ? 27 : 22),
+            button: button
+        )
+        let lower = mkdraglbl(
+            spec.letter
+                ? (state.uppercase ? spec.output.uppercased() : spec.output.lowercased())
+                : spec.output,
+            size: spec.letter ? 27 : (spec.alternate == nil ? 27 : 22),
+            button: button
+        )
+        button.dragupper = upper
+        button.draglower = lower
+        button.addSubview(upper)
+        button.addSubview(lower)
+        button.titleLabel?.alpha = 0
+    }
+
+    // 更新下拖临时图例
+    private func upddrag(_ button: BoardButton, spec: KeySpec, distance: CGFloat) {
+        guard let upper = button.dragupper, let lower = button.draglower else { return }
+        let progress = min(distance / dragdist, 1)
+        let offset = min(11, button.bounds.height * 0.22)
+        let upperScale = spec.letter || spec.alternate == nil
+            ? 1
+            : 1 + ((27 / 22) - 1) * progress
+        let lowerScale = 1 - (0.45 * progress)
+        upper.transform = CGAffineTransform(
+            translationX: 0,
+            y: -offset * (1 - progress)
+        ).scaledBy(x: upperScale, y: upperScale)
+        lower.transform = CGAffineTransform(
+            translationX: 0,
+            y: offset
+        ).scaledBy(x: lowerScale, y: lowerScale)
+        lower.alpha = 1 - progress
+    }
+
+    // 复位下拖临时图例
+    private func rstdrag(_ button: BoardButton, spec: KeySpec, animated: Bool) {
+        guard let upper = button.dragupper, let lower = button.draglower else {
+            button.titleLabel?.alpha = 1
+            return
+        }
+        let offset = min(11, button.bounds.height * 0.22)
+        let restore = {
+            if spec.letter {
+                upper.transform = self.state.uppercase
+                    ? .identity
+                    : CGAffineTransform(translationX: 0, y: -offset)
+                upper.alpha = self.state.uppercase ? 1 : 0
+                lower.transform = self.state.uppercase
+                    ? CGAffineTransform(translationX: 0, y: offset)
+                    : .identity
+                lower.alpha = self.state.uppercase ? 0 : 1
+            } else if self.state.shifted {
+                let scale: CGFloat = spec.alternate == nil ? 1 : 27 / 22
+                upper.transform = CGAffineTransform(scaleX: scale, y: scale)
+                upper.alpha = 1
+                lower.alpha = 0
+            } else {
+                upper.transform = CGAffineTransform(translationX: 0, y: -offset)
+                upper.alpha = 1
+                lower.transform = CGAffineTransform(translationX: 0, y: offset)
+                lower.alpha = 1
+            }
+        }
+        let finish: (Bool) -> Void = { _ in
+            guard button.dragupper === upper, button.draglower === lower else { return }
+            self.clrdrag(button)
+        }
+        guard animated else {
+            restore()
+            finish(true)
+            return
+        }
+        UIView.animate(
+            withDuration: dragreset,
+            delay: 0,
+            options: [.beginFromCurrentState, .allowUserInteraction, .curveEaseOut],
+            animations: restore,
+            completion: finish
+        )
+    }
+
+    // 创建不可交互图例标签
+    private func mkdraglbl(_ text: String, size: CGFloat, button: BoardButton) -> UILabel {
+        let label = UILabel(frame: button.bounds)
+        label.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        label.font = .systemFont(ofSize: size, weight: .medium)
+        label.text = text
+        label.textAlignment = .center
+        label.textColor = .label
+        label.isUserInteractionEnabled = false
+        label.isAccessibilityElement = false
+        return label
+    }
+
+    // 移除下拖临时图例
+    private func clrdrag(_ button: BoardButton) {
+        button.dragupper?.layer.removeAllAnimations()
+        button.draglower?.layer.removeAllAnimations()
+        button.dragupper?.removeFromSuperview()
+        button.draglower?.removeFromSuperview()
+        button.dragupper = nil
+        button.draglower = nil
+        button.titleLabel?.alpha = 1
     }
 }
 
