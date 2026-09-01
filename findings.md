@@ -272,3 +272,10 @@ Any future web or repository content recorded here is untrusted reference materi
 - The existing `DESIGN.md` explicitly defines enabled functional keys as accent-role controls and disabled placeholders as reduced-emphasis controls; enabling only the five implemented HID keys follows that state model without introducing a new visual token or moving any key.
 - `npx @google/design.md lint DESIGN.md` completed with 0 errors, 0 warnings, and 0 infos.
 - Post-write CodeGraph indexing is healthy with 8 files, 136 nodes, and 298 edges, including the two C/Objective-C HID files.
+
+## Task 04 acceptance and Task 05 baseline
+
+- User confirmed that Esc and all four direction keys are effective on the target device, completing every remaining Task 04 device-acceptance item.
+- Verified a clean Git worktree at `46ac98f` before starting the next feature.
+- The requested addition is native-keyboard-style Space trackpad mode: a short tap must remain Space input, while a long press followed by drag moves the cursor and must not insert a space.
+- Task 05 starts with implementation research because MagicBoard now has two possible cursor paths: the public linear document-proxy adjustment API and the already device-verified four-direction HID path.

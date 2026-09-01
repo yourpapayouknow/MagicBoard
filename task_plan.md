@@ -304,7 +304,7 @@ Add one native TrollStore HID event path for Esc and the four arrow keys while p
 
 ### Phase 20 — Build, package, and device acceptance
 
-**Status:** in_progress
+**Status:** complete
 
 - Run shared tests, simulator compilation where supported, and generic arm64 Release packaging.
 - Inspect the final `.tipa`, binary architectures, Info.plists, and exported entitlements.
@@ -315,9 +315,57 @@ Add one native TrollStore HID event path for Esc and the four arrow keys while p
 - [x] TrollVNC HID keyboard-event source and adaptation notes are recorded
 - [x] Independent `HIDBridge` exists
 - [x] Required TrollStore entitlements are configured and package-verified
-- [ ] `IOHIDEventSystemClient` creation succeeds on the target device
+- [x] `IOHIDEventSystemClient` creation succeeds on the target device
 - [x] Esc sends paired HID key down/up events
 - [x] Left, Right, Up, and Down send paired HID key down/up events
-- [ ] Two foreground apps accept all four directions as physical-keyboard navigation
-- [ ] An app with hardware Esc support recognizes Esc
+- [x] Two foreground apps accept all four directions as physical-keyboard navigation
+- [x] An app with hardware Esc support recognizes Esc
 - [x] The HID path uses no Dopamine, Bootstrap, Substrate, compatibility layer, or runtime hook
+
+## Task 05 — Spacebar trackpad cursor mode
+
+### Goal
+
+Preserve ordinary Space input while adding a native-keyboard-style long-press drag mode that moves the insertion cursor freely and exits cleanly without inserting a space.
+
+### Phase 21 — Interaction and implementation alignment
+
+**Status:** in_progress
+
+- Inspect the current Space touch path and reusable gesture/HID implementations.
+- Verify UIKit gesture cancellation behavior and the available cursor-position APIs from primary declarations or source.
+- Confirm the long-press threshold, movement model, and active visual state before editing code.
+
+### Phase 22 — Cursor movement model and focused tests
+
+**Status:** pending
+
+- Add only the minimum testable state needed to distinguish a short Space tap from an active/cancelled trackpad gesture.
+- Cover activation, movement thresholds, residual movement, direction changes, release, cancellation, and ordinary Space regression.
+
+### Phase 23 — Space gesture wiring and feedback
+
+**Status:** pending
+
+- Reuse the existing Space key and accepted layout without changing its size or position.
+- Route active drag movement through the confirmed cursor mechanism and suppress Space insertion after recognition.
+- Restore the normal key appearance and state on release, cancellation, view disappearance, and teardown.
+
+### Phase 24 — Build, package, and device acceptance
+
+**Status:** pending
+
+- Run focused/shared tests, design lint, simulator Debug, and generic arm64 Release packaging.
+- Verify the final archive, entitlements, versions, and artifact hash.
+- On the target iPad, verify short Space taps, long-press activation, four-direction cursor movement, cancellation, and regression behavior in at least two text editors.
+
+### Task 05 completion checklist
+
+- [ ] Short-tapping Space inserts exactly one space
+- [ ] Long-pressing Space enters cursor mode without inserting a space
+- [ ] Dragging moves the cursor in the confirmed directions and sensitivity
+- [ ] Reversing direction does not accumulate stale movement
+- [ ] Release and cancellation always restore the normal Space state
+- [ ] Existing text, Shift, Delete, down-drag, Esc, and arrow behavior remains intact
+- [ ] `DESIGN.md` lint and all automated builds/tests pass
+- [ ] A regenerated `.tipa` passes target-device acceptance in two text editors
