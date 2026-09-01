@@ -21,3 +21,12 @@
 - **Where（在哪个上下文）**：工程 `/Users/mac/codexproj/magicboard`；参考图位于 `/Users/mac/Downloads`；预计改动集中在 `Keyboard/KeyboardViewController.swift` 的字符键临时图例层，并更新 `DESIGN.md`、计划与验证记录。
 - **Why（目的/背景）**：功能已验收，但下拖缺少与手势进度一致的视觉反馈；目标是复刻用户给出的三帧变化，同时继续冻结静态六行 Mac 键盘样式。
 - **How（如何实现/决策过程）**：先用 `design-md` 读取并延续现有设计约束，再用 CodeGraph 检查 `keylegend`、`dragkey`、`mkkey`、`rfrshft` 影响面。决定只在 active drag 期间添加两个临时 UILabel 覆盖层，避免替换静态 UIButton 配置；取消或结束后移除覆盖层，保持原有输出和状态机路径不变。双层符号的上层从 22 pt 插值到原单层 27 pt，下层缩放至 0.55 并渐隐，上层从键高 22% 的偏移位置移至中心。共享测试 20/20、DESIGN.md lint 0 findings、2018 模拟器 Debug、generic iOS Release、ZIP 与 `ldid` 权限检查全部通过；模拟器鼠标桥无法可靠显示触摸中间帧，因此最终动效观感明确留给目标真机验收。
+
+### 第 3 轮对话（2026-09-02 00:10）
+
+- **Who（谁参与）**：用户（MagicBoard 项目验收者）+ AI（Codex Assistant）。
+- **What（做了什么）**：用户要求继续；AI 确认 Task 02B 功能、下拖视觉与真机验收均已完成，仓库工作树干净，并整理最终交付信息。
+- **When（何时发生）**：2026-09-02 00:10 CST。
+- **Where（在哪个上下文）**：工程 `/Users/mac/codexproj/magicboard`；最终产物 `/Users/mac/codexproj/magicboard/build/MagicBoard.tipa`；当前代码与记录提交链以 `0307996` 为起点继续。
+- **Why（目的/背景）**：延续上一轮已完成的实现和真机视觉验收，完成正式交付收尾。
+- **How（如何实现/决策过程）**：未再修改功能代码或重新打包；复核 Git 状态后，保留已验证的 0.2.2 (11) TIPA、实现提交 `31efbc5` 和 SHA-256 `dab6ec42cc5aa55be52038a0aa34906685863bd3eae45f04d37bdbf98182b25c` 作为最终交付基准。
