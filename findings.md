@@ -169,3 +169,12 @@ Any future web or repository content recorded here is untrusted reference materi
 - Hamster's MIT key-code mapping confirms physical-keyboard case behavior is `Shift XOR Caps Lock`. MagicBoard will therefore emit one lowercase letter when single Shift is used while Caps Lock is active, then consume Shift while leaving Caps Lock locked.
 - azooKey separates QWERTY English, QWERTY number, and QWERTY symbol tabs. MagicBoard will mirror that three-page structure without importing its framework or customization abstractions.
 - Existing Task 01 `textDocumentProxy.insertText`, `deleteBackward`, and Apple next-input-mode selector paths remain valid and should be reused instead of creating a second input mechanism.
+
+## Task 02B confirmed parameters and constraints
+
+- Baseline inspection on 2026-09-01 found a clean Git worktree at the requested commit `2881955`.
+- The existing `DESIGN.md` is versioned `0.2.2` and already freezes the fixed Mac keyboard structure, state-dependent legends, English/Chinese symbol pairs, Caps Lock semantics, and visual tokens; Task 02B requires no design-file change.
+- A latched Shift that is long-pressed will turn off on release. During the hold it remains active; entering a character does not alter the final release result.
+- Delete repeat timing is fixed at a 450 ms startup delay and 80 ms repeat interval.
+- Down-drag uses a 24 pt vertical threshold and continues tracking beyond the original key. It commits only on a non-cancelled touch completion, at most once per gesture.
+- The implementation must remain surgical: shared state logic plus controller touch handling only, with no key layout or visual styling edits.

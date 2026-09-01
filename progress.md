@@ -137,3 +137,11 @@
 - Mapped both target plists to the shared build settings, bumped Task 02 to `0.2.0 (2)`, and added package checks requiring host/extension version parity.
 - Re-ran 9 shared tests successfully and generated `build/MagicBoard.tipa` (107,459 bytes), SHA-256 `461fda52c3b4898299558716c87cc2c95176549d9867c88b075612657179cb1d`.
 - Fresh extraction verified both host and extension are arm64 and report `0.2.0 (2)`; device installation and refreshed screenshot remain pending.
+
+## 2026-09-01 — Task 02B started
+
+- Read and applied the `request-user-input`, `design-md`, and `planning-with-files` skills.
+- Confirmed the required interaction decisions: latched Shift long-hold releases to off, Delete repeats at 450/80 ms, and down-drag triggers at 24 pt while continuing outside the original key.
+- Verified the repository is clean at requested HEAD `2881955` and read the existing accepted `DESIGN.md`.
+- Added Task 02B phases and explicit success checks to the existing persistent plan; no source or design changes have been made yet.
+- Next: use CodeGraph to map the existing state and proxy-action flows, then add tests before implementation.

@@ -167,3 +167,62 @@ Extend the installed keyboard into a dependable basic text keyboard with QWERTY 
 - [ ] Letter/number/symbol page switching works
 - [ ] System next-keyboard key works
 - [ ] Continuous input/delete/return/case switching pass device acceptance
+
+## Task 02B — Keyboard touch interaction repair
+
+### Goal
+
+Repair touch semantics without changing the accepted six-row Mac keyboard visual structure, key sizing, weights, typography, colors, icons, alignment, Chinese symbol mappings, or layout.
+
+### Confirmed interaction parameters
+
+- A latched Shift that is long-pressed stays active while held; on release it turns off whether or not a character was entered.
+- Delete repeat starts after 450 ms and repeats every 80 ms.
+- Down-drag triggers at 24 pt, continues tracking outside the original key, inserts at most once on a completed touch, and inserts nothing on cancellation.
+
+### Phase 11 — Baseline and impact analysis
+
+**Status:** in_progress
+
+- Verify clean Git baseline at `2881955`, version `0.2.2 (11)`, and the accepted `DESIGN.md` constraints.
+- Use CodeGraph to map current Shift, Delete, character emission, Caps Lock, and language-toggle flows before editing.
+- Record exact state transitions and controller lifecycle cleanup requirements.
+
+### Phase 12 — Shared Shift state machine and tests
+
+**Status:** pending
+
+- Add the minimum shared state transitions needed for tap, hold, character consumption, release, and cancellation.
+- Cover left/right-equivalent behavior, repeated taps, held input/no-input cases, Caps Lock interaction, alternate symbols, and Chinese replacements.
+- Verify the shared package suite passes.
+
+### Phase 13 — Touch handlers for Shift, Delete, and down-drag
+
+**Status:** pending
+
+- Reuse existing key construction and document-proxy paths; add only gesture/touch behavior.
+- Stop Delete repeat on release, cancel, boundary exit, and extension disappearance/deinitialization.
+- Insert one drag alternate without mutating Shift or Caps Lock; preserve normal tap behavior and cancellation semantics.
+
+### Phase 14 — Validation, builds, and package
+
+**Status:** pending
+
+- Run all shared tests and `DESIGN.md` lint with 0 findings.
+- Build Debug for simulator `73860E49-6DDF-450B-B505-F0E0A09F764B` and arm64 Release for device.
+- Exercise Safari address-bar touch scenarios in the simulator where automation permits; report any physical-device-only acceptance steps explicitly.
+- Regenerate `MagicBoard.tipa` and report version, SHA-256, and source commit.
+
+### Task 02B completion checklist
+
+- [ ] Shift tap/hold/release/cancel state machine passes unit and boundary tests
+- [ ] Left and right Shift share identical behavior
+- [ ] Caps Lock, English/Chinese switching, alternate symbols, and Chinese mappings regressions pass
+- [ ] Delete single press and 450/80 ms repeat stop conditions pass
+- [ ] Down-drag inserts exactly one alternate and does not mutate global modifiers
+- [ ] `DESIGN.md` lint reports 0 findings
+- [ ] Shared module tests pass
+- [ ] 2018 iPad Pro simulator Debug build succeeds
+- [ ] arm64 Release build succeeds
+- [ ] Safari address-bar interaction acceptance is completed or clearly handed off for physical touch validation
+- [ ] `MagicBoard.tipa` is regenerated and verified
