@@ -100,6 +100,8 @@ Build a traceable iPadOS project containing the MagicBoard host app, keyboard ex
 | XcodeGen generated `1.0 (1)` for both old and new packages despite project build settings | 1 | XcodeGen source confirmed these are generator defaults; explicitly mapped both targets' plist versions to `MARKETING_VERSION`/`CURRENT_PROJECT_VERSION`, bumped Task 02 to `0.2.0 (2)`, and added package-time host/extension version parity checks |
 | Task 02B source inspection referenced nonexistent `Tests`, `MagicBoardSharedTests.swift`, and `Scripts/build_tipa.zsh` paths | 1 | The preceding `rg --files` output identified the actual paths: `SharedConfigTests.swift` and lowercase `scripts/build-tipa.zsh`; continue only with those resolved paths |
 | Task 02B state-machine tests failed to compile because `shftdown`, `shftup`, `shftcncl`, and `dragout` do not exist | 1 | Expected red phase: the failures prove the new tests exercise APIs absent from the baseline; implement only those transitions next |
+| Task 02B simulator Debug build rejected direct UIKit access from `Timer` Sendable closures | 1 | Swift 6 correctly identified MainActor isolation; hop timer callbacks explicitly to `@MainActor` and recheck the owned timer before deleting |
+| Task 02B simulator Debug build rejected `Timer?` access from nonisolated controller `deinit` | 2 | The timer is confined to the main RunLoop; mark only this stored property `nonisolated(unsafe)` so deinit can invalidate it without weakening other UIKit isolation |
 
 ## Completion checklist
 
@@ -200,7 +202,7 @@ Repair touch semantics without changing the accepted six-row Mac keyboard visual
 
 ### Phase 13 — Touch handlers for Shift, Delete, and down-drag
 
-**Status:** in_progress
+**Status:** complete
 
 - Reuse existing key construction and document-proxy paths; add only gesture/touch behavior.
 - Stop Delete repeat on release, cancel, boundary exit, and extension disappearance/deinitialization.
@@ -208,7 +210,7 @@ Repair touch semantics without changing the accepted six-row Mac keyboard visual
 
 ### Phase 14 — Validation, builds, and package
 
-**Status:** pending
+**Status:** in_progress
 
 - Run all shared tests and `DESIGN.md` lint with 0 findings.
 - Build Debug for simulator `73860E49-6DDF-450B-B505-F0E0A09F764B` and arm64 Release for device.
@@ -218,13 +220,13 @@ Repair touch semantics without changing the accepted six-row Mac keyboard visual
 ### Task 02B completion checklist
 
 - [x] Shift tap/hold/release/cancel state machine passes unit and boundary tests
-- [ ] Left and right Shift share identical behavior
+- [x] Left and right Shift share identical behavior
 - [x] Caps Lock, English/Chinese switching, alternate symbols, and Chinese mappings regressions pass
 - [ ] Delete single press and 450/80 ms repeat stop conditions pass
 - [ ] Down-drag inserts exactly one alternate and does not mutate global modifiers
 - [ ] `DESIGN.md` lint reports 0 findings
 - [ ] Shared module tests pass
-- [ ] 2018 iPad Pro simulator Debug build succeeds
+- [x] 2018 iPad Pro simulator Debug build succeeds
 - [ ] arm64 Release build succeeds
 - [ ] Safari address-bar interaction acceptance is completed or clearly handed off for physical touch validation
 - [ ] `MagicBoard.tipa` is regenerated and verified

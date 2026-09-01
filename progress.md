@@ -172,3 +172,21 @@
 - Preserved ordinary one-shot Shift behavior when no Shift touch is active and kept held Shift active across multiple emitted characters until release.
 - Ran the complete shared package suite: 20 tests passed, 0 failed.
 - Phase 11 and Phase 12 are complete. Phase 13 begins with controller event wiring and lifecycle cleanup.
+
+## 2026-09-01 — Task 02B controller wiring compile pass 1
+
+- Wired Shift control events, Delete repeat stop events, and one pan recognizer per text key while preserving every existing layout/style `KeySpec` value.
+- Re-ran all 20 shared tests successfully and regenerated the Xcode project.
+- The requested 2018 simulator Debug build reached `KeyboardViewController.swift` and failed only because Swift 6 forbids direct MainActor UIKit access from `Timer` Sendable closures.
+- Next: make the two timer callbacks hop explicitly to `@MainActor`, retain the timer-validity guard, and rebuild once.
+- The callback isolation fix compiled; pass 2 then stopped at controller `deinit`, where Swift 6 cannot prove the main-RunLoop-confined `Timer?` is safe to access from a nonisolated destructor.
+- Next: annotate only the timer storage as manually main-thread confined, keep deinit invalidation, and rebuild without changing behavior.
+
+## 2026-09-01 — Task 02B controller implementation completed
+
+- Confined the single Delete timer to the main RunLoop, retained deinit invalidation, and explicitly hopped Sendable timer callbacks to MainActor with validity checks.
+- Built Debug successfully for simulator `73860E49-6DDF-450B-B505-F0E0A09F764B`; only unrelated AppIntents metadata warnings were emitted.
+- Installed and launched the current Debug app, switched Safari to MagicBoard, and visually confirmed the accepted six-row Mac layout remains intact.
+- Safari address-bar automation passed normal text, one-shot Shift, left/right Shift toggle equivalence, shifted punctuation, one-character Delete, language switching, and Chinese base/alternate punctuation.
+- Simulator mouse bridging could not faithfully generate held multi-touch, long press, or system touch-cancel, and produced inconsistent pan delivery; those physical-touch cases remain for device acceptance.
+- Phase 13 is complete. Phase 14 continues with diff/design validation, Release arm64 build, packaging, and final artifact inspection.

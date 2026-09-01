@@ -76,6 +76,14 @@ final class KeyboardViewController: UIInputViewController {
     private var theme = SharedConfig.ldthm()
     private var state = InputState()
     private var height: NSLayoutConstraint?
+    private var buttons: [BoardButton] = []
+    // 仅由主 RunLoop 触摸生命周期访问
+    nonisolated(unsafe) private var deltimer: Timer?
+
+    // 清理扩展计时器
+    deinit {
+        deltimer?.invalidate()
+    }
 
     // 构建键盘容器
     override func viewDidLoad() {
@@ -127,8 +135,18 @@ final class KeyboardViewController: UIInputViewController {
         bldkbd()
     }
 
+    // 停止离场触摸任务
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        stopdel()
+        state.shftcncl()
+    }
+
     // 生成固定键盘布局
     private func bldkbd() {
+        stopdel()
+        state.shftcncl()
+        buttons.removeAll(keepingCapacity: true)
         for item in rows.arrangedSubviews {
             rows.removeArrangedSubview(item)
             item.removeFromSuperview()
@@ -317,6 +335,7 @@ final class KeyboardViewController: UIInputViewController {
     private func mkkey(_ spec: KeySpec) -> BoardButton {
         let button = BoardButton(type: .system)
         button.spec = spec
+        buttons.append(button)
         button.isEnabled = spec.enabled
         button.accessibilityLabel = aclabel(spec)
         if spec.kind == .placeholder {
@@ -382,6 +401,22 @@ final class KeyboardViewController: UIInputViewController {
             let hold = UILongPressGestureRecognizer(target: self, action: #selector(lngcaps(_:)))
             hold.minimumPressDuration = 0.45
             button.addGestureRecognizer(hold)
+        } else if spec.kind == .shift {
+            button.addTarget(self, action: #selector(shftdown(_:)), for: .touchDown)
+            button.addTarget(self, action: #selector(shftup(_:)), for: .touchUpInside)
+            button.addTarget(self, action: #selector(shftcncl(_:)), for: [.touchUpOutside, .touchCancel])
+        } else if spec.kind == .delete {
+            button.addTarget(self, action: #selector(deldown(_:)), for: .touchDown)
+            button.addTarget(
+                self,
+                action: #selector(delup(_:)),
+                for: [.touchUpInside, .touchUpOutside, .touchCancel, .touchDragExit]
+            )
+        } else if spec.kind == .text {
+            button.addTarget(self, action: #selector(prskey(_:)), for: .touchUpInside)
+            let drag = UIPanGestureRecognizer(target: self, action: #selector(dragkey(_:)))
+            drag.maximumNumberOfTouches = 1
+            button.addGestureRecognizer(drag)
         } else if spec.kind != .placeholder {
             button.addTarget(self, action: #selector(prskey(_:)), for: .touchUpInside)
         }
@@ -408,18 +443,17 @@ final class KeyboardViewController: UIInputViewController {
         guard let spec = (sender as? BoardButton)?.spec else { return }
         switch spec.kind {
         case .text:
-            let hadShift = state.shifted
             let output = state.emit(spec.output, alternate: spec.alternate, letter: spec.letter)
             textDocumentProxy.insertText(output)
-            if hadShift { bldkbd() }
+            rfrshft()
         case .shift:
             state.tglshft()
-            bldkbd()
+            rfrshft()
         case .language:
             state.tgllang()
             bldkbd()
         case .delete:
-            textDocumentProxy.deleteBackward()
+            break
         case .enter:
             textDocumentProxy.insertText("\n")
         case .space:
@@ -436,6 +470,121 @@ final class KeyboardViewController: UIInputViewController {
         guard sender.state == .began else { return }
         state.tglcaps()
         bldkbd()
+    }
+
+    // 开始 Shift 触摸
+    @objc private func shftdown(_ sender: UIButton) {
+        state.shftdown()
+        rfrshft()
+    }
+
+    // 完成 Shift 触摸
+    @objc private func shftup(_ sender: UIButton) {
+        state.shftup()
+        rfrshft()
+    }
+
+    // 取消 Shift 触摸
+    @objc private func shftcncl(_ sender: UIButton) {
+        state.shftcncl()
+        rfrshft()
+    }
+
+    // 刷新 Shift 键帽状态
+    private func rfrshft() {
+        for button in buttons {
+            guard let spec = button.spec, var config = button.configuration else { continue }
+            if spec.kind == .text {
+                let legend = keylegend(spec)
+                config.title = legend.title
+                config.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
+                    var outgoing = incoming
+                    outgoing.font = .systemFont(ofSize: legend.size, weight: .medium)
+                    return outgoing
+                }
+                button.accessibilityLabel = legend.title
+            } else if spec.kind == .shift {
+                config.baseForegroundColor = state.shifted ? .systemBackground : .label
+                config.baseBackgroundColor = state.shifted
+                    ? theme.primary.uiclr
+                    : theme.accent.uiclr.withAlphaComponent(0.24)
+            } else {
+                continue
+            }
+            button.configuration = config
+        }
+    }
+
+    // 生成当前字符键图例
+    private func keylegend(_ spec: KeySpec) -> (title: String, size: CGFloat) {
+        if spec.letter {
+            return (state.uppercase ? spec.output.uppercased() : spec.output.lowercased(), 27)
+        }
+        if state.shifted, let alternate = spec.alternate {
+            return (alternate, 27)
+        }
+        if let alternate = spec.alternate {
+            return ("\(alternate)\n\(spec.output)", 22)
+        }
+        return (spec.output, 27)
+    }
+
+    // 开始 Delete 删除与延迟
+    @objc private func deldown(_ sender: UIButton) {
+        stopdel()
+        textDocumentProxy.deleteBackward()
+        let timer = Timer(timeInterval: 0.45, repeats: false) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                self?.startdel()
+            }
+        }
+        deltimer = timer
+        RunLoop.main.add(timer, forMode: .common)
+    }
+
+    // 启动 Delete 连续删除
+    private func startdel() {
+        guard deltimer != nil else { return }
+        deltimer?.invalidate()
+        textDocumentProxy.deleteBackward()
+        let timer = Timer(timeInterval: 0.08, repeats: true) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                self?.deltick()
+            }
+        }
+        deltimer = timer
+        RunLoop.main.add(timer, forMode: .common)
+    }
+
+    // 执行 Delete 连续删除
+    private func deltick() {
+        guard deltimer?.isValid == true else { return }
+        textDocumentProxy.deleteBackward()
+    }
+
+    // 处理 Delete 触摸终止
+    @objc private func delup(_ sender: UIButton) {
+        stopdel()
+    }
+
+    // 停止 Delete 计时器
+    private func stopdel() {
+        deltimer?.invalidate()
+        deltimer = nil
+    }
+
+    // 处理字符键下拖
+    @objc private func dragkey(_ sender: UIPanGestureRecognizer) {
+        guard
+            sender.state == .ended,
+            sender.translation(in: sender.view).y >= 24,
+            let button = sender.view as? BoardButton,
+            let spec = button.spec
+        else { return }
+
+        let output = state.dragout(spec.output, alternate: spec.alternate, letter: spec.letter)
+        textDocumentProxy.insertText(output)
+        rfrshft()
     }
 }
 
