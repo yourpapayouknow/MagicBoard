@@ -16,8 +16,8 @@
 ### 第 2 轮对话（2026-09-01 19:20）
 
 - **Who（谁参与）**：用户（MagicBoard 真机验收者与动效参考提供者）+ AI（Codex Assistant）。
-- **What（做了什么）**：用户确认 Task 02B 所有功能在真机通过，并新增下拖视觉配合需求；提供 `/Users/mac/Downloads/IMG_4369.jpg`、`IMG_4367.jpg`、`IMG_4366.jpg` 三张关键帧。AI 检查仓库仍干净，逐张查看原图，确认关键帧表现为下层图例缩小渐隐、上层图例移至中心；通过提问工具确认字母使用“大写上层/当前字母下层”，动画 0–24 pt 连续跟手并在成功或取消后 120 ms 复位。随后在 `Keyboard/KeyboardViewController.swift` 实现仅手势期间存在的双 UILabel 覆盖层、连续插值、120 ms 复位、Reduce Motion 即时复位和连续手势完成保护；更新 `DESIGN.md` 并重新生成 `/Users/mac/codexproj/magicboard/build/MagicBoard.tipa`，版本 `0.2.2 (11)`，大小 121,836 bytes，SHA-256 `dab6ec42cc5aa55be52038a0aa34906685863bd3eae45f04d37bdbf98182b25c`，实现提交 `31efbc5`。
-- **When（何时发生）**：2026-09-01 19:17–19:42 CST。
+- **What（做了什么）**：用户确认 Task 02B 所有功能在真机通过，并新增下拖视觉配合需求；提供 `/Users/mac/Downloads/IMG_4369.jpg`、`IMG_4367.jpg`、`IMG_4366.jpg` 三张关键帧。AI 检查仓库仍干净，逐张查看原图，确认关键帧表现为下层图例缩小渐隐、上层图例移至中心；通过提问工具确认字母使用“大写上层/当前字母下层”，动画 0–24 pt 连续跟手并在成功或取消后 120 ms 复位。随后在 `Keyboard/KeyboardViewController.swift` 实现仅手势期间存在的双 UILabel 覆盖层、连续插值、120 ms 复位、Reduce Motion 即时复位和连续手势完成保护；更新 `DESIGN.md` 并重新生成 `/Users/mac/codexproj/magicboard/build/MagicBoard.tipa`，版本 `0.2.2 (11)`，大小 121,836 bytes，SHA-256 `dab6ec42cc5aa55be52038a0aa34906685863bd3eae45f04d37bdbf98182b25c`，实现提交 `31efbc5`。用户在目标 iPad 上安装该产物并确认下拖动效全部通过。
+- **When（何时发生）**：2026-09-01 19:17–19:44 CST。
 - **Where（在哪个上下文）**：工程 `/Users/mac/codexproj/magicboard`；参考图位于 `/Users/mac/Downloads`；预计改动集中在 `Keyboard/KeyboardViewController.swift` 的字符键临时图例层，并更新 `DESIGN.md`、计划与验证记录。
 - **Why（目的/背景）**：功能已验收，但下拖缺少与手势进度一致的视觉反馈；目标是复刻用户给出的三帧变化，同时继续冻结静态六行 Mac 键盘样式。
 - **How（如何实现/决策过程）**：先用 `design-md` 读取并延续现有设计约束，再用 CodeGraph 检查 `keylegend`、`dragkey`、`mkkey`、`rfrshft` 影响面。决定只在 active drag 期间添加两个临时 UILabel 覆盖层，避免替换静态 UIButton 配置；取消或结束后移除覆盖层，保持原有输出和状态机路径不变。双层符号的上层从 22 pt 插值到原单层 27 pt，下层缩放至 0.55 并渐隐，上层从键高 22% 的偏移位置移至中心。共享测试 20/20、DESIGN.md lint 0 findings、2018 模拟器 Debug、generic iOS Release、ZIP 与 `ldid` 权限检查全部通过；模拟器鼠标桥无法可靠显示触摸中间帧，因此最终动效观感明确留给目标真机验收。

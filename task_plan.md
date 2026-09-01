@@ -262,4 +262,4 @@ Repair touch semantics without changing the accepted six-row Mac keyboard visual
 - [x] 2018 iPad Pro simulator Debug build succeeds
 - [x] arm64 Release host and keyboard extension build succeeds
 - [x] `MagicBoard.tipa` is regenerated and structurally verified
-- [ ] Target-device motion appearance matches the supplied three reference frames
+- [x] Target-device motion appearance matches the supplied three reference frames
