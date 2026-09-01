@@ -407,7 +407,7 @@ Enable the existing Control, left/right Option, and left/right Command keycaps a
 
 ### Phase 27 — Automated validation and package
 
-**Status:** in_progress
+**Status:** complete
 
 - Run the expected red shared tests, implement the minimum state model, and rerun the full suite.
 - Build the simulator Debug target, lint `DESIGN.md`, and regenerate/inspect the arm64 TrollStore package.
@@ -425,12 +425,12 @@ Enable the existing Control, left/right Option, and left/right Command keycaps a
 
 ### Function 05 completion checklist
 
-- [ ] Unified `ModifierState` covers Control and both physical Option/Command keys
-- [ ] Control, Option, and Command send real HID down/up events with cancellation cleanup
-- [ ] Modifier + A–Z sends paired HID keyboard events
-- [ ] Modifier-active letters never call `textDocumentProxy.insertText`
+- [x] Unified `ModifierState` covers Control and both physical Option/Command keys
+- [x] Control, Option, and Command send real HID down/up events with cancellation cleanup
+- [x] Modifier + A–Z sends paired HID keyboard events
+- [x] Modifier-active letters never call `textDocumentProxy.insertText`
 - [ ] Command+A/C/V/Z work in a foreground app
 - [ ] At least one foreground-app-specific Command shortcut works
 - [ ] At least one Control and one Option combination are recognized by foreground apps
-- [ ] No shortcut behavior is hard-coded inside MagicBoard
-- [ ] Shared tests, design lint, simulator build, and arm64 package checks pass
+- [x] No shortcut behavior is hard-coded inside MagicBoard
+- [x] Shared tests, design lint, simulator build, and arm64 package checks pass

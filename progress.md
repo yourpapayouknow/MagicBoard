@@ -318,3 +318,14 @@
 - The first simulator build exposed the verified Clang Importer spelling `.A...Z`; a direct Swift type check confirmed it, the source was corrected, and the complete 2018 iPad Pro simulator Debug build then succeeded.
 - A first type-check probe used literal `\\n` separators and failed at its own syntax; the semicolon-delimited probe succeeded. The first post-write CodeGraph status call returned `Transport closed` and will be retried during final validation.
 - Re-ran all 30 shared tests successfully and found no prohibited local Shell invocation. Phase 26 is complete; Phase 27 starts with version `0.6.0 (14)`, lint, Release packaging, and archive inspection.
+
+## 2026-09-02 — Function 05 local validation completed
+
+- Committed the modifier implementation as `ae5cb5c` and regenerated the project at version `0.6.0 (14)`.
+- Final shared suite passed 30/30; `DESIGN.md` lint reported 0 errors, warnings, or infos; the 2018 iPad Pro simulator Debug build and generic arm64 Release build succeeded.
+- Static inspection found no select/copy/paste/undo implementation or Command+A/C/V/Z command table; MagicBoard only chooses proxy versus HID transport based on active physical modifiers.
+- Generated `/Users/mac/codexproj/magicboard/build/MagicBoard.tipa`, 146,567 bytes, SHA-256 `24e7c4f2df768cf422b540b3381758225ea4febb63a842b25f0e38707670ea29`.
+- Independent archive validation passed ZIP integrity, arm64 architecture, host/extension `0.6.0 (14)` parity, IOKit linkage, four HID imports, and least-privilege entitlement placement.
+- The independent verification command was initially rejected before execution because it included temporary-directory deletion; the read-only variant passed and left `/tmp/magicboard-verify.NdcwmH` intact.
+- Post-write CodeGraph status retries both returned `Transport closed`; the successful pre-write context plus compiler/test/archive evidence remain authoritative for this turn.
+- No target iPad is connected through `devicectl`, so Phase 27 is complete and Phase 28 awaits installation plus foreground-app acceptance for Command+A/C/V/Z, one app-specific Command shortcut, and Control/Option combinations.
