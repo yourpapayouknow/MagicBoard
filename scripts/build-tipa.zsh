@@ -35,6 +35,18 @@ chksign() {
   [[ "$group_id" == "group.com.iwmei.magicboard" ]] || fail "App Group 签名不匹配：$binary_path"
 }
 
+# 检查 HID 派发权限
+chkhid() {
+  local host_dump="$1"
+  local keyboard_dump="$2"
+  if /usr/libexec/PlistBuddy -c 'Print :com.apple.private.hid.client.event-dispatch' "$host_dump" >/dev/null 2>&1; then
+    fail "主 App 不应携带 HID 派发权限"
+  fi
+  local hid_dispatch
+  hid_dispatch=$(/usr/libexec/PlistBuddy -c 'Print :com.apple.private.hid.client.event-dispatch' "$keyboard_dump")
+  [[ "$hid_dispatch" == "true" ]] || fail "键盘 HID 派发权限缺失"
+}
+
 needcmd xcodegen
 needcmd xcodebuild
 needcmd ldid
@@ -83,6 +95,7 @@ ldid -S"$host_entitlements" "$host_binary"
 
 chksign "$host_binary" "${build_dir}/host-entitlements.plist"
 chksign "$keyboard_binary" "${build_dir}/keyboard-entitlements.plist"
+chkhid "${build_dir}/host-entitlements.plist" "${build_dir}/keyboard-entitlements.plist"
 
 readonly host_id=$(plutil -extract CFBundleIdentifier raw "$staged_app/Info.plist")
 readonly keyboard_id=$(plutil -extract CFBundleIdentifier raw "$staged_app/PlugIns/MagicBoardKeyboard.appex/Info.plist")

@@ -6,5 +6,7 @@
 	<array>
 		<string>group.com.iwmei.magicboard</string>
 	</array>
+	<key>com.apple.private.hid.client.event-dispatch</key>
+	<true/>
 </dict>
 </plist>

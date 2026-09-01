@@ -12,8 +12,8 @@ settings:
   base:
     SWIFT_VERSION: "6.0"
     TARGETED_DEVICE_FAMILY: "2"
-    CURRENT_PROJECT_VERSION: "11"
-    MARKETING_VERSION: "0.2.2"
+    CURRENT_PROJECT_VERSION: "12"
+    MARKETING_VERSION: "0.4.0"
 
 packages:
   MagicBoardShared:
@@ -87,17 +87,20 @@ targets:
       properties:
         com.apple.security.application-groups:
           - group.com.iwmei.magicboard
+        com.apple.private.hid.client.event-dispatch: true
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.iwmei.magicboard.keyboard
         PRODUCT_NAME: MagicBoardKeyboard
         INFOPLIST_FILE: Keyboard/Info.plist
         CODE_SIGN_ENTITLEMENTS: Keyboard/MagicBoardKeyboard.entitlements
+        SWIFT_OBJC_BRIDGING_HEADER: Keyboard/Keyboard-Bridging-Header.h
         APPLICATION_EXTENSION_API_ONLY: "YES"
         SKIP_INSTALL: "YES"
         TARGETED_DEVICE_FAMILY: "2"
     dependencies:
       - package: MagicBoardShared
+      - sdk: IOKit.framework
 
 schemes:
   MagicBoard:

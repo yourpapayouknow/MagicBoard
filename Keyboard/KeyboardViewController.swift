@@ -12,7 +12,24 @@ private enum KeyKind: Int {
     case space
     case next
     case dismiss
+    case escape
+    case leftArrow
+    case rightArrow
+    case upArrow
+    case downArrow
     case placeholder
+
+    // 返回特殊键对应的 HID usage
+    var hidKey: MBHIDKey? {
+        switch self {
+        case .escape: .escape
+        case .leftArrow: .leftArrow
+        case .rightArrow: .rightArrow
+        case .upArrow: .upArrow
+        case .downArrow: .downArrow
+        default: nil
+        }
+    }
 }
 
 // 标识键帽内容对齐
@@ -87,6 +104,7 @@ final class KeyboardViewController: UIInputViewController {
     // 清理扩展计时器
     deinit {
         deltimer?.invalidate()
+        HIDBridge.shared.releaseAll()
     }
 
     // 构建键盘容器
@@ -144,12 +162,14 @@ final class KeyboardViewController: UIInputViewController {
         super.viewWillDisappear(animated)
         stopdel()
         state.shftcncl()
+        HIDBridge.shared.releaseAll()
     }
 
     // 生成固定键盘布局
     private func bldkbd() {
         stopdel()
         state.shftcncl()
+        HIDBridge.shared.releaseAll()
         buttons.removeAll(keepingCapacity: true)
         for item in rows.arrangedSubviews {
             rows.removeArrangedSubview(item)
@@ -166,7 +186,7 @@ final class KeyboardViewController: UIInputViewController {
     // 创建 Mac 功能键占位行
     private func fnrow() -> [KeySpec] {
         [
-            ph("Esc", weight: 1.5, align: .leading, fontSize: 17),
+            ctl("Esc", kind: .escape, weight: 1.5, align: .leading, fontSize: 17),
             ph("F1", image: "sun.min", align: .bottom, fontSize: 13, stackIcon: true),
             ph("F2", image: "sun.max", align: .bottom, fontSize: 13, stackIcon: true),
             ph("F3", image: "rectangle.3.group", align: .bottom, fontSize: 13, stackIcon: true),
@@ -226,9 +246,9 @@ final class KeyboardViewController: UIInputViewController {
             ctl("space", kind: .space, weight: 5),
             ph(image: "command", weight: 1.25, align: .trailing),
             ph(image: "option", weight: 1.15, align: .trailing),
-            ph(image: "arrow.left", weight: 0.75),
-            ph(image: "arrow.up.arrow.down", weight: 0.75),
-            ph(image: "arrow.right", weight: 0.75),
+            ctl(image: "arrow.left", kind: .leftArrow, weight: 0.75),
+            ctl(image: "arrow.up.arrow.down", kind: .upArrow, weight: 0.75),
+            ctl(image: "arrow.right", kind: .rightArrow, weight: 0.75),
         ]
     }
 
@@ -330,8 +350,8 @@ final class KeyboardViewController: UIInputViewController {
         pair.alignment = .fill
         pair.distribution = .fillEqually
         pair.spacing = 3
-        pair.addArrangedSubview(mkkey(ph(image: "arrow.up")))
-        pair.addArrangedSubview(mkkey(ph(image: "arrow.down")))
+        pair.addArrangedSubview(mkkey(ctl(image: "arrow.up", kind: .upArrow)))
+        pair.addArrangedSubview(mkkey(ctl(image: "arrow.down", kind: .downArrow)))
         return pair
     }
 
@@ -398,7 +418,14 @@ final class KeyboardViewController: UIInputViewController {
         button.titleLabel?.numberOfLines = 2
         button.titleLabel?.textAlignment = .center
 
-        if spec.kind == .next {
+        if spec.kind.hidKey != nil {
+            button.addTarget(self, action: #selector(hiddown(_:)), for: .touchDown)
+            button.addTarget(
+                self,
+                action: #selector(hidup(_:)),
+                for: [.touchUpInside, .touchUpOutside, .touchCancel, .touchDragExit]
+            )
+        } else if spec.kind == .next {
             button.addTarget(self, action: #selector(handleInputModeList(from:with:)), for: .allTouchEvents)
         } else if spec.kind == .language {
             button.addTarget(self, action: #selector(prskey(_:)), for: .touchUpInside)
@@ -437,6 +464,11 @@ final class KeyboardViewController: UIInputViewController {
         case .space: "空格"
         case .next: "下一个键盘"
         case .dismiss: "收起键盘"
+        case .escape: "Esc"
+        case .leftArrow: "左方向键"
+        case .rightArrow: "右方向键"
+        case .upArrow: "上方向键"
+        case .downArrow: "下方向键"
         case .placeholder: spec.title.isEmpty ? "任务 3 功能键" : "\(spec.title)，任务 3 功能键"
         case .text: spec.title
         }
@@ -464,9 +496,29 @@ final class KeyboardViewController: UIInputViewController {
             textDocumentProxy.insertText(" ")
         case .dismiss:
             dismissKeyboard()
+        case .escape, .leftArrow, .rightArrow, .upArrow, .downArrow:
+            break
         case .next, .placeholder:
             break
         }
+    }
+
+    // 发送 HID 按键按下事件
+    @objc private func hiddown(_ sender: UIButton) {
+        guard
+            let spec = (sender as? BoardButton)?.spec,
+            let key = spec.kind.hidKey
+        else { return }
+        HIDBridge.shared.keyDown(key)
+    }
+
+    // 发送 HID 按键抬起事件
+    @objc private func hidup(_ sender: UIButton) {
+        guard
+            let spec = (sender as? BoardButton)?.spec,
+            let key = spec.kind.hidKey
+        else { return }
+        HIDBridge.shared.keyUp(key)
     }
 
     // 处理语言键长按 Caps Lock
