@@ -75,3 +75,93 @@
 - **Where（在哪个上下文）**：项目 `/Users/mac/codexproj/magicboard`，待验收产物 `/Users/mac/codexproj/magicboard/build/MagicBoard.tipa`，验收环境为用户的 TrollStore iPad。
 - **Why（目的/背景）**：用户询问“验收标准是？”，需要把任务 2 的抽象完成条件转换为明确、可观察、可报告的通过标准。
 - **How（如何实现/决策过程）**：将每项需求映射为一个独立测试动作和唯一预期结果；要求全部项目通过才完成任务 2，任何失败均记录所在步骤、实际输出与可见现象后继续排查，不以本地构建成功替代真机行为验收。
+
+### 第 8 轮对话（2026-08-31 18:35）
+
+- **Who（谁参与）**：用户（MagicBoard 项目发起者）+ AI（Codex Assistant）。
+- **What（做了什么）**：用户指出任务 2 初版外观与 Mac 键盘无关，要求停止沿用普通 iPad QWERTY 外观。AI 将问题归类为布局基准错误并开始以 Mac 实体键盘为唯一布局基准重新核对需求。
+- **When（何时发生）**：2026-08-31 18:35（Asia/Shanghai）。
+- **Where（在哪个上下文）**：`/Users/mac/codexproj/magicboard` 的 Keyboard Extension 界面与 `DESIGN.md`。
+- **Why（目的/背景）**：项目目标不是一般触屏键盘，而是将 Mac Magic Keyboard 的键位、行结构和相对宽度映射到 iPad 输入法扩展。
+- **How（如何实现/决策过程）**：不把已通过的输入能力等同于视觉验收；把物理键位顺序、功能行、左右宽键和底行修饰键纳入重新设计范围。
+
+### 第 9 轮对话（2026-08-31 18:38）
+
+- **Who（谁参与）**：用户（提供实际界面截图）+ AI（Codex Assistant）。
+- **What（做了什么）**：用户提供 `/Users/mac/Downloads/IMG_A81C86382681-1.jpeg`，截图显示初版只有四行放大的触屏键、缺少 Mac 数字行/功能行/修饰键与方向键，并且测试标题占据键盘空间。AI依据截图明确问题是整体结构错误而非单一配色或间距错误。
+- **When（何时发生）**：2026-08-31 18:38（Asia/Shanghai）。
+- **Where（在哪个上下文）**：iPad 上的 MagicBoard 实际键盘界面；实现文件 `Keyboard/KeyboardViewController.swift`。
+- **Why（目的/背景）**：通过真实渲染结果确认初版与目标 Mac 键盘的差距。
+- **How（如何实现/决策过程）**：按截图逐项对比行数、键位密度、宽键位置、符号层级和系统候选栏，避免把屏幕截图中的系统区域误当成扩展自身布局。
+
+### 第 10 轮对话（2026-08-31 18:40）
+
+- **Who（谁参与）**：用户 + AI（Codex Assistant）。
+- **What（做了什么）**：用户说明前一步点错选项并更正选择。AI保留当前任务连续性，没有据错误选项继续扩大代码改动。
+- **When（何时发生）**：2026-08-31 18:40（Asia/Shanghai）。
+- **Where（在哪个上下文）**：MagicBoard 任务 2 的布局需求确认阶段。
+- **Why（目的/背景）**：防止误操作被固化为实现决定。
+- **How（如何实现/决策过程）**：以用户最新更正为准，撤销错误分支判断，继续收集明确的键帽与对齐要求。
+
+### 第 11 轮对话（2026-08-31 18:43）
+
+- **Who（谁参与）**：用户（定义键帽文案规范）+ AI（Codex Assistant）。
+- **What（做了什么）**：用户要求 Command 与 Option 使用图标避免小键换行；大功能键使用字符，将回车改为 `return`、回退改为 `delete`；左侧功能键文字放左下、右侧放右下；同时放大字母区域符号。AI将这些规则加入固定 Mac 布局设计。
+- **When（何时发生）**：2026-08-31 18:43（Asia/Shanghai）。
+- **Where（在哪个上下文）**：`Keyboard/KeyboardViewController.swift` 的 `KeySpec`、键帽配置和底行布局。
+- **Why（目的/背景）**：在有限触屏键宽中保留 Mac 键盘的识别度，同时避免英文功能键换行和字符区过小。
+- **How（如何实现/决策过程）**：使用紧凑符号、左右下角对齐以及字符/功能键不同字号，不为单个键创建另一套布局。
+
+### 第 12 轮对话（2026-08-31 18:48）
+
+- **Who（谁参与）**：用户（提供中英文 Mac 键盘参考图）+ AI（Codex Assistant）。
+- **What（做了什么）**：用户提供两张 Mac Magic Keyboard 中英文参考图，并提醒真实设备是 iPad Pro M1 12.9 英寸，而非 A16 基础款 iPad。AI将验证设备改为 iPad Pro 12.9-inch (5th generation, M1)，并以参考图确定六行结构、相对键宽与方向键区。
+- **When（何时发生）**：2026-08-31 18:48（Asia/Shanghai）。
+- **Where（在哪个上下文）**：设计基准图片、`DESIGN.md` 和模拟器设备配置。
+- **Why（目的/背景）**：不同 iPad 宽度会显著影响完整 Mac 键盘的键宽、字号与换行，必须在与真机匹配的尺寸上验收。
+- **How（如何实现/决策过程）**：布局由 Mac 图片决定，iPad 设备仅决定可用宽高和触控适配；不再使用基础款 iPad 截图代表用户设备。
+
+### 第 13 轮对话（2026-09-01 11:30）
+
+- **Who（谁参与）**：用户（提供四张 iPad 系统键盘状态图）+ AI（Codex Assistant）。
+- **What（做了什么）**：用户要求四张截图只参考中英文、Shift 和符号切换逻辑，布局继续保持此前 Mac 键盘。AI据此设计英文未 Shift、英文 Shift、中文未 Shift、中文 Shift 四态；短按语言键切换中英文，长按切换 Caps Lock；中文符号使用 `¥`、`……`、`—`、`《》` 等映射。
+- **When（何时发生）**：2026-09-01 11:30（Asia/Shanghai）。
+- **Where（在哪个上下文）**：`SharedConfig.swift`、`SharedConfigTests.swift`、`KeyboardViewController.swift` 与 `DESIGN.md`。
+- **Why（目的/背景）**：融合系统 iPad 键盘的输入状态语义与 Mac 实体键盘固定结构，避免状态切换造成键位移动。
+- **How（如何实现/决策过程）**：取消字母/数字/符号分页，始终显示 Mac 完整键位；未 Shift 显示上下双层字符，Shift 后只显示实际输出字符；单次 Shift 在字符输入后消费，Caps Lock 保持并与 Shift 使用异或大小写语义。
+
+### 第 14 轮对话（2026-09-01 12:47）
+
+- **Who（谁参与）**：用户（要求继续）+ AI（Codex Assistant）。
+- **What（做了什么）**：完成固定 Mac 六行键盘、四态中英文逻辑、Command/Option 图标、左右功能键对齐与字符放大；在新建的 `MagicBoard iPad Pro 12.9 M1`（iOS 18.4，UDID `FA9C5159-5E21-45E9-94D6-C183711C8987`）模拟器安装主 App、添加键盘并启用完全访问。实际输入验证得到 `aA¥《`，证明普通输入、单次 Shift 消费和中文 Shift 符号映射正常。
+- **When（何时发生）**：2026-09-01 12:47（Asia/Shanghai）。
+- **Where（在哪个上下文）**：MagicBoard 工程、iPad Pro 12.9-inch (5th generation) 模拟器、Safari 地址栏。
+- **Why（目的/背景）**：在与用户 M1 12.9 英寸真机匹配的设备档案上完成任务 2 新布局的可视与行为回归。
+- **How（如何实现/决策过程）**：共享状态新增 `BoardLang` 和 10 项测试；UIKit 使用固定权重行布局；设计规范经 lint 0 findings；Release `.tipa` 构建成功。自动化无法可靠模拟地球键的长按停留，因此由用户按系统正确方式长按并拖选 MagicBoard，不把普通点击/循环切换当成长按选择。
+
+### 第 15 轮对话（2026-09-01 12:49）
+
+- **Who（谁参与）**：用户（补充键帽细节）+ AI（Codex Assistant）。
+- **What（做了什么）**：用户要求把过长的 `control` 改为首字母大写的 `Ctrl`，`esc` 改为 `Esc`，并要求上下方向键分离。AI通过结构化提问列出上下堆叠双键、四键同高横排和保留合并三种方案；用户第一次误选“四键同高横排”。
+- **When（何时发生）**：2026-09-01 12:49（Asia/Shanghai）。
+- **Where（在哪个上下文）**：MagicBoard 底行修饰键与方向键区。
+- **Why（目的/背景）**：缩短小键帽文案，并使方向键视觉更接近实体 Mac 键盘。
+- **How（如何实现/决策过程）**：在存在排列歧义时没有直接修改，先用 `request_user_input` 保持任务活跃并让用户明确选择。
+
+### 第 16 轮对话（2026-09-01 12:55）
+
+- **Who（谁参与）**：用户（更正方向键选择并参与模拟器验收）+ AI（Codex Assistant）。
+- **What（做了什么）**：用户说明前次答案有误并要求重新提问，随后确认“上下堆叠双键”：左右箭头全高，中间的上/下箭头为两个独立半高键帽。AI实现 `Esc`、`Ctrl` 与专用上下双键容器，把构建号提升至 0.2.2 (5)，重新生成 `/Users/mac/codexproj/magicboard/build/MagicBoard.tipa`。用户在模拟器中长按地球键切到 MagicBoard，截图确认最终布局；随后输入 `a` 并执行删除，`textDocumentProxy` 插入/删除继续正常。
+- **When（何时发生）**：2026-09-01 12:55（Asia/Shanghai）。
+- **Where（在哪个上下文）**：`Keyboard/KeyboardViewController.swift`、`DESIGN.md`、`project.yml`、iPad Pro 12.9 M1 模拟器和 Safari 地址栏。
+- **Why（目的/背景）**：修正误选并完成与 Mac 实体键盘一致的紧凑方向键区，同时保持任务 2 输入逻辑不回归。
+- **How（如何实现/决策过程）**：`mkrow` 允许普通键帽或嵌套 `UIStackView` 项；遇到 `arrow.up.arrow.down` 描述时生成两个等高独立键帽。共享模块 10/10 测试通过，`DESIGN.md` lint 为 0 errors/0 warnings，真机 arm64 Release 和模拟器 Debug 构建均成功；最终 `.tipa` SHA-256 为 `917703a442e991cc4ec76b77863ed4da18ac9d34918157092c287ad0b0f177c2`。
+
+### 第 17 轮对话（2026-09-01 13:05）
+
+- **Who（谁参与）**：用户（要求进一步放大键帽内容）+ AI（Codex Assistant）。
+- **What（做了什么）**：用户要求功能键字符/符号进一步放大，字母也稍微放大。通过结构化提问，用户选择“明显放大”：字母和单字符由 23 pt 提升到 27 pt，双层符号由 18 pt 提升到 22 pt，功能文字整体增加约 3 pt，SF Symbols 由 13 pt 提升到 17 pt；构建号提升到 0.2.2 (6)。
+- **When（何时发生）**：2026-09-01 13:05（Asia/Shanghai）。
+- **Where（在哪个上下文）**：`Keyboard/KeyboardViewController.swift`、`DESIGN.md`、`project.yml`、iPad Pro 12.9 M1 模拟器和最终 `build/MagicBoard.tipa`。
+- **Why（目的/背景）**：12.9 英寸屏幕上的完整 Mac 键盘键位密度较高，上一版虽然结构正确，但字符和功能符号仍不够醒目。
+- **How（如何实现/决策过程）**：保持字符区字号高于功能区，不改变任何键宽、输入状态或事件逻辑；在同一 12.9 英寸第五代模拟器覆盖安装并截图检查，确认 `Esc`、`Ctrl`、F1–F12、`delete`、`return`、Shift、Command/Option 和分离方向键均未换行或截断。共享模块 10/10 测试通过，设计 lint 0 findings，arm64 Release 与模拟器 Debug 均构建成功；最终 `.tipa` SHA-256 为 `0c1795b091815f42e6d328fd5d15019247a36289c04186928b90a3eff4d2eaa5`。

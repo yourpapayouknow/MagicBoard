@@ -34,22 +34,25 @@ public struct BoardTheme: Codable, Equatable, Sendable {
     )
 }
 
-// 表示键盘输入页面
-public enum BoardPage: Equatable, Sendable {
-    case letters
-    case numbers
-    case symbols
+// 表示当前输入语言
+public enum BoardLang: Equatable, Sendable {
+    case english
+    case chinese
 }
 
-// 管理页面与大小写状态
+// 管理语言与大小写状态
 public struct InputState: Equatable, Sendable {
-    public private(set) var page: BoardPage
+    public private(set) var language: BoardLang
     public private(set) var shifted: Bool
     public private(set) var capsLocked: Bool
 
     // 创建默认输入状态
-    public init(page: BoardPage = .letters, shifted: Bool = false, capsLocked: Bool = false) {
-        self.page = page
+    public init(
+        language: BoardLang = .english,
+        shifted: Bool = false,
+        capsLocked: Bool = false
+    ) {
+        self.language = language
         self.shifted = shifted
         self.capsLocked = capsLocked
     }
@@ -67,13 +70,11 @@ public struct InputState: Equatable, Sendable {
     // 切换 Caps Lock
     public mutating func tglcaps() {
         capsLocked.toggle()
-        shifted = false
     }
 
-    // 切换输入页面
-    public mutating func setpage(_ page: BoardPage) {
-        self.page = page
-        shifted = false
+    // 切换输入语言
+    public mutating func tgllang() {
+        language = language == .english ? .chinese : .english
     }
 
     // 生成字符并消费 Shift
@@ -82,7 +83,6 @@ public struct InputState: Equatable, Sendable {
         alternate: String? = nil,
         letter: Bool = true
     ) -> String {
-        guard page == .letters else { return value }
         let output: String
         if letter {
             output = uppercase ? value.uppercased() : value.lowercased()

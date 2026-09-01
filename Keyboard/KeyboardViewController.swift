@@ -6,15 +6,19 @@ import UIKit
 private enum KeyKind: Int {
     case text
     case shift
-    case caps
+    case language
     case delete
     case enter
     case space
     case next
-    case letters
-    case numbers
-    case symbols
     case placeholder
+}
+
+// 标识键帽内容对齐
+private enum KeyAlign {
+    case center
+    case leading
+    case trailing
 }
 
 // 描述单个按键
@@ -27,6 +31,9 @@ private struct KeySpec {
     let kind: KeyKind
     let weight: CGFloat
     let enabled: Bool
+    let align: KeyAlign
+    let fontSize: CGFloat
+    let stackIcon: Bool
 
     // 创建按键描述
     init(
@@ -37,7 +44,10 @@ private struct KeySpec {
         letter: Bool = false,
         kind: KeyKind = .text,
         weight: CGFloat = 1,
-        enabled: Bool = true
+        enabled: Bool = true,
+        align: KeyAlign = .center,
+        fontSize: CGFloat = 11,
+        stackIcon: Bool = false
     ) {
         self.title = title
         self.image = image
@@ -47,6 +57,9 @@ private struct KeySpec {
         self.kind = kind
         self.weight = weight
         self.enabled = enabled
+        self.align = align
+        self.fontSize = fontSize
+        self.stackIcon = stackIcon
     }
 }
 
@@ -112,7 +125,7 @@ final class KeyboardViewController: UIInputViewController {
         bldkbd()
     }
 
-    // 生成当前键盘页面
+    // 生成固定键盘布局
     private func bldkbd() {
         for item in rows.arrangedSubviews {
             rows.removeArrangedSubview(item)
@@ -120,141 +133,109 @@ final class KeyboardViewController: UIInputViewController {
         }
 
         rows.addArrangedSubview(mkrow(fnrow()))
-        let pageRows: [[KeySpec]]
-        switch state.page {
-        case .letters:
-            pageRows = ltrrows()
-        case .numbers:
-            pageRows = numrows()
-        case .symbols:
-            pageRows = symrows()
-        }
-        for specs in pageRows {
+        for specs in ltrrows() {
             rows.addArrangedSubview(mkrow(specs))
         }
         rows.addArrangedSubview(mkrow(btmrow()))
     }
 
-    // 创建功能键占位行
+    // 创建 Mac 功能键占位行
     private func fnrow() -> [KeySpec] {
         [
-            ph("esc", weight: 1.25),
-            ph(image: "sun.min"),
-            ph(image: "sun.max"),
-            ph(image: "rectangle.3.group"),
-            ph(image: "magnifyingglass"),
-            ph(image: "mic"),
-            ph(image: "moon"),
-            ph(image: "backward.fill"),
-            ph(image: "playpause.fill"),
-            ph(image: "forward.fill"),
-            ph(image: "speaker.slash.fill"),
-            ph(image: "speaker.wave.1.fill"),
-            ph(image: "speaker.wave.3.fill"),
-            ph(image: "lock", weight: 1.25),
+            ph("Esc", weight: 1.25, align: .leading, fontSize: 12),
+            ph("F1", image: "sun.min", stackIcon: true),
+            ph("F2", image: "sun.max", stackIcon: true),
+            ph("F3", image: "rectangle.3.group", stackIcon: true),
+            ph("F4", image: "magnifyingglass", stackIcon: true),
+            ph("F5", image: "mic", stackIcon: true),
+            ph("F6", image: "moon", stackIcon: true),
+            ph("F7", image: "backward.fill", stackIcon: true),
+            ph("F8", image: "playpause.fill", stackIcon: true),
+            ph("F9", image: "forward.fill", stackIcon: true),
+            ph("F10", image: "speaker.slash.fill", stackIcon: true),
+            ph("F11", image: "speaker.wave.1.fill", stackIcon: true),
+            ph("F12", image: "speaker.wave.3.fill", stackIcon: true),
+            ph(image: "circle", weight: 1.25),
         ]
     }
 
-    // 创建字母页面行
+    // 创建固定文字键位
     private func ltrrows() -> [[KeySpec]] {
         [
             [
-                txt("`", alternate: "~"), txt("1", alternate: "!"), txt("2", alternate: "@"),
-                txt("3", alternate: "#"), txt("4", alternate: "$"), txt("5", alternate: "%"),
-                txt("6", alternate: "^"), txt("7", alternate: "&"), txt("8", alternate: "*"),
-                txt("9", alternate: "("), txt("0", alternate: ")"), txt("-", alternate: "_"),
-                txt("=", alternate: "+"), ctl(image: "delete.left", kind: .delete, weight: 1.7),
+                txt("`", alternate: "~", zhBase: "·"), txt("1", alternate: "!"), txt("2", alternate: "@"),
+                txt("3", alternate: "#"), txt("4", alternate: "$", zhAlt: "¥"), txt("5", alternate: "%"),
+                txt("6", alternate: "^", zhAlt: "……"), txt("7", alternate: "&"), txt("8", alternate: "*"),
+                txt("9", alternate: "("), txt("0", alternate: ")"), txt("-", alternate: "_", zhAlt: "—"),
+                txt("=", alternate: "+"), ctl("delete", kind: .delete, weight: 1.7, align: .trailing, fontSize: 16),
             ],
             [
-                ph("tab", weight: 1.5), ltr("Q"), ltr("W"), ltr("E"), ltr("R"), ltr("T"),
+                ph("tab", weight: 1.5, align: .leading), ltr("Q"), ltr("W"), ltr("E"), ltr("R"), ltr("T"),
                 ltr("Y"), ltr("U"), ltr("I"), ltr("O"), ltr("P"),
                 txt("[", alternate: "{"), txt("]", alternate: "}"), txt("\\", alternate: "|", weight: 1.5),
             ],
             [
-                ctl(image: state.capsLocked ? "capslock.fill" : "capslock", kind: .caps, weight: 1.8),
+                ctl(state.language == .english ? "双拼" : "abc", kind: .language, weight: 1.8, align: .leading, fontSize: 18),
                 ltr("A"), ltr("S"), ltr("D"), ltr("F"), ltr("G"), ltr("H"), ltr("J"), ltr("K"), ltr("L"),
                 txt(";", alternate: ":"), txt("'", alternate: "\""),
-                ctl(image: "return", kind: .enter, weight: 1.9),
+                ctl("return", kind: .enter, weight: 1.9, align: .trailing, fontSize: 16),
             ],
             [
-                ctl(image: state.shifted ? "shift.fill" : "shift", kind: .shift, weight: 2.25),
+                ctl("shift", kind: .shift, weight: 2.25, align: .leading, fontSize: 16),
                 ltr("Z"), ltr("X"), ltr("C"), ltr("V"), ltr("B"), ltr("N"), ltr("M"),
-                txt(",", alternate: "<"), txt(".", alternate: ">"), txt("/", alternate: "?"),
-                ctl(image: state.shifted ? "shift.fill" : "shift", kind: .shift, weight: 2.25),
+                txt(",", alternate: "<", zhBase: "，", zhAlt: "《"),
+                txt(".", alternate: ">", zhBase: "。", zhAlt: "》"), txt("/", alternate: "?"),
+                ctl("shift", kind: .shift, weight: 2.25, align: .trailing, fontSize: 16),
             ],
-        ]
-    }
-
-    // 创建数字页面行
-    private func numrows() -> [[KeySpec]] {
-        [
-            txtrow(["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"]) + [
-                ctl(image: "delete.left", kind: .delete, weight: 1.7),
-            ],
-            txtrow(["-", "/", ":", ";", "(", ")", "$", "&", "@", "\""]),
-            txtrow([".", ",", "?", "!", "'", "[", "]", "{", "}"]) + [
-                ctl(image: "return", kind: .enter, weight: 1.7),
-            ],
-            txtrow(["+", "=", "*", "%", "#", "<", ">", "_", "\\", "|"]),
-        ]
-    }
-
-    // 创建符号页面行
-    private func symrows() -> [[KeySpec]] {
-        [
-            txtrow(["[", "]", "{", "}", "#", "%", "^", "*", "+", "="]) + [
-                ctl(image: "delete.left", kind: .delete, weight: 1.7),
-            ],
-            txtrow(["_", "\\", "|", "~", "<", ">", "€", "£", "¥", "•"]),
-            txtrow([".", ",", "?", "!", "'", "\"", "`", ";", ":"]) + [
-                ctl(image: "return", kind: .enter, weight: 1.7),
-            ],
-            txtrow(["©", "®", "™", "✓", "§", "±", "÷", "×", "°", "…"]),
         ]
     }
 
     // 创建底部控制行
     private func btmrow() -> [KeySpec] {
-        let lead: KeySpec
-        let tail: KeySpec
-        switch state.page {
-        case .letters:
-            lead = ctl("123", kind: .numbers, weight: 1.25)
-            tail = ph(image: "arrow.left.and.right", weight: 1.25)
-        case .numbers:
-            lead = ctl("#+=", kind: .symbols, weight: 1.25)
-            tail = ctl("ABC", kind: .letters, weight: 1.25)
-        case .symbols:
-            lead = ctl("123", kind: .numbers, weight: 1.25)
-            tail = ctl("ABC", kind: .letters, weight: 1.25)
-        }
-
-        return [
-            lead,
+        [
             ctl(image: "globe", kind: .next, weight: 1.05),
-            ph("control", weight: 1.15),
-            ph("option", weight: 1.15),
-            ph("command", weight: 1.25),
+            ph("Ctrl", weight: 1.15, align: .leading),
+            ph(image: "option", weight: 1.15, align: .leading),
+            ph(image: "command", weight: 1.25, align: .leading),
             ctl("space", kind: .space, weight: 5),
-            ph("command", weight: 1.25),
-            ph("option", weight: 1.15),
-            tail,
+            ph(image: "command", weight: 1.25, align: .trailing),
+            ph(image: "option", weight: 1.15, align: .trailing),
+            ph(image: "arrow.left", weight: 0.75),
+            ph(image: "arrow.up.arrow.down", weight: 0.75),
+            ph(image: "arrow.right", weight: 0.75),
         ]
     }
 
     // 创建字母按键描述
     private func ltr(_ title: String) -> KeySpec {
-        KeySpec(title, output: title.lowercased(), letter: true)
+        let label = state.uppercase ? title.uppercased() : title.lowercased()
+        return KeySpec(label, output: title.lowercased(), letter: true, fontSize: 27)
     }
 
-    // 创建文字按键描述
-    private func txt(_ title: String, alternate: String? = nil, weight: CGFloat = 1) -> KeySpec {
-        KeySpec(title, output: title, alternate: alternate, weight: weight)
-    }
-
-    // 创建文字按键数组
-    private func txtrow(_ titles: [String]) -> [KeySpec] {
-        titles.map { txt($0) }
+    // 创建中英双层字符按键
+    private func txt(
+        _ base: String,
+        alternate: String? = nil,
+        zhBase: String? = nil,
+        zhAlt: String? = nil,
+        weight: CGFloat = 1
+    ) -> KeySpec {
+        let chinese = state.language == .chinese
+        let output = chinese ? (zhBase ?? base) : base
+        let alternate = chinese ? (zhAlt ?? alternate) : alternate
+        let label: String
+        let size: CGFloat
+        if state.shifted, let alternate {
+            label = alternate
+            size = 27
+        } else if let alternate {
+            label = "\(alternate)\n\(output)"
+            size = 22
+        } else {
+            label = output
+            size = 27
+        }
+        return KeySpec(label, output: output, alternate: alternate, weight: weight, fontSize: size)
     }
 
     // 创建控制按键描述
@@ -262,14 +243,32 @@ final class KeyboardViewController: UIInputViewController {
         _ title: String = "",
         image: String? = nil,
         kind: KeyKind,
-        weight: CGFloat = 1
+        weight: CGFloat = 1,
+        align: KeyAlign = .center,
+        fontSize: CGFloat = 14
     ) -> KeySpec {
-        KeySpec(title, image: image, kind: kind, weight: weight)
+        KeySpec(title, image: image, kind: kind, weight: weight, align: align, fontSize: fontSize)
     }
 
     // 创建任务三占位描述
-    private func ph(_ title: String = "", image: String? = nil, weight: CGFloat = 1) -> KeySpec {
-        KeySpec(title, image: image, kind: .placeholder, weight: weight, enabled: false)
+    private func ph(
+        _ title: String = "",
+        image: String? = nil,
+        weight: CGFloat = 1,
+        align: KeyAlign = .center,
+        fontSize: CGFloat = 11,
+        stackIcon: Bool = false
+    ) -> KeySpec {
+        KeySpec(
+            title,
+            image: image,
+            kind: .placeholder,
+            weight: weight,
+            enabled: false,
+            align: align,
+            fontSize: fontSize,
+            stackIcon: stackIcon
+        )
     }
 
     // 创建自适应按键行
@@ -280,20 +279,34 @@ final class KeyboardViewController: UIInputViewController {
         row.distribution = .fill
         row.spacing = 5
 
-        var base: (button: UIButton, weight: CGFloat)?
+        var base: (item: UIView, weight: CGFloat)?
         for spec in specs {
-            let button = mkkey(spec)
-            row.addArrangedSubview(button)
+            let item = mkitem(spec)
+            row.addArrangedSubview(item)
             if let base {
-                button.widthAnchor.constraint(
-                    equalTo: base.button.widthAnchor,
+                item.widthAnchor.constraint(
+                    equalTo: base.item.widthAnchor,
                     multiplier: spec.weight / base.weight
                 ).isActive = true
             } else {
-                base = (button, spec.weight)
+                base = (item, spec.weight)
             }
         }
         return row
+    }
+
+    // 创建普通键帽或上下方向双键
+    private func mkitem(_ spec: KeySpec) -> UIView {
+        guard spec.image == "arrow.up.arrow.down" else { return mkkey(spec) }
+
+        let pair = UIStackView()
+        pair.axis = .vertical
+        pair.alignment = .fill
+        pair.distribution = .fillEqually
+        pair.spacing = 3
+        pair.addArrangedSubview(mkkey(ph(image: "arrow.up")))
+        pair.addArrangedSubview(mkkey(ph(image: "arrow.down")))
+        return pair
     }
 
     // 创建单个键帽
@@ -310,15 +323,33 @@ final class KeyboardViewController: UIInputViewController {
         config.cornerStyle = .medium
         config.title = spec.title.isEmpty ? nil : spec.title
         config.image = spec.image.flatMap(UIImage.init(systemName:))
-        config.imagePlacement = .leading
+        config.imagePlacement = spec.stackIcon ? .top : .leading
         config.imagePadding = 3
+        config.preferredSymbolConfigurationForImage = .init(pointSize: 17, weight: .regular)
+        config.contentInsets = .init(top: 4, leading: 7, bottom: 5, trailing: 7)
         config.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
             var outgoing = incoming
-            outgoing.font = .systemFont(ofSize: 13, weight: .medium)
+            outgoing.font = .systemFont(ofSize: spec.fontSize, weight: .medium)
             return outgoing
         }
 
-        let selected = (spec.kind == .shift && state.shifted) || (spec.kind == .caps && state.capsLocked)
+        switch spec.align {
+        case .center:
+            config.titleAlignment = .center
+            button.contentHorizontalAlignment = .center
+            button.contentVerticalAlignment = .center
+        case .leading:
+            config.titleAlignment = .leading
+            button.contentHorizontalAlignment = .left
+            button.contentVerticalAlignment = .bottom
+        case .trailing:
+            config.titleAlignment = .trailing
+            button.contentHorizontalAlignment = .right
+            button.contentVerticalAlignment = .bottom
+        }
+
+        let selected = (spec.kind == .shift && state.shifted)
+            || (spec.kind == .language && state.capsLocked)
         if spec.kind == .placeholder {
             config.baseForegroundColor = .tertiaryLabel
             config.baseBackgroundColor = .secondarySystemFill
@@ -333,9 +364,16 @@ final class KeyboardViewController: UIInputViewController {
             config.baseBackgroundColor = theme.accent.uiclr.withAlphaComponent(0.24)
         }
         button.configuration = config
+        button.titleLabel?.numberOfLines = 2
+        button.titleLabel?.textAlignment = .center
 
         if spec.kind == .next {
             button.addTarget(self, action: #selector(handleInputModeList(from:with:)), for: .allTouchEvents)
+        } else if spec.kind == .language {
+            button.addTarget(self, action: #selector(prskey(_:)), for: .touchUpInside)
+            let hold = UILongPressGestureRecognizer(target: self, action: #selector(lngcaps(_:)))
+            hold.minimumPressDuration = 0.45
+            button.addGestureRecognizer(hold)
         } else if spec.kind != .placeholder {
             button.addTarget(self, action: #selector(prskey(_:)), for: .touchUpInside)
         }
@@ -346,14 +384,11 @@ final class KeyboardViewController: UIInputViewController {
     private func aclabel(_ spec: KeySpec) -> String {
         switch spec.kind {
         case .shift: "Shift"
-        case .caps: "Caps Lock"
+        case .language: "切换输入语言，长按切换 Caps Lock"
         case .delete: "删除"
         case .enter: "换行"
         case .space: "空格"
         case .next: "下一个键盘"
-        case .letters: "字母键盘"
-        case .numbers: "数字键盘"
-        case .symbols: "符号键盘"
         case .placeholder: spec.title.isEmpty ? "任务 3 功能键" : "\(spec.title)，任务 3 功能键"
         case .text: spec.title
         }
@@ -371,8 +406,8 @@ final class KeyboardViewController: UIInputViewController {
         case .shift:
             state.tglshft()
             bldkbd()
-        case .caps:
-            state.tglcaps()
+        case .language:
+            state.tgllang()
             bldkbd()
         case .delete:
             textDocumentProxy.deleteBackward()
@@ -380,18 +415,16 @@ final class KeyboardViewController: UIInputViewController {
             textDocumentProxy.insertText("\n")
         case .space:
             textDocumentProxy.insertText(" ")
-        case .letters:
-            state.setpage(.letters)
-            bldkbd()
-        case .numbers:
-            state.setpage(.numbers)
-            bldkbd()
-        case .symbols:
-            state.setpage(.symbols)
-            bldkbd()
         case .next, .placeholder:
             break
         }
+    }
+
+    // 处理语言键长按 Caps Lock
+    @objc private func lngcaps(_ sender: UILongPressGestureRecognizer) {
+        guard sender.state == .began else { return }
+        state.tglcaps()
+        bldkbd()
     }
 }
 
