@@ -112,4 +112,122 @@ final class SharedConfigTests: XCTestCase {
         XCTAssertTrue(state.shifted)
         XCTAssertEqual(state.emit("a"), "a")
     }
+
+    // 验证 Shift 按下立即启用且空松开保持
+    func testshfthold() {
+        var state = InputState()
+
+        state.shftdown()
+        XCTAssertTrue(state.shifted)
+        state.shftup()
+        XCTAssertTrue(state.shifted)
+    }
+
+    // 验证保持态再次按下松开关闭
+    func testshftoff() {
+        var state = InputState(shifted: true)
+
+        state.shftdown()
+        XCTAssertTrue(state.shifted)
+        state.shftup()
+        XCTAssertFalse(state.shifted)
+    }
+
+    // 验证按住输入期间保持且松开关闭
+    func testshftused() {
+        var state = InputState()
+
+        state.shftdown()
+        XCTAssertEqual(state.emit("a"), "A")
+        XCTAssertTrue(state.shifted)
+        XCTAssertEqual(state.emit("b"), "B")
+        XCTAssertTrue(state.shifted)
+        state.shftup()
+        XCTAssertFalse(state.shifted)
+    }
+
+    // 验证保持态按住输入后松开关闭
+    func testlockhold() {
+        var state = InputState(shifted: true)
+
+        state.shftdown()
+        XCTAssertEqual(state.emit("a"), "A")
+        XCTAssertTrue(state.shifted)
+        state.shftup()
+        XCTAssertFalse(state.shifted)
+    }
+
+    // 验证 Shift 取消恢复触摸前状态
+    func testshftcncl() {
+        var idle = InputState()
+        idle.shftdown()
+        idle.shftcncl()
+        XCTAssertFalse(idle.shifted)
+
+        var latched = InputState(shifted: true)
+        latched.shftdown()
+        latched.shftcncl()
+        XCTAssertTrue(latched.shifted)
+    }
+
+    // 验证按住 Shift 与 Caps Lock 异或且不解锁
+    func testholdcaps() {
+        var state = InputState(capsLocked: true)
+
+        state.shftdown()
+        XCTAssertEqual(state.emit("a"), "a")
+        XCTAssertTrue(state.shifted)
+        XCTAssertTrue(state.capsLocked)
+        state.shftup()
+        XCTAssertFalse(state.shifted)
+        XCTAssertTrue(state.capsLocked)
+        XCTAssertEqual(state.emit("b"), "B")
+    }
+
+    // 验证中文替代符号跟随按住 Shift
+    func testholdzhalt() {
+        var state = InputState(language: .chinese)
+
+        state.shftdown()
+        XCTAssertEqual(state.emit("【", alternate: "「", letter: false), "「")
+        XCTAssertTrue(state.shifted)
+        state.shftup()
+        XCTAssertFalse(state.shifted)
+        XCTAssertEqual(state.language, .chinese)
+    }
+
+    // 验证下拖字母大写且不消费修饰状态
+    func testdragltr() {
+        var idle = InputState()
+        XCTAssertEqual(idle.dragout("a"), "A")
+        XCTAssertFalse(idle.shifted)
+        XCTAssertFalse(idle.capsLocked)
+
+        var latched = InputState(shifted: true, capsLocked: true)
+        XCTAssertEqual(latched.dragout("a"), "A")
+        XCTAssertTrue(latched.shifted)
+        XCTAssertTrue(latched.capsLocked)
+    }
+
+    // 验证下拖双层与中文替代符号
+    func testdragalt() {
+        var state = InputState(language: .chinese)
+
+        XCTAssertEqual(state.dragout("1", alternate: "!", letter: false), "!")
+        XCTAssertEqual(state.dragout("【", alternate: "「", letter: false), "「")
+        XCTAssertFalse(state.shifted)
+        XCTAssertFalse(state.capsLocked)
+        XCTAssertEqual(state.language, .chinese)
+    }
+
+    // 验证按住期间下拖输入仍在松开时关闭 Shift
+    func testholddrag() {
+        var state = InputState()
+
+        state.shftdown()
+        XCTAssertEqual(state.dragout("a"), "A")
+        XCTAssertTrue(state.shifted)
+        state.shftup()
+        XCTAssertFalse(state.shifted)
+    }
 }

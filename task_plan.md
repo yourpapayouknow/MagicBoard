@@ -98,6 +98,8 @@ Build a traceable iPadOS project containing the MagicBoard host app, keyboard ex
 | Safety policy rejected automatic removal of the temporary verification directory | 1 | Kept the isolated read-only directory `/tmp/magicboard-verify.uaUkOJ`; no project or artifact file was affected |
 | Device screenshot still showed the Task 01 test keyboard after a Task 02 overwrite install | 1 | Matched the screenshot's status label and four-row structure to the old source; confirmed the new archive contains Task 02-only function-row symbols, isolating the issue to old extension registration/process state rather than the new layout source |
 | XcodeGen generated `1.0 (1)` for both old and new packages despite project build settings | 1 | XcodeGen source confirmed these are generator defaults; explicitly mapped both targets' plist versions to `MARKETING_VERSION`/`CURRENT_PROJECT_VERSION`, bumped Task 02 to `0.2.0 (2)`, and added package-time host/extension version parity checks |
+| Task 02B source inspection referenced nonexistent `Tests`, `MagicBoardSharedTests.swift`, and `Scripts/build_tipa.zsh` paths | 1 | The preceding `rg --files` output identified the actual paths: `SharedConfigTests.swift` and lowercase `scripts/build-tipa.zsh`; continue only with those resolved paths |
+| Task 02B state-machine tests failed to compile because `shftdown`, `shftup`, `shftcncl`, and `dragout` do not exist | 1 | Expected red phase: the failures prove the new tests exercise APIs absent from the baseline; implement only those transitions next |
 
 ## Completion checklist
 

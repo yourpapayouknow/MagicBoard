@@ -145,3 +145,22 @@
 - Verified the repository is clean at requested HEAD `2881955` and read the existing accepted `DESIGN.md`.
 - Added Task 02B phases and explicit success checks to the existing persistent plan; no source or design changes have been made yet.
 - Next: use CodeGraph to map the existing state and proxy-action flows, then add tests before implementation.
+
+## 2026-09-01 — Task 02B impact analysis completed
+
+- Used CodeGraph context, symbol source, and impact queries to identify the shared state model and controller touch binding as the only required source change surfaces.
+- Confirmed all current text insertion is centralized through `InputState.emit` and `textDocumentProxy.insertText`; the repair will extend these existing paths rather than add a parallel input engine.
+- Confirmed Delete currently handles only `.touchUpInside`, while `BoardButton` has no per-touch state and the controller has no repeat timer lifecycle.
+- Recorded a CodeGraph symbol-line mismatch for nonexistent `setshft`/`altout` metadata; live source snippets, compilation, and tests remain authoritative.
+- Next: inspect the exact shared tests and controller lifecycle, then write failing state-machine tests before implementation.
+- A combined read used stale guessed test/script paths and reported three not-found errors; the same command resolved the correct paths, so no fallback shell or repeated failing command is needed.
+- Read the resolved shared tests and Zsh packaging script and verified project version `0.2.2 (11)`.
+- Verified UIKit control events, Foundation timer invalidation/common-mode scheduling, and pan gesture terminal states against Apple Developer documentation before using those APIs.
+- Verified the project has no forbidden local macOS shell invocation.
+- Inspected the approved Tasty reference implementation for repeat-delete and Shift touch tracking; selected its event lifecycle while simplifying its two timers to one owned timer and retaining MagicBoard's existing state/document-proxy paths.
+
+## 2026-09-01 — Task 02B Shift tests added
+
+- Added boundary tests for Shift touch-down/up/cancel, latched Shift re-press, held multi-character input, Caps Lock XOR behavior, Chinese alternate symbols, and modifier-independent drag output.
+- Ran the shared suite and received the expected compile failures for the four not-yet-implemented transition APIs; no pre-existing test failure appeared before those missing members.
+- Next: implement the minimum shared state fields and transitions, then rerun the full shared suite.
