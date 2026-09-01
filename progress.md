@@ -245,3 +245,13 @@
 
 - User installed the regenerated TIPA on the MagicBoard iPad Pro 12.9 2018 and confirmed the complete down-drag motion matches the supplied reference frames.
 - Task 02B and its down-drag visual follow-up are fully accepted; no further code or package change is required.
+
+## 2026-09-02 — Task 04 started
+
+- Verified the repository is a clean Git worktree on `master` at `3627d2b` before any change.
+- Restored the existing planning files and confirmed CodeGraph is healthy with 6 indexed files, 127 nodes, and 130 edges.
+- Initially found no functional Esc/arrow key kinds and asked the user to resolve the apparent Task 03 baseline mismatch.
+- User clarified that Task 03 was layout-only and was implemented inside commits currently labeled as Task 02; HID behavior is correctly deferred to Task 04.
+- Added Task 03 scope clarification plus four Task 04 phases and explicit completion checks.
+- Backed up the pre-edit planning files under `/Users/mac/backup/2026-09-02_1600_MagicBoard_HID04/`.
+- Next: inspect TrollVNC source and verified private HID API/entitlement declarations before designing `HIDBridge`.

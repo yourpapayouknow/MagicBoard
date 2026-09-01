@@ -263,3 +263,61 @@ Repair touch semantics without changing the accepted six-row Mac keyboard visual
 - [x] arm64 Release host and keyboard extension build succeeds
 - [x] `MagicBoard.tipa` is regenerated and structurally verified
 - [x] Target-device motion appearance matches the supplied three reference frames
+
+## Task 03 — Magic Keyboard layout
+
+### Confirmed scope
+
+- Task 03 is the already-completed layout work contained in the commits currently described as Task 02 layout refinements.
+- Esc, Ctrl, Option, Command, and the four arrow keys are present as visual keys/placeholders; their HID behavior is intentionally deferred to Task 04.
+- Rewording historical commit messages is separate from Task 04 implementation because it rewrites every descendant commit ID.
+
+## Task 04 — TrollStore HID special-key path
+
+### Goal
+
+Add one native TrollStore HID event path for Esc and the four arrow keys while preserving the existing `textDocumentProxy` path for text-producing keys and keeping the accepted keyboard layout unchanged.
+
+### Phase 17 — TrollVNC source and entitlement research
+
+**Status:** in_progress
+
+- Locate the authoritative TrollVNC HID keyboard-event implementation and record the exact client creation, event construction, usage-page/usage mappings, sender identity, and dispatch sequence.
+- Verify the required private framework symbols and TrollStore entitlements against source, headers, and the current project target/package flow.
+- Confirm that no Dopamine, Bootstrap, Substrate, compatibility layer, or runtime hook is part of the selected path.
+
+### Phase 18 — HIDBridge model and tests
+
+**Status:** pending
+
+- Add one independent `HIDBridge` module with a minimal supported-key model for Esc and four arrows.
+- Cover HID usage mappings and paired key-down/key-up dispatch behavior with focused tests where the private API boundary permits deterministic local verification.
+- Keep private API declarations isolated from the keyboard controller.
+
+### Phase 19 — Keyboard routing and TrollStore entitlements
+
+**Status:** pending
+
+- Route the existing Esc and arrow layout keys through `HIDBridge` without changing their accepted position, size, or touch area.
+- Configure the minimum verified host/extension entitlements in `project.yml` and the checked-in entitlement plists.
+- Extend packaging checks so the final keyboard executable demonstrably retains every required HID entitlement.
+
+### Phase 20 — Build, package, and device acceptance
+
+**Status:** pending
+
+- Run shared tests, simulator compilation where supported, and generic arm64 Release packaging.
+- Inspect the final `.tipa`, binary architectures, Info.plists, and exported entitlements.
+- Verify Esc and all four arrows as physical-keyboard events in at least two foreground apps on the target TrollStore device.
+
+### Task 04 completion checklist
+
+- [ ] TrollVNC HID keyboard-event source and adaptation notes are recorded
+- [ ] Independent `HIDBridge` exists
+- [ ] Required TrollStore entitlements are configured and package-verified
+- [ ] `IOHIDEventSystemClient` creation succeeds on the target device
+- [ ] Esc sends paired HID key down/up events
+- [ ] Left, Right, Up, and Down send paired HID key down/up events
+- [ ] Two foreground apps accept all four directions as physical-keyboard navigation
+- [ ] An app with hardware Esc support recognizes Esc
+- [ ] The HID path uses no Dopamine, Bootstrap, Substrate, compatibility layer, or runtime hook
