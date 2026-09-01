@@ -11,6 +11,7 @@ private enum KeyKind: Int {
     case enter
     case space
     case next
+    case dismiss
     case placeholder
 }
 
@@ -143,7 +144,7 @@ final class KeyboardViewController: UIInputViewController {
     // 创建 Mac 功能键占位行
     private func fnrow() -> [KeySpec] {
         [
-            ph("Esc", weight: 1.25, align: .leading, fontSize: 17),
+            ph("Esc", weight: 1.5, align: .leading, fontSize: 17),
             ph("F1", image: "sun.min", align: .bottom, fontSize: 13, stackIcon: true),
             ph("F2", image: "sun.max", align: .bottom, fontSize: 13, stackIcon: true),
             ph("F3", image: "rectangle.3.group", align: .bottom, fontSize: 13, stackIcon: true),
@@ -156,7 +157,7 @@ final class KeyboardViewController: UIInputViewController {
             ph("F10", image: "speaker.slash", align: .bottom, fontSize: 13, stackIcon: true),
             ph("F11", image: "speaker.wave.1", align: .bottom, fontSize: 13, stackIcon: true),
             ph("F12", image: "speaker.wave.3", align: .bottom, fontSize: 13, stackIcon: true),
-            ph(image: "circle", weight: 1.25),
+            ctl(image: "keyboard.chevron.compact.down", kind: .dismiss),
         ]
     }
 
@@ -396,6 +397,7 @@ final class KeyboardViewController: UIInputViewController {
         case .enter: "换行"
         case .space: "空格"
         case .next: "下一个键盘"
+        case .dismiss: "收起键盘"
         case .placeholder: spec.title.isEmpty ? "任务 3 功能键" : "\(spec.title)，任务 3 功能键"
         case .text: spec.title
         }
@@ -422,6 +424,8 @@ final class KeyboardViewController: UIInputViewController {
             textDocumentProxy.insertText("\n")
         case .space:
             textDocumentProxy.insertText(" ")
+        case .dismiss:
+            dismissKeyboard()
         case .next, .placeholder:
             break
         }

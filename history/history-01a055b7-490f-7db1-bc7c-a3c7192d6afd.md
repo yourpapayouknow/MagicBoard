@@ -219,3 +219,12 @@
 - **Where（在哪个上下文）**：`Keyboard/KeyboardViewController.swift`、`DESIGN.md`、`project.yml`、2018 款 iPad Pro 12.9 模拟器与 `build/MagicBoard.tipa`。
 - **Why（目的/背景）**：统一 F1–F12 的线性视觉语言，并与用户提供的 Mac Magic Keyboard 顶排图标保持一致。
 - **How（如何实现/决策过程）**：先使用系统符号目录确认六个轮廓名称均可解析，再进行仅六行图标名的最小替换；字号、位置、内边距和 F1–F6 完全不动。共享模块 10/10 测试通过，设计 lint 为 0 findings，真机 Release 与 2018 模拟器 Debug 构建成功；覆盖安装后在 Safari 的 MagicBoard 键盘界面确认 F7–F12 均为轮廓图标。最终 `.tipa` SHA-256 为 `7bb569ec22b37f23f8954f339480b681b6e072c47d7fe048e96df732894728ef`。
+
+### 第 24 轮对话（2026-09-01 18:56）
+
+- **Who（谁参与）**：用户（继续调整顶栏比例并选择快捷功能）+ AI（Codex Assistant）。
+- **What（做了什么）**：用户要求顶部 `Esc` 与下一行 `tab` 等宽，并将最右键收窄后改造成一个快捷刚需功能。经提问工具确认，用户选择“收起键盘”。AI把 `Esc` 从 1.25 单位加宽到 1.5 单位，把右上键从 1.25 单位收窄为 1.0 单位并改为 `keyboard.chevron.compact.down` 图标，新增原生 `dismissKeyboard()` 行为；构建号提升到 0.2.2 (11)。
+- **When（何时发生）**：2026-09-01 18:56（Asia/Shanghai）。
+- **Where（在哪个上下文）**：`Keyboard/KeyboardViewController.swift`、`DESIGN.md`、`project.yml`、Safari 地址栏与 2018 款 iPad Pro 12.9 模拟器。
+- **Why（目的/背景）**：让顶栏左侧宽键与 Mac 键盘的 tab 宽度关系一致，并把原本仅作视觉占位的右上圆环键变成无重复、无破坏性的高频操作。
+- **How（如何实现/决策过程）**：保持顶栏总权重不变，Esc 增加的 0.25 单位由右上键等量缩减，因此 F1–F12 不整体位移；从 UIKit SDK 头文件确认 `UIInputViewController.dismissKeyboard()` 可用，并确认目标 SF Symbol 存在。共享逻辑 10/10 测试、设计 lint、真机 Release 和模拟器 Debug 均通过；模拟器实际点按右上键后键盘立即收起且 Safari 焦点保留。最终 `.tipa` SHA-256 为 `ae19d0a7b65bf45d2a0f4fe8e087c97d0095c4b4516bbd2dab44ed18615bc121`。
