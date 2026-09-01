@@ -102,6 +102,7 @@ Build a traceable iPadOS project containing the MagicBoard host app, keyboard ex
 | Task 02B state-machine tests failed to compile because `shftdown`, `shftup`, `shftcncl`, and `dragout` do not exist | 1 | Expected red phase: the failures prove the new tests exercise APIs absent from the baseline; implement only those transitions next |
 | Task 02B simulator Debug build rejected direct UIKit access from `Timer` Sendable closures | 1 | Swift 6 correctly identified MainActor isolation; hop timer callbacks explicitly to `@MainActor` and recheck the owned timer before deleting |
 | Task 02B simulator Debug build rejected `Timer?` access from nonisolated controller `deinit` | 2 | The timer is confined to the main RunLoop; mark only this stored property `nonisolated(unsafe)` so deinit can invalidate it without weakening other UIKit isolation |
+| Final entitlement inspection used a dotted `plutil -extract` key path that split the entitlement key incorrectly | 1 | The archive and package-time PlistBuddy checks already passed; read the exported entitlement plists with `/usr/libexec/PlistBuddy` for the independent verification |
 
 ## Completion checklist
 
@@ -224,9 +225,9 @@ Repair touch semantics without changing the accepted six-row Mac keyboard visual
 - [x] Caps Lock, English/Chinese switching, alternate symbols, and Chinese mappings regressions pass
 - [ ] Delete single press and 450/80 ms repeat stop conditions pass
 - [ ] Down-drag inserts exactly one alternate and does not mutate global modifiers
-- [ ] `DESIGN.md` lint reports 0 findings
-- [ ] Shared module tests pass
+- [x] `DESIGN.md` lint reports 0 findings
+- [x] Shared module tests pass
 - [x] 2018 iPad Pro simulator Debug build succeeds
-- [ ] arm64 Release build succeeds
+- [x] arm64 Release build succeeds
 - [ ] Safari address-bar interaction acceptance is completed or clearly handed off for physical touch validation
-- [ ] `MagicBoard.tipa` is regenerated and verified
+- [x] `MagicBoard.tipa` is regenerated and verified

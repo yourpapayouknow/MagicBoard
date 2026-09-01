@@ -190,3 +190,19 @@
 - Safari address-bar automation passed normal text, one-shot Shift, left/right Shift toggle equivalence, shifted punctuation, one-character Delete, language switching, and Chinese base/alternate punctuation.
 - Simulator mouse bridging could not faithfully generate held multi-touch, long press, or system touch-cancel, and produced inconsistent pan delivery; those physical-touch cases remain for device acceptance.
 - Phase 13 is complete. Phase 14 continues with diff/design validation, Release arm64 build, packaging, and final artifact inspection.
+
+## 2026-09-01 — Task 02B final validation pass 1
+
+- `DESIGN.md` lint returned 0 errors, 0 warnings, and 0 infos.
+- The full shared package suite passed again: 20 tests, 0 failures.
+- Generic iOS Release built both host and keyboard as arm64 and generated `MagicBoard.tipa` version `0.2.2 (11)`.
+- ZIP integrity passed; artifact size is 118,097 bytes and SHA-256 is `1992028d9215a8db66d97ccf601bd122f1bbe779338ef6bdb4c873801c968403`.
+- Byte comparisons confirmed the fixed key-layout/mapping block and existing UIButton configuration style block are identical to baseline `2881955`.
+- A standalone `plutil` entitlement query used invalid dotted-key syntax; next verification will use the already-exported entitlement plists with PlistBuddy.
+
+## 2026-09-01 — Task 02B local validation completed
+
+- Re-read exported host and keyboard entitlement plists with PlistBuddy: both contain `group.com.iwmei.magicboard`; the keyboard extension point and open-access setting are correct.
+- Final artifact is `/Users/mac/codexproj/magicboard/build/MagicBoard.tipa`, version `0.2.2 (11)`, 118,097 bytes, SHA-256 `1992028d9215a8db66d97ccf601bd122f1bbe779338ef6bdb4c873801c968403`.
+- Artifact implementation commit is `82f9db2`.
+- All local automated acceptance items are complete. Physical touch validation remains for held multi-touch Shift, Delete hold/exit/cancel, and drag exit/cancel because Simulator mouse automation cannot faithfully synthesize those inputs.
