@@ -17,6 +17,7 @@ private enum KeyKind: Int {
 // 标识键帽内容对齐
 private enum KeyAlign {
     case center
+    case bottom
     case leading
     case trailing
 }
@@ -143,18 +144,18 @@ final class KeyboardViewController: UIInputViewController {
     private func fnrow() -> [KeySpec] {
         [
             ph("Esc", weight: 1.25, align: .leading, fontSize: 17),
-            ph("F1", image: "sun.min", stackIcon: true),
-            ph("F2", image: "sun.max", stackIcon: true),
-            ph("F3", image: "rectangle.3.group", stackIcon: true),
-            ph("F4", image: "magnifyingglass", stackIcon: true),
-            ph("F5", image: "mic", stackIcon: true),
-            ph("F6", image: "moon", stackIcon: true),
-            ph("F7", image: "backward.fill", stackIcon: true),
-            ph("F8", image: "playpause.fill", stackIcon: true),
-            ph("F9", image: "forward.fill", stackIcon: true),
-            ph("F10", image: "speaker.slash.fill", stackIcon: true),
-            ph("F11", image: "speaker.wave.1.fill", stackIcon: true),
-            ph("F12", image: "speaker.wave.3.fill", stackIcon: true),
+            ph("F1", image: "sun.min", align: .bottom, fontSize: 13, stackIcon: true),
+            ph("F2", image: "sun.max", align: .bottom, fontSize: 13, stackIcon: true),
+            ph("F3", image: "rectangle.3.group", align: .bottom, fontSize: 13, stackIcon: true),
+            ph("F4", image: "magnifyingglass", align: .bottom, fontSize: 13, stackIcon: true),
+            ph("F5", image: "mic", align: .bottom, fontSize: 13, stackIcon: true),
+            ph("F6", image: "moon", align: .bottom, fontSize: 13, stackIcon: true),
+            ph("F7", image: "backward.fill", align: .bottom, fontSize: 13, stackIcon: true),
+            ph("F8", image: "playpause.fill", align: .bottom, fontSize: 13, stackIcon: true),
+            ph("F9", image: "forward.fill", align: .bottom, fontSize: 13, stackIcon: true),
+            ph("F10", image: "speaker.slash.fill", align: .bottom, fontSize: 13, stackIcon: true),
+            ph("F11", image: "speaker.wave.1.fill", align: .bottom, fontSize: 13, stackIcon: true),
+            ph("F12", image: "speaker.wave.3.fill", align: .bottom, fontSize: 13, stackIcon: true),
             ph(image: "circle", weight: 1.25),
         ]
     }
@@ -172,7 +173,9 @@ final class KeyboardViewController: UIInputViewController {
             [
                 ph("tab", weight: 1.5, align: .leading, fontSize: 17), ltr("Q"), ltr("W"), ltr("E"), ltr("R"), ltr("T"),
                 ltr("Y"), ltr("U"), ltr("I"), ltr("O"), ltr("P"),
-                txt("[", alternate: "{"), txt("]", alternate: "}"), txt("\\", alternate: "|", weight: 1.5),
+                txt("[", alternate: "{", zhBase: "【", zhAlt: "「"),
+                txt("]", alternate: "}", zhBase: "】", zhAlt: "」"),
+                txt("\\", alternate: "|", weight: 1.5),
             ],
             [
                 ctl(state.language == .english ? "双拼" : "abc", kind: .language, weight: 1.8, align: .leading, fontSize: 18),
@@ -193,7 +196,7 @@ final class KeyboardViewController: UIInputViewController {
     // 创建底部控制行
     private func btmrow() -> [KeySpec] {
         [
-            ctl(image: "globe", kind: .next, weight: 1.05),
+            ctl(image: "globe", kind: .next, weight: 1.05, align: .leading),
             ph("Ctrl", weight: 1.15, align: .leading, fontSize: 17),
             ph(image: "option", weight: 1.15, align: .leading),
             ph(image: "command", weight: 1.25, align: .leading),
@@ -324,7 +327,7 @@ final class KeyboardViewController: UIInputViewController {
         config.title = spec.title.isEmpty ? nil : spec.title
         config.image = spec.image.flatMap(UIImage.init(systemName:))
         config.imagePlacement = spec.stackIcon ? .top : .leading
-        config.imagePadding = 3
+        config.imagePadding = spec.stackIcon ? 8 : 3
         config.preferredSymbolConfigurationForImage = .init(pointSize: 17, weight: .regular)
         config.contentInsets = .init(top: 4, leading: 7, bottom: 5, trailing: 7)
         config.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
@@ -338,6 +341,10 @@ final class KeyboardViewController: UIInputViewController {
             config.titleAlignment = .center
             button.contentHorizontalAlignment = .center
             button.contentVerticalAlignment = .center
+        case .bottom:
+            config.titleAlignment = .center
+            button.contentHorizontalAlignment = .center
+            button.contentVerticalAlignment = .bottom
         case .leading:
             config.titleAlignment = .leading
             button.contentHorizontalAlignment = .left

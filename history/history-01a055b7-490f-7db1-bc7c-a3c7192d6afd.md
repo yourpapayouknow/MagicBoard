@@ -174,3 +174,39 @@
 - **Where（在哪个上下文）**：`Keyboard/KeyboardViewController.swift`、`DESIGN.md`、`project.yml`、iPad Pro 12.9 M1 模拟器和 `build/MagicBoard.tipa`。
 - **Why（目的/背景）**：需要统一文字型与图标型功能键的视觉字号，避免同一底行和侧边功能区出现不一致的视觉权重。
 - **How（如何实现/决策过程）**：只调整文字型功能键的字号，不再扩大 F 键副标签或改变键宽；Release 构建、模拟器 Debug、共享模块 10/10 测试和设计 lint 全部通过。覆盖安装后切到 MagicBoard 截图确认标签均为单行且无截断；最终 `.tipa` SHA-256 为 `9fadcffe3b5585a3e36831cb926c74352980060468f8cc591570a185a933b5a8`。
+
+### 第 19 轮对话（2026-09-01 13:20）
+
+- **Who（谁参与）**：用户（在真机继续检查触摸细节）+ AI（Codex Assistant）。
+- **What（做了什么）**：用户指出五项问题：地球图标未在左下；Shift 只有简单 toggle，缺少点按保持/再次取消及按住期间输入后松手取消；Delete 长按不能连删；F1–F12 编号未与 Esc 同底部高度且图标需要下移；文字键缺少按住向下拖动输入 Shift 替代字符。AI先检查模拟器扩展日志、CodeGraph 状态机和 UIKit 事件绑定，确认扩展正常启动且触摸已分发，根因均为对应事件或对齐实现不存在。
+- **When（何时发生）**：2026-09-01 13:20（Asia/Shanghai）。
+- **Where（在哪个上下文）**：`Keyboard/KeyboardViewController.swift`、`SharedConfig.swift`、iPad Pro 12.9 M1 模拟器日志。
+- **Why（目的/背景）**：把视觉接近 Mac 的键盘继续提升到接近原版 iPad/Mac 键盘的触摸交互语义。
+- **How（如何实现/决策过程）**：日志排除了扩展崩溃；代码直接证明地球键默认居中、Shift 仅绑定 `touchUpInside` 且 `emit()` 强制清状态、Delete 无计时器、F 键无底部对齐、文字键无拖动识别。用户通过提问工具确认：按住 Shift 无输入时松手按普通点按处理；按住期间有输入时松手自动取消。
+
+### 第 20 轮对话（2026-09-01 13:35）
+
+- **Who（谁参与）**：用户（调整实施顺序并补充中文括号）+ AI（Codex Assistant）。
+- **What（做了什么）**：用户要求先修样式、功能问题后置，并指出中文模式两枚括号键未本地化。AI撤回尚未完成且未提交的 Shift 状态局部改动；用户确认中文括号采用左键 `「/【`、右键 `」/】`。完成地球图标左下对齐、F1–F12 底部基线和图标下移、中文括号映射，版本提升到 0.2.2 (8)。
+- **When（何时发生）**：2026-09-01 13:35（Asia/Shanghai）。
+- **Where（在哪个上下文）**：`Keyboard/KeyboardViewController.swift`、`DESIGN.md`、`project.yml`、iPad Pro 12.9 M1 模拟器。
+- **Why（目的/背景）**：先冻结视觉与键帽映射，避免在样式仍变化时同时调试复杂触摸状态机。
+- **How（如何实现/决策过程）**：新增居中底部对齐类型，F 键编号与 Esc 共用底部基线；地球键使用左下对齐；中文 `txt` 映射分别加入 `【/「` 与 `】/」`。模拟器截图验证英文、中文未 Shift、中文 Shift 三态；共享模块 10/10 测试、设计 lint、Release 和模拟器 Debug 均通过。样式包 SHA-256 为 `327f1e9926d0b00d20de5760d739dce2d6c51e97af3ad385868f06c3dcec52f6`，功能五项保留到下一阶段。
+
+### 第 21 轮对话（2026-09-01 13:40）
+
+- **Who（谁参与）**：用户（继续检查功能键顶排样式）+ AI（Codex Assistant）。
+- **What（做了什么）**：用户确认 F1–F12 的位置已经合适，要求 F 编号字号再放大 2 pt，并将视觉偏低的顶排图标向上调整，使其与双层可替换字符的排布关系一致；同时要求降低模拟器内存负担。AI把 F 编号由 11 pt 调到 13 pt，并增加图标与底部编号的垂直间距；构建号提升到 0.2.2 (9)。
+- **When（何时发生）**：2026-09-01 13:40（Asia/Shanghai）。
+- **Where（在哪个上下文）**：`Keyboard/KeyboardViewController.swift`、`DESIGN.md`、`project.yml`、`build/MagicBoard.tipa` 与 Xcode Simulator。
+- **Why（目的/背景）**：提高功能键顶排的可读性和图标/编号层级，同时避免继续使用 M1 12.9 模拟器造成不必要的宿主机资源占用。
+- **How（如何实现/决策过程）**：保持 F 键位置、键宽和底部基线不变，仅调整字号和图像内边距；共享模块 10/10 测试、设计 lint 和 Release 构建均通过，最终 `.tipa` SHA-256 为 `89d17f4100aeb04fdcd9c46e0ba8a663e75bafb624ee1ec615bfb813c5d8aecb`。
+
+### 第 22 轮对话（2026-09-01 18:43）
+
+- **Who（谁参与）**：用户（指定模拟器资源策略）+ AI（Codex Assistant）。
+- **What（做了什么）**：用户认为仅验收时启动并截图后立即关机效率太低，要求改用最低负担的 12.9 英寸设备，例如 2018 款。AI创建并启用 `MagicBoard iPad Pro 12.9 2018`（第三代，UDID `73860E49-6DDF-450B-B505-F0E0A09F764B`，iOS 18.4），保持原 M1 模拟器关机；在新设备安装 MagicBoard 并成功加入键盘列表。
+- **When（何时发生）**：2026-09-01 18:43（Asia/Shanghai）。
+- **Where（在哪个上下文）**：Xcode Simulator、iPad Pro 12.9-inch (3rd generation) 设备档案、MagicBoard 模拟器构建产物和 iPadOS 设置键盘列表。
+- **Why（目的/背景）**：在保留 12.9 英寸相同逻辑画布的前提下，减少同时运行高配模拟器带来的资源浪费，并避免每次验收反复开关机。
+- **How（如何实现/决策过程）**：选择最早的全面屏 12.9 英寸第三代设备档案以贴近 M1 12.9 的屏幕比例；首次启动经历数据迁移后，SpringBoard 和 MagicBoard 均稳定运行，主 App 可打开，输入法扩展可在设置中添加。明确说明 Simulator 不会真实模拟 2018 硬件的 CPU/RAM 上限，实际节省来自仅启动这一台并关闭其他模拟器；该设备保持开机作为后续日常验收环境。
