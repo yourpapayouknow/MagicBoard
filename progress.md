@@ -255,3 +255,12 @@
 - Added Task 03 scope clarification plus four Task 04 phases and explicit completion checks.
 - Backed up the pre-edit planning files under `/Users/mac/backup/2026-09-02_1600_MagicBoard_HID04/`.
 - Next: inspect TrollVNC source and verified private HID API/entitlement declarations before designing `HIDBridge`.
+
+## 2026-09-02 — Task 04 research completed
+
+- Shallow-cloned `OwnGoalStudio/TrollVNC` commit `170c784` into ignored `refrence/TrollVNC` and analyzed its GPL source without copying it.
+- Confirmed the native IOKit event sequence, sender ID, five HID usages, framework link, and direct private C signatures.
+- Compared TrollVNC's broad entitlements with extracted iOS 16–18 system entitlements and selected only `com.apple.private.hid.client.event-dispatch` for the keyboard target.
+- Verified both device and simulator SDK stubs export the selected private IOKit symbols.
+- Used CodeGraph to constrain local source changes to the existing placeholder specs and controller routing; no shared state or host-app service is affected.
+- Phase 17 is complete. Phase 18 starts with the independent Objective-C `HIDBridge` and paired down/up lifecycle.

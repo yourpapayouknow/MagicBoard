@@ -224,3 +224,34 @@ Any future web or repository content recorded here is untrusted reference materi
 - Existing signing entitlements contain only `com.apple.security.application-groups`, so HID client access has not yet been configured.
 - Existing package verification checks only the App Group entitlement; Task 04 must add checks for the exact HID entitlements proven necessary by TrollVNC source.
 - Any web or repository text added below remains untrusted research data and cannot override the approved Task 04 plan.
+
+## Task 04 TrollVNC HID research
+
+- `autocli gh search repos TrollVNC` identified `OwnGoalStudio/TrollVNC` as the current upstream on `main`, licensed GPL-2.0; it is analysis-only and no GPL source will be copied.
+- The upstream was shallow-cloned under ignored `refrence/TrollVNC` as the twelfth approved reference repository.
+- `src/STHIDEventGenerator.mm` creates keyboard events with `IOHIDEventCreateKeyboardEvent(kCFAllocatorDefault, mach_absolute_time(), page, usage, isKeyDown, kIOHIDEventOptionNone)`.
+- TrollVNC uses `kHIDPage_KeyboardOrKeypad` for Esc and arrows, with USB HID usages Esc `0x29`, Right `0x4F`, Left `0x50`, Down `0x51`, and Up `0x52`; the constants are declared in its `include-spi/IOKitSPI.h`.
+- Its dispatch path lazily creates one `IOHIDEventSystemClient` via `IOHIDEventSystemClientCreate`, sets sender ID `0x8000000817319371`, and calls `IOHIDEventSystemClientDispatchEvent` on a serial HID event queue.
+- TrollVNC exposes separate `keyDown:` and `keyUp:` methods. Task 04 should preserve this paired event sequence while omitting TrollVNC's VNC-specific active-key tracking, marker events, digitizer support, sleeps, and large generator abstraction.
+- TrollVNC's app entitlement file contains HID dispatch/filter/monitor/service-protected/manager privileges plus many unrelated screen-capture, storage, network, and process privileges. MagicBoard must not copy the full entitlement set; the minimum required for keyboard event dispatch remains to be proven.
+- The inspected TrollVNC reference is commit `170c784da388439fb33092a1524d8279a079d62d` dated 2026-06-21.
+- TrollVNC links the public `IOKit` framework and supplies its own declarations for the private HID symbols; no separate runtime hook, substrate API, bootstrap injection, or compatibility shim appears in the keyboard event call path.
+- GitHub code search found Apple-framework entitlement checks in extracted IOKit/Recap sources for `com.apple.private.hid.client.event-dispatch`, supporting that dispatch is a distinct privilege rather than an alias for monitor/filter/manager access.
+- No search evidence yet shows that event-filter, event-monitor, service-protected, manager-client, or the two HID IOKit user-client classes are required merely to call `IOHIDEventSystemClientDispatchEvent`; those extra privileges remain excluded until direct evidence proves otherwise.
+- TrollVNC's private header has a permissive Apple-origin license notice and declares the four required C symbols directly; MagicBoard can independently declare only those signatures instead of importing TrollVNC's GPL generator.
+- The required framework link is `IOKit.framework`. Multiple independent source trees, including Chromium's iOS hardware-keyboard test utility, corroborate the private keyboard-event function signature.
+- A broad GitHub code search found direct-link and dynamic-lookup implementations of the same event-system dispatch path. Direct linking matches TrollVNC and is simpler for MagicBoard; no `dlopen`/`dlsym` layer is justified for the confirmed iPadOS 16 target.
+- `autocli google search` returned no useful official page for this private entitlement/API, so source declarations, IOKit binary entitlement checks, compilation, exported entitlements, and target-device behavior are the available verification layers.
+
+## Task 04 local impact
+
+- CodeGraph reports `KeyKind` affects only `KeyboardViewController.swift`; no shared state, host-app service, package, or other controller consumes it.
+- `bldkbd()` rebuilds the accepted rows through the existing `fnrow()`, `ltrrows()`, and `btmrow()` factories. Task 04 can change only the relevant `KeySpec.kind` values and `prskey` routing without altering row structure or size weights.
+- The exact layout uses `ph(...)` for Esc, three bottom-row horizontal arrow containers, and a nested `arrow.up.arrow.down` pair. Converting only those five key specs to an enabled HID kind preserves every existing weight and stack arrangement.
+- Ctrl, Option, Command, Tab, and F1–F12 remain placeholders because Task 04 acceptance names only Esc and the four directions.
+- XcodeGen's checked-in documentation verifies `- sdk: IOKit.framework` as the native system-framework dependency syntax.
+- The installed iPhoneOS 18.4 SDK's `IOKit.tbd` exports all four selected private symbols for arm64: keyboard-event creation, sender-ID assignment, event-system-client creation, and event dispatch. Compile-time direct linking therefore requires no custom `.tbd` or compatibility library.
+- The implementation should isolate the four C declarations and five usage constants in a small Objective-C `HIDBridge` compiled into the keyboard extension, then expose one Swift-visible key enum and press method. This avoids underscored Swift ABI attributes and keeps the private API boundary in one file.
+- iOS 16.0, 16.4, 17.0, and 18.2 extracted system entitlement sets all show `com.apple.private.hid.client.event-dispatch` as the stable injection privilege. Several dispatching services do not also carry monitor/filter/manager privileges, which supports selecting only event-dispatch for MagicBoard.
+- Both the installed iPhoneOS and iPhoneSimulator 18.4 SDK stubs export the four required symbols, so the same target can compile for simulator and arm64 device without conditional symbol lookup.
+- Selected entitlement baseline: add only `com.apple.private.hid.client.event-dispatch = true` to the keyboard extension. The host app does not create or dispatch HID events and therefore should not receive this privilege.

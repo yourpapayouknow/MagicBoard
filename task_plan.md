@@ -280,7 +280,7 @@ Add one native TrollStore HID event path for Esc and the four arrow keys while p
 
 ### Phase 17 — TrollVNC source and entitlement research
 
-**Status:** in_progress
+**Status:** complete
 
 - Locate the authoritative TrollVNC HID keyboard-event implementation and record the exact client creation, event construction, usage-page/usage mappings, sender identity, and dispatch sequence.
 - Verify the required private framework symbols and TrollStore entitlements against source, headers, and the current project target/package flow.
@@ -288,7 +288,7 @@ Add one native TrollStore HID event path for Esc and the four arrow keys while p
 
 ### Phase 18 — HIDBridge model and tests
 
-**Status:** pending
+**Status:** in_progress
 
 - Add one independent `HIDBridge` module with a minimal supported-key model for Esc and four arrows.
 - Cover HID usage mappings and paired key-down/key-up dispatch behavior with focused tests where the private API boundary permits deterministic local verification.
