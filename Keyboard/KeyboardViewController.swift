@@ -142,7 +142,7 @@ final class KeyboardViewController: UIInputViewController {
     // 创建 Mac 功能键占位行
     private func fnrow() -> [KeySpec] {
         [
-            ph("Esc", weight: 1.25, align: .leading, fontSize: 12),
+            ph("Esc", weight: 1.25, align: .leading, fontSize: 17),
             ph("F1", image: "sun.min", stackIcon: true),
             ph("F2", image: "sun.max", stackIcon: true),
             ph("F3", image: "rectangle.3.group", stackIcon: true),
@@ -167,10 +167,10 @@ final class KeyboardViewController: UIInputViewController {
                 txt("3", alternate: "#"), txt("4", alternate: "$", zhAlt: "¥"), txt("5", alternate: "%"),
                 txt("6", alternate: "^", zhAlt: "……"), txt("7", alternate: "&"), txt("8", alternate: "*"),
                 txt("9", alternate: "("), txt("0", alternate: ")"), txt("-", alternate: "_", zhAlt: "—"),
-                txt("=", alternate: "+"), ctl("delete", kind: .delete, weight: 1.7, align: .trailing, fontSize: 16),
+                txt("=", alternate: "+"), ctl("delete", kind: .delete, weight: 1.7, align: .trailing),
             ],
             [
-                ph("tab", weight: 1.5, align: .leading), ltr("Q"), ltr("W"), ltr("E"), ltr("R"), ltr("T"),
+                ph("tab", weight: 1.5, align: .leading, fontSize: 17), ltr("Q"), ltr("W"), ltr("E"), ltr("R"), ltr("T"),
                 ltr("Y"), ltr("U"), ltr("I"), ltr("O"), ltr("P"),
                 txt("[", alternate: "{"), txt("]", alternate: "}"), txt("\\", alternate: "|", weight: 1.5),
             ],
@@ -178,14 +178,14 @@ final class KeyboardViewController: UIInputViewController {
                 ctl(state.language == .english ? "双拼" : "abc", kind: .language, weight: 1.8, align: .leading, fontSize: 18),
                 ltr("A"), ltr("S"), ltr("D"), ltr("F"), ltr("G"), ltr("H"), ltr("J"), ltr("K"), ltr("L"),
                 txt(";", alternate: ":"), txt("'", alternate: "\""),
-                ctl("return", kind: .enter, weight: 1.9, align: .trailing, fontSize: 16),
+                ctl("return", kind: .enter, weight: 1.9, align: .trailing),
             ],
             [
-                ctl("shift", kind: .shift, weight: 2.25, align: .leading, fontSize: 16),
+                ctl("shift", kind: .shift, weight: 2.25, align: .leading),
                 ltr("Z"), ltr("X"), ltr("C"), ltr("V"), ltr("B"), ltr("N"), ltr("M"),
                 txt(",", alternate: "<", zhBase: "，", zhAlt: "《"),
                 txt(".", alternate: ">", zhBase: "。", zhAlt: "》"), txt("/", alternate: "?"),
-                ctl("shift", kind: .shift, weight: 2.25, align: .trailing, fontSize: 16),
+                ctl("shift", kind: .shift, weight: 2.25, align: .trailing),
             ],
         ]
     }
@@ -194,7 +194,7 @@ final class KeyboardViewController: UIInputViewController {
     private func btmrow() -> [KeySpec] {
         [
             ctl(image: "globe", kind: .next, weight: 1.05),
-            ph("Ctrl", weight: 1.15, align: .leading),
+            ph("Ctrl", weight: 1.15, align: .leading, fontSize: 17),
             ph(image: "option", weight: 1.15, align: .leading),
             ph(image: "command", weight: 1.25, align: .leading),
             ctl("space", kind: .space, weight: 5),
@@ -245,7 +245,7 @@ final class KeyboardViewController: UIInputViewController {
         kind: KeyKind,
         weight: CGFloat = 1,
         align: KeyAlign = .center,
-        fontSize: CGFloat = 14
+        fontSize: CGFloat = 17
     ) -> KeySpec {
         KeySpec(title, image: image, kind: kind, weight: weight, align: align, fontSize: fontSize)
     }

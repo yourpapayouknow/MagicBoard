@@ -165,3 +165,12 @@
 - **Where（在哪个上下文）**：`Keyboard/KeyboardViewController.swift`、`DESIGN.md`、`project.yml`、iPad Pro 12.9 M1 模拟器和最终 `build/MagicBoard.tipa`。
 - **Why（目的/背景）**：12.9 英寸屏幕上的完整 Mac 键盘键位密度较高，上一版虽然结构正确，但字符和功能符号仍不够醒目。
 - **How（如何实现/决策过程）**：保持字符区字号高于功能区，不改变任何键宽、输入状态或事件逻辑；在同一 12.9 英寸第五代模拟器覆盖安装并截图检查，确认 `Esc`、`Ctrl`、F1–F12、`delete`、`return`、Shift、Command/Option 和分离方向键均未换行或截断。共享模块 10/10 测试通过，设计 lint 0 findings，arm64 Release 与模拟器 Debug 均构建成功；最终 `.tipa` SHA-256 为 `0c1795b091815f42e6d328fd5d15019247a36289c04186928b90a3eff4d2eaa5`。
+
+### 第 18 轮对话（2026-09-01 13:15）
+
+- **Who（谁参与）**：用户（在真机验收中指出视觉层级问题）+ AI（Codex Assistant）。
+- **What（做了什么）**：用户反馈 `Esc`、`tab`、`Ctrl` 等文字型功能键明显小于 Option/Command 图标。AI把 `Esc`、`tab`、`Ctrl`、`space`、`delete`、`return` 和两侧 `shift` 统一为约 17 pt，并保留 F1–F12 编号为较小的图标副标签；构建号提升到 0.2.2 (7)。
+- **When（何时发生）**：2026-09-01 13:15（Asia/Shanghai）。
+- **Where（在哪个上下文）**：`Keyboard/KeyboardViewController.swift`、`DESIGN.md`、`project.yml`、iPad Pro 12.9 M1 模拟器和 `build/MagicBoard.tipa`。
+- **Why（目的/背景）**：需要统一文字型与图标型功能键的视觉字号，避免同一底行和侧边功能区出现不一致的视觉权重。
+- **How（如何实现/决策过程）**：只调整文字型功能键的字号，不再扩大 F 键副标签或改变键宽；Release 构建、模拟器 Debug、共享模块 10/10 测试和设计 lint 全部通过。覆盖安装后切到 MagicBoard 截图确认标签均为单行且无截断；最终 `.tipa` SHA-256 为 `9fadcffe3b5585a3e36831cb926c74352980060468f8cc591570a185a933b5a8`。
