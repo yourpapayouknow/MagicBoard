@@ -17,6 +17,11 @@ private enum KeyKind: Int {
     case rightArrow
     case upArrow
     case downArrow
+    case control
+    case leftOption
+    case leftCommand
+    case rightCommand
+    case rightOption
     case placeholder
 
     // 返回特殊键对应的 HID usage
@@ -27,6 +32,23 @@ private enum KeyKind: Int {
         case .rightArrow: .rightArrow
         case .upArrow: .upArrow
         case .downArrow: .downArrow
+        case .control: .control
+        case .leftOption: .leftOption
+        case .leftCommand: .leftCommand
+        case .rightCommand: .rightCommand
+        case .rightOption: .rightOption
+        default: nil
+        }
+    }
+
+    // 返回物理修饰键对应的共享状态键
+    var modifierKey: ModifierKey? {
+        switch self {
+        case .control: .control
+        case .leftOption: .leftOption
+        case .leftCommand: .leftCommand
+        case .rightCommand: .rightCommand
+        case .rightOption: .rightOption
         default: nil
         }
     }
@@ -53,6 +75,7 @@ private struct KeySpec {
     let align: KeyAlign
     let fontSize: CGFloat
     let stackIcon: Bool
+    let hidKey: MBHIDKey?
 
     // 创建按键描述
     init(
@@ -66,7 +89,8 @@ private struct KeySpec {
         enabled: Bool = true,
         align: KeyAlign = .center,
         fontSize: CGFloat = 11,
-        stackIcon: Bool = false
+        stackIcon: Bool = false,
+        hidKey: MBHIDKey? = nil
     ) {
         self.title = title
         self.image = image
@@ -79,6 +103,7 @@ private struct KeySpec {
         self.align = align
         self.fontSize = fontSize
         self.stackIcon = stackIcon
+        self.hidKey = hidKey
     }
 }
 
@@ -95,6 +120,7 @@ final class KeyboardViewController: UIInputViewController {
     private let trackpad = UIView()
     private var theme = SharedConfig.ldthm()
     private var state = InputState()
+    private var modifiers = ModifierState()
     private var height: NSLayoutConstraint?
     private var buttons: [BoardButton] = []
     private let dragdist: CGFloat = 24
@@ -177,6 +203,7 @@ final class KeyboardViewController: UIInputViewController {
         stopcursor()
         stopdel()
         state.shftcncl()
+        modifiers.reset()
         HIDBridge.shared.releaseAll()
     }
 
@@ -185,6 +212,7 @@ final class KeyboardViewController: UIInputViewController {
         stopcursor()
         stopdel()
         state.shftcncl()
+        modifiers.reset()
         HIDBridge.shared.releaseAll()
         buttons.removeAll(keepingCapacity: true)
         for item in rows.arrangedSubviews {
@@ -256,12 +284,12 @@ final class KeyboardViewController: UIInputViewController {
     private func btmrow() -> [KeySpec] {
         [
             ctl(image: "globe", kind: .next, weight: 1.05, align: .leading),
-            ph("Ctrl", weight: 1.15, align: .leading, fontSize: 17),
-            ph(image: "option", weight: 1.15, align: .leading),
-            ph(image: "command", weight: 1.25, align: .leading),
+            ctl("Ctrl", kind: .control, weight: 1.15, align: .leading),
+            ctl(image: "option", kind: .leftOption, weight: 1.15, align: .leading),
+            ctl(image: "command", kind: .leftCommand, weight: 1.25, align: .leading),
             ctl("space", kind: .space, weight: 5),
-            ph(image: "command", weight: 1.25, align: .trailing),
-            ph(image: "option", weight: 1.15, align: .trailing),
+            ctl(image: "command", kind: .rightCommand, weight: 1.25, align: .trailing),
+            ctl(image: "option", kind: .rightOption, weight: 1.15, align: .trailing),
             ctl(image: "arrow.left", kind: .leftArrow, weight: 0.75),
             ctl(image: "arrow.up.arrow.down", kind: .upArrow, weight: 0.75),
             ctl(image: "arrow.right", kind: .rightArrow, weight: 0.75),
@@ -271,7 +299,74 @@ final class KeyboardViewController: UIInputViewController {
     // 创建字母按键描述
     private func ltr(_ title: String) -> KeySpec {
         let label = state.uppercase ? title.uppercased() : title.lowercased()
-        return KeySpec(label, output: title.lowercased(), letter: true, fontSize: 27)
+        return KeySpec(
+            label,
+            output: title.lowercased(),
+            letter: true,
+            fontSize: 27,
+            hidKey: ltrhid(title)
+        )
+    }
+
+    // 返回字母对应的 USB HID usage
+    private func ltrhid(_ value: String) -> MBHIDKey? {
+        switch value.lowercased() {
+        case "a": .A
+        case "b": .B
+        case "c": .C
+        case "d": .D
+        case "e": .E
+        case "f": .F
+        case "g": .G
+        case "h": .H
+        case "i": .I
+        case "j": .J
+        case "k": .K
+        case "l": .L
+        case "m": .M
+        case "n": .N
+        case "o": .O
+        case "p": .P
+        case "q": .Q
+        case "r": .R
+        case "s": .S
+        case "t": .T
+        case "u": .U
+        case "v": .V
+        case "w": .W
+        case "x": .X
+        case "y": .Y
+        case "z": .Z
+        default: nil
+        }
+    }
+
+    // 返回数字与标点对应的 USB HID usage
+    private func txthid(_ value: String) -> MBHIDKey? {
+        switch value {
+        case "1": .digit1
+        case "2": .digit2
+        case "3": .digit3
+        case "4": .digit4
+        case "5": .digit5
+        case "6": .digit6
+        case "7": .digit7
+        case "8": .digit8
+        case "9": .digit9
+        case "0": .digit0
+        case "-": .minus
+        case "=": .equal
+        case "[": .leftBracket
+        case "]": .rightBracket
+        case "\\": .backslash
+        case ";": .semicolon
+        case "'": .quote
+        case "`": .grave
+        case ",": .comma
+        case ".": .period
+        case "/": .slash
+        default: nil
+        }
     }
 
     // 创建中英双层字符按键
@@ -297,7 +392,14 @@ final class KeyboardViewController: UIInputViewController {
             label = output
             size = 27
         }
-        return KeySpec(label, output: output, alternate: alternate, weight: weight, fontSize: size)
+        return KeySpec(
+            label,
+            output: output,
+            alternate: alternate,
+            weight: weight,
+            fontSize: size,
+            hidKey: txthid(base)
+        )
     }
 
     // 创建控制按键描述
@@ -417,6 +519,7 @@ final class KeyboardViewController: UIInputViewController {
 
         let selected = (spec.kind == .shift && state.shifted)
             || (spec.kind == .language && state.capsLocked)
+            || (spec.kind.modifierKey.map { modifiers.contains($0) } ?? false)
         if spec.kind == .placeholder {
             config.baseForegroundColor = .tertiaryLabel
             config.baseBackgroundColor = .secondarySystemFill
@@ -434,7 +537,14 @@ final class KeyboardViewController: UIInputViewController {
         button.titleLabel?.numberOfLines = 2
         button.titleLabel?.textAlignment = .center
 
-        if spec.kind.hidKey != nil {
+        if spec.kind.modifierKey != nil {
+            button.addTarget(self, action: #selector(moddown(_:)), for: .touchDown)
+            button.addTarget(
+                self,
+                action: #selector(modup(_:)),
+                for: [.touchUpInside, .touchUpOutside, .touchCancel, .touchDragExit]
+            )
+        } else if spec.kind.hidKey != nil {
             button.addTarget(self, action: #selector(hiddown(_:)), for: .touchDown)
             button.addTarget(
                 self,
@@ -494,6 +604,11 @@ final class KeyboardViewController: UIInputViewController {
         case .rightArrow: "右方向键"
         case .upArrow: "上方向键"
         case .downArrow: "下方向键"
+        case .control: "Control"
+        case .leftOption: "左 Option"
+        case .leftCommand: "左 Command"
+        case .rightCommand: "右 Command"
+        case .rightOption: "右 Option"
         case .placeholder: spec.title.isEmpty ? "任务 3 功能键" : "\(spec.title)，任务 3 功能键"
         case .text: spec.title
         }
@@ -504,9 +619,7 @@ final class KeyboardViewController: UIInputViewController {
         guard let spec = (sender as? BoardButton)?.spec else { return }
         switch spec.kind {
         case .text:
-            let output = state.emit(spec.output, alternate: spec.alternate, letter: spec.letter)
-            textDocumentProxy.insertText(output)
-            rfrshft()
+            inptxt(spec, drag: false)
         case .shift:
             state.tglshft()
             rfrshft()
@@ -516,16 +629,38 @@ final class KeyboardViewController: UIInputViewController {
         case .delete:
             break
         case .enter:
-            textDocumentProxy.insertText("\n")
+            if modifiers.isActive {
+                sndhid(.enter)
+            } else {
+                textDocumentProxy.insertText("\n")
+            }
         case .space:
-            textDocumentProxy.insertText(" ")
+            if modifiers.isActive {
+                sndhid(.space)
+            } else {
+                textDocumentProxy.insertText(" ")
+            }
         case .dismiss:
             dismissKeyboard()
-        case .escape, .leftArrow, .rightArrow, .upArrow, .downArrow:
+        case .escape, .leftArrow, .rightArrow, .upArrow, .downArrow,
+             .control, .leftOption, .leftCommand, .rightCommand, .rightOption:
             break
         case .next, .placeholder:
             break
         }
+    }
+
+    // 通过当前输入路径发送字符键
+    private func inptxt(_ spec: KeySpec, drag: Bool) {
+        if modifiers.isActive {
+            if let key = spec.hidKey { sndhid(key) }
+            return
+        }
+        let output = drag
+            ? state.dragout(spec.output, alternate: spec.alternate, letter: spec.letter)
+            : state.emit(spec.output, alternate: spec.alternate, letter: spec.letter)
+        textDocumentProxy.insertText(output)
+        rfrshft()
     }
 
     // 发送 HID 按键按下事件
@@ -544,6 +679,46 @@ final class KeyboardViewController: UIInputViewController {
             let key = spec.kind.hidKey
         else { return }
         HIDBridge.shared.keyUp(key)
+    }
+
+    // 开始物理修饰键触摸
+    @objc private func moddown(_ sender: UIButton) {
+        guard
+            let button = sender as? BoardButton,
+            let spec = button.spec,
+            let modifier = spec.kind.modifierKey,
+            let key = spec.kind.hidKey,
+            modifiers.press(modifier)
+        else { return }
+        guard HIDBridge.shared.keyDown(key) else {
+            modifiers.release(modifier)
+            return
+        }
+        updmod(button, active: true)
+    }
+
+    // 完成或取消物理修饰键触摸
+    @objc private func modup(_ sender: UIButton) {
+        guard
+            let button = sender as? BoardButton,
+            let spec = button.spec,
+            let modifier = spec.kind.modifierKey,
+            let key = spec.kind.hidKey,
+            modifiers.release(modifier)
+        else { return }
+        HIDBridge.shared.keyUp(key)
+        updmod(button, active: false)
+    }
+
+    // 更新修饰键活动外观
+    private func updmod(_ button: BoardButton, active: Bool) {
+        guard var config = button.configuration else { return }
+        config.baseForegroundColor = active ? .systemBackground : .label
+        config.baseBackgroundColor = active
+            ? theme.primary.uiclr
+            : theme.accent.uiclr.withAlphaComponent(0.24)
+        button.configuration = config
+        button.accessibilityValue = active ? "已按下" : nil
     }
 
     // 处理空格键触控板手势
@@ -605,6 +780,11 @@ final class KeyboardViewController: UIInputViewController {
         case .up: .upArrow
         case .down: .downArrow
         }
+        sndhid(key)
+    }
+
+    // 发送一次完整 HID 按键
+    private func sndhid(_ key: MBHIDKey) {
         guard HIDBridge.shared.keyDown(key) else { return }
         HIDBridge.shared.keyUp(key)
     }
@@ -691,6 +871,10 @@ final class KeyboardViewController: UIInputViewController {
     // 开始 Delete 删除与延迟
     @objc private func deldown(_ sender: UIButton) {
         stopdel()
+        if modifiers.isActive {
+            sndhid(.delete)
+            return
+        }
         textDocumentProxy.deleteBackward()
         let timer = Timer(timeInterval: 0.45, repeats: false) { [weak self] _ in
             Task { @MainActor [weak self] in
@@ -746,9 +930,7 @@ final class KeyboardViewController: UIInputViewController {
             upddrag(button, spec: spec, distance: distance)
         case .ended:
             if distance >= dragdist {
-                let output = state.dragout(spec.output, alternate: spec.alternate, letter: spec.letter)
-                textDocumentProxy.insertText(output)
-                rfrshft()
+                inptxt(spec, drag: true)
             }
             rstdrag(button, spec: spec, animated: !UIAccessibility.isReduceMotionEnabled)
         case .cancelled, .failed:

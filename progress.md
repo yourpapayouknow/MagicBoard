@@ -300,3 +300,21 @@
 - Independently verified ZIP integrity, arm64 binaries, host/extension version parity, IOKit linkage, HID imports, and least-privilege entitlement placement.
 - Artifact: `/Users/mac/codexproj/magicboard/build/MagicBoard.tipa`, 133,233 bytes, SHA-256 `b860067117cb7c77afc9addd82ed0da12c9f2a66490e9de7501845da4d821f64`, source commit `6cfc02e`.
 - Phase 24 now awaits target-iPad touch acceptance in two text editors.
+
+## 2026-09-02 — Function 05 modifier work started
+
+- Verified a clean Git worktree at `fcd7ba6`, restored the existing planning files, and confirmed CodeGraph is healthy with 8 indexed files.
+- Re-read the accepted `DESIGN.md`; existing functional-key and selected-state rules cover the requested modifier enablement without a design-file change.
+- Mapped the existing `InputState`, `prskey`, key-spec factories, and sole `HIDBridge` lifecycle. No second HID engine or shortcut-command table is needed.
+- Verified A–Z and five physical modifier usages against the installed Apple IOKit usage-table declarations.
+- Backed up the pre-edit planning files under `/Users/mac/backup/2026-09-02_功能05_修饰键/`.
+- Added Phases 25–28 and explicit foreground-app acceptance checks. Phase 25 proceeds with red tests for the shared `ModifierState`.
+- Added five focused state tests. The first shared-suite run failed at compile time only on the intentionally missing `ModifierState`/`ModifierKey` symbols, establishing the expected red phase with no unrelated regression.
+- Added the minimum shared `ModifierKey`/`ModifierState` model with five physical sources, idempotent press/release, active queries, and full reset.
+- Re-ran the complete shared suite: 30 tests passed, 0 failures. Phase 25 is complete; Phase 26 begins with the existing HID bridge and controller routing only.
+- Extended the existing HID enum with verified A–Z, number, punctuation, Space, Return, Delete, and five physical modifier usages; no bridge implementation or entitlement change was needed.
+- Enabled the existing Control/Option/Command keycaps without moving or resizing them, added held-state feedback, and wired down/up/outside/cancel/drag-exit cleanup.
+- Centralized modified character dispatch so active modifiers use paired HID events and return before `textDocumentProxy`; Space, Return, and Delete follow the same rule, while unmodified input remains unchanged.
+- The first simulator build exposed the verified Clang Importer spelling `.A...Z`; a direct Swift type check confirmed it, the source was corrected, and the complete 2018 iPad Pro simulator Debug build then succeeded.
+- A first type-check probe used literal `\\n` separators and failed at its own syntax; the semicolon-delimited probe succeeded. The first post-write CodeGraph status call returned `Transport closed` and will be retried during final validation.
+- Re-ran all 30 shared tests successfully and found no prohibited local Shell invocation. Phase 26 is complete; Phase 27 starts with version `0.6.0 (14)`, lint, Release packaging, and archive inspection.

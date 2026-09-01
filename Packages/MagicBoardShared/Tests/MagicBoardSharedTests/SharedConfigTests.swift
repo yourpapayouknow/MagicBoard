@@ -231,6 +231,67 @@ final class SharedConfigTests: XCTestCase {
         XCTAssertFalse(state.shifted)
     }
 
+    // 验证修饰键默认状态
+    func testmodsinit() {
+        let state = ModifierState()
+
+        XCTAssertFalse(state.isActive)
+        XCTAssertFalse(state.contains(.control))
+    }
+
+    // 验证五个物理修饰键独立切换
+    func testmods() {
+        var state = ModifierState()
+        let keys: [ModifierKey] = [.control, .leftOption, .leftCommand, .rightCommand, .rightOption]
+
+        for key in keys {
+            XCTAssertTrue(state.press(key))
+            XCTAssertTrue(state.contains(key))
+            XCTAssertTrue(state.isActive)
+            XCTAssertTrue(state.release(key))
+            XCTAssertFalse(state.contains(key))
+            XCTAssertFalse(state.isActive)
+        }
+    }
+
+    // 验证重复修饰事件保持幂等
+    func testmodsdup() {
+        var state = ModifierState()
+
+        XCTAssertTrue(state.press(.control))
+        XCTAssertFalse(state.press(.control))
+        XCTAssertTrue(state.release(.control))
+        XCTAssertFalse(state.release(.control))
+        XCTAssertFalse(state.isActive)
+    }
+
+    // 验证左右同类修饰键互不释放
+    func testmodpairs() {
+        var state = ModifierState()
+
+        state.press(.leftCommand)
+        state.press(.rightCommand)
+        XCTAssertTrue(state.release(.leftCommand))
+        XCTAssertFalse(state.contains(.leftCommand))
+        XCTAssertTrue(state.contains(.rightCommand))
+        XCTAssertTrue(state.isActive)
+    }
+
+    // 验证一次清理全部修饰键
+    func testmodsrst() {
+        var state = ModifierState()
+
+        state.press(.control)
+        state.press(.leftOption)
+        state.press(.rightCommand)
+        state.reset()
+
+        XCTAssertFalse(state.isActive)
+        XCTAssertFalse(state.contains(.control))
+        XCTAssertFalse(state.contains(.leftOption))
+        XCTAssertFalse(state.contains(.rightCommand))
+    }
+
     // 验证未越过阈值时保留位移
     func testcursres() {
         var motion = CursorMotion(step: 12)

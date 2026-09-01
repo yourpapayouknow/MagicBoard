@@ -379,3 +379,58 @@ Preserve ordinary Space input while adding a native-keyboard-style long-press dr
 - [ ] Existing text, Shift, Delete, down-drag, Esc, and arrow behavior remains intact
 - [x] `DESIGN.md` lint and all automated builds/tests pass
 - [ ] A regenerated `.tipa` passes target-device acceptance in two text editors
+
+## Function 05 — Ctrl / Option / Command HID modifiers
+
+### Goal
+
+Enable the existing Control, left/right Option, and left/right Command keycaps as real held HID modifiers. While any of these modifiers is active, letter keys must emit paired HID keyboard events and must never insert through `textDocumentProxy`; the foreground app remains the sole shortcut interpreter.
+
+### Phase 25 — State model and HID usage verification
+
+**Status:** complete
+
+- Verify modifier and A–Z USB HID usages against the installed Apple IOKit usage-table declarations.
+- Add one shared `ModifierState` that distinguishes all five physical modifier keycaps and exposes only active-state transitions/querying.
+- Add focused tests for initial state, independent press/release, duplicate transitions, simultaneous left/right modifiers, and reset.
+
+**Expected red test:** the first shared-suite run fails only because `ModifierState` and `ModifierKey` are not implemented yet. Resolution is the minimum shared state model described above.
+
+### Phase 26 — Keyboard routing and cleanup
+
+**Status:** complete
+
+- Extend the existing `HIDBridge` key enum only; do not create another event client or shortcut-command layer.
+- Reuse touch down/up/cancel lifecycle for the five modifier keycaps and preserve independent left/right HID usages.
+- Route A–Z through paired HID events only while a modifier is active; keep unmodified text on the existing document-proxy path.
+- Release and reset every active modifier on cancellation, rebuild, disappearance, and teardown.
+
+### Phase 27 — Automated validation and package
+
+**Status:** in_progress
+
+- Run the expected red shared tests, implement the minimum state model, and rerun the full suite.
+- Build the simulator Debug target, lint `DESIGN.md`, and regenerate/inspect the arm64 TrollStore package.
+- Confirm the diff contains no hard-coded Command+A/C/V/Z behavior and no foreground-app business logic.
+
+**Errors recorded:** the first simulator build found that single-letter C enum members import as `.A...Z`, not `.a...z`; direct Swift type checking confirmed the importer names and the corrected build passed. A first diagnostic command encoded newlines literally and was replaced with a semicolon-delimited compiler input. The first post-write CodeGraph status retry returned `Transport closed`; final validation will retry once after packaging.
+
+### Phase 28 — Foreground-app acceptance
+
+**Status:** pending
+
+- Verify Command+A, Command+C, Command+V, Command+Z, and one app-specific Command shortcut on the target device.
+- Verify at least one Control combination and one Option combination are recognized by foreground apps.
+- Confirm active modifiers suppress proxy text insertion and all shortcut outcomes are produced by the foreground app.
+
+### Function 05 completion checklist
+
+- [ ] Unified `ModifierState` covers Control and both physical Option/Command keys
+- [ ] Control, Option, and Command send real HID down/up events with cancellation cleanup
+- [ ] Modifier + A–Z sends paired HID keyboard events
+- [ ] Modifier-active letters never call `textDocumentProxy.insertText`
+- [ ] Command+A/C/V/Z work in a foreground app
+- [ ] At least one foreground-app-specific Command shortcut works
+- [ ] At least one Control and one Option combination are recognized by foreground apps
+- [ ] No shortcut behavior is hard-coded inside MagicBoard
+- [ ] Shared tests, design lint, simulator build, and arm64 package checks pass

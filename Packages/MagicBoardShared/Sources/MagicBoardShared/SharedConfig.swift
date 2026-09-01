@@ -40,6 +40,52 @@ public enum BoardLang: Equatable, Sendable {
     case chinese
 }
 
+// 标识底部物理修饰键
+public enum ModifierKey: Hashable, Sendable {
+    case control
+    case leftOption
+    case leftCommand
+    case rightCommand
+    case rightOption
+}
+
+// 管理全部按住的物理修饰键
+public struct ModifierState: Equatable, Sendable {
+    private var active: Set<ModifierKey>
+
+    // 创建空修饰键状态
+    public init() {
+        active = []
+    }
+
+    // 判断是否存在活动修饰键
+    public var isActive: Bool {
+        !active.isEmpty
+    }
+
+    // 判断指定修饰键是否活动
+    public func contains(_ key: ModifierKey) -> Bool {
+        active.contains(key)
+    }
+
+    // 记录修饰键按下并返回是否改变
+    @discardableResult
+    public mutating func press(_ key: ModifierKey) -> Bool {
+        active.insert(key).inserted
+    }
+
+    // 记录修饰键释放并返回是否改变
+    @discardableResult
+    public mutating func release(_ key: ModifierKey) -> Bool {
+        active.remove(key) != nil
+    }
+
+    // 清空全部活动修饰键
+    public mutating func reset() {
+        active.removeAll()
+    }
+}
+
 // 管理语言与大小写状态
 public struct InputState: Equatable, Sendable {
     public private(set) var language: BoardLang
