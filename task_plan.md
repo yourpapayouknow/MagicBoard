@@ -330,15 +330,23 @@ Preserve ordinary Space input while adding a native-keyboard-style long-press dr
 
 ### Phase 21 — Interaction and implementation alignment
 
-**Status:** in_progress
+**Status:** complete
 
 - Inspect the current Space touch path and reusable gesture/HID implementations.
 - Verify UIKit gesture cancellation behavior and the available cursor-position APIs from primary declarations or source.
 - Confirm the long-press threshold, movement model, and active visual state before editing code.
 
+### Confirmed interaction parameters
+
+- A short Space tap inserts exactly one space through the existing document-proxy path.
+- Holding Space for 0.45 seconds enters trackpad mode and cancels that touch's Space insertion.
+- Each accumulated 12-point drag step emits one paired HID arrow event; the foreground app resolves real character and visual-line navigation.
+- The dominant axis wins for diagonal movement, residual distance is retained, and changing direction discards stale residual movement on that axis.
+- Active mode reuses the existing cyan selected state without changing the Space key's title, position, size, or surrounding layout.
+
 ### Phase 22 — Cursor movement model and focused tests
 
-**Status:** pending
+**Status:** in_progress
 
 - Add only the minimum testable state needed to distinguish a short Space tap from an active/cancelled trackpad gesture.
 - Cover activation, movement thresholds, residual movement, direction changes, release, cancellation, and ordinary Space regression.
