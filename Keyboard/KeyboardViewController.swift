@@ -150,12 +150,12 @@ final class KeyboardViewController: UIInputViewController {
             ph("F4", image: "magnifyingglass", align: .bottom, fontSize: 13, stackIcon: true),
             ph("F5", image: "mic", align: .bottom, fontSize: 13, stackIcon: true),
             ph("F6", image: "moon", align: .bottom, fontSize: 13, stackIcon: true),
-            ph("F7", image: "backward.fill", align: .bottom, fontSize: 13, stackIcon: true),
-            ph("F8", image: "playpause.fill", align: .bottom, fontSize: 13, stackIcon: true),
-            ph("F9", image: "forward.fill", align: .bottom, fontSize: 13, stackIcon: true),
-            ph("F10", image: "speaker.slash.fill", align: .bottom, fontSize: 13, stackIcon: true),
-            ph("F11", image: "speaker.wave.1.fill", align: .bottom, fontSize: 13, stackIcon: true),
-            ph("F12", image: "speaker.wave.3.fill", align: .bottom, fontSize: 13, stackIcon: true),
+            ph("F7", image: "backward", align: .bottom, fontSize: 13, stackIcon: true),
+            ph("F8", image: "playpause", align: .bottom, fontSize: 13, stackIcon: true),
+            ph("F9", image: "forward", align: .bottom, fontSize: 13, stackIcon: true),
+            ph("F10", image: "speaker.slash", align: .bottom, fontSize: 13, stackIcon: true),
+            ph("F11", image: "speaker.wave.1", align: .bottom, fontSize: 13, stackIcon: true),
+            ph("F12", image: "speaker.wave.3", align: .bottom, fontSize: 13, stackIcon: true),
             ph(image: "circle", weight: 1.25),
         ]
     }

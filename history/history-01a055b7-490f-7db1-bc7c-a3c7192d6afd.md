@@ -210,3 +210,12 @@
 - **Where（在哪个上下文）**：Xcode Simulator、iPad Pro 12.9-inch (3rd generation) 设备档案、MagicBoard 模拟器构建产物和 iPadOS 设置键盘列表。
 - **Why（目的/背景）**：在保留 12.9 英寸相同逻辑画布的前提下，减少同时运行高配模拟器带来的资源浪费，并避免每次验收反复开关机。
 - **How（如何实现/决策过程）**：选择最早的全面屏 12.9 英寸第三代设备档案以贴近 M1 12.9 的屏幕比例；首次启动经历数据迁移后，SpringBoard 和 MagicBoard 均稳定运行，主 App 可打开，输入法扩展可在设置中添加。明确说明 Simulator 不会真实模拟 2018 硬件的 CPU/RAM 上限，实际节省来自仅启动这一台并关闭其他模拟器；该设备保持开机作为后续日常验收环境。
+
+### 第 23 轮对话（2026-09-01 18:50）
+
+- **Who（谁参与）**：用户（检查顶排图标细节）+ AI（Codex Assistant）。
+- **What（做了什么）**：用户确认其余样式正确，指出 F7–F12 使用了实心图标，要求与 F1–F6 及 Mac 原版键盘统一为轮廓图标。AI将 `backward.fill`、`playpause.fill`、`forward.fill`、`speaker.slash.fill`、`speaker.wave.1.fill`、`speaker.wave.3.fill` 分别替换为对应无 `.fill` 的轮廓 SF Symbols，构建号提升到 0.2.2 (10)。
+- **When（何时发生）**：2026-09-01 18:50（Asia/Shanghai）。
+- **Where（在哪个上下文）**：`Keyboard/KeyboardViewController.swift`、`DESIGN.md`、`project.yml`、2018 款 iPad Pro 12.9 模拟器与 `build/MagicBoard.tipa`。
+- **Why（目的/背景）**：统一 F1–F12 的线性视觉语言，并与用户提供的 Mac Magic Keyboard 顶排图标保持一致。
+- **How（如何实现/决策过程）**：先使用系统符号目录确认六个轮廓名称均可解析，再进行仅六行图标名的最小替换；字号、位置、内边距和 F1–F6 完全不动。共享模块 10/10 测试通过，设计 lint 为 0 findings，真机 Release 与 2018 模拟器 Debug 构建成功；覆盖安装后在 Safari 的 MagicBoard 键盘界面确认 F7–F12 均为轮廓图标。最终 `.tipa` SHA-256 为 `7bb569ec22b37f23f8954f339480b681b6e072c47d7fe048e96df732894728ef`。
