@@ -342,22 +342,23 @@ Preserve ordinary Space input while adding a native-keyboard-style long-press dr
 - Holding Space for 0.45 seconds enters trackpad mode and cancels that touch's Space insertion.
 - Each accumulated 12-point drag step emits one paired HID arrow event; the foreground app resolves real character and visual-line navigation.
 - The dominant axis wins for diagonal movement, residual distance is retained, and changing direction discards stale residual movement on that axis.
-- Active mode reuses the existing cyan selected state without changing the Space key's title, position, size, or surrounding layout.
+- Active mode transforms the entire keyboard region into a native-style trackpad surface; release or cancellation restores the complete accepted keyboard appearance.
+- The active surface is one uninterrupted dynamic light-gray overlay covering the full key grid; all keycap labels, icons, fills, and boundaries disappear together, while Reduce Motion disables the short transition.
 
 ### Phase 22 — Cursor movement model and focused tests
 
-**Status:** in_progress
+**Status:** complete
 
 - Add only the minimum testable state needed to distinguish a short Space tap from an active/cancelled trackpad gesture.
 - Cover activation, movement thresholds, residual movement, direction changes, release, cancellation, and ordinary Space regression.
 
 ### Phase 23 — Space gesture wiring and feedback
 
-**Status:** pending
+**Status:** in_progress
 
 - Reuse the existing Space key and accepted layout without changing its size or position.
 - Route active drag movement through the confirmed cursor mechanism and suppress Space insertion after recognition.
-- Restore the normal key appearance and state on release, cancellation, view disappearance, and teardown.
+- Hide the full keyboard's keycap content and boundaries while trackpad mode is active, then restore the normal appearance and state on release, cancellation, view disappearance, and teardown.
 
 ### Phase 24 — Build, package, and device acceptance
 
@@ -374,6 +375,7 @@ Preserve ordinary Space input while adding a native-keyboard-style long-press dr
 - [ ] Dragging moves the cursor in the confirmed directions and sensitivity
 - [ ] Reversing direction does not accumulate stale movement
 - [ ] Release and cancellation always restore the normal Space state
+- [ ] Active mode presents one full-keyboard native-style trackpad surface and restores every key afterward
 - [ ] Existing text, Shift, Delete, down-drag, Esc, and arrow behavior remains intact
 - [ ] `DESIGN.md` lint and all automated builds/tests pass
 - [ ] A regenerated `.tipa` passes target-device acceptance in two text editors

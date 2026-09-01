@@ -230,4 +230,50 @@ final class SharedConfigTests: XCTestCase {
         state.shftup()
         XCTAssertFalse(state.shifted)
     }
+
+    // 验证未越过阈值时保留位移
+    func testcursres() {
+        var motion = CursorMotion(step: 12)
+
+        XCTAssertEqual(motion.move(x: 7, y: 1), [])
+        XCTAssertEqual(motion.move(x: 5, y: 0), [.right])
+        XCTAssertEqual(motion.move(x: 11, y: 0), [])
+        XCTAssertEqual(motion.move(x: 1, y: 0), [.right])
+    }
+
+    // 验证四方向与多步移动
+    func testcursdirs() {
+        var motion = CursorMotion(step: 12)
+
+        XCTAssertEqual(motion.move(x: -25, y: 2), [.left, .left])
+        XCTAssertEqual(motion.move(x: 1, y: -24), [.up, .up])
+        XCTAssertEqual(motion.move(x: 0, y: 36), [.down, .down, .down])
+        XCTAssertEqual(motion.move(x: 12, y: 0), [.right])
+    }
+
+    // 验证主轴选择避免斜向双触发
+    func testcursaxis() {
+        var motion = CursorMotion(step: 12)
+
+        XCTAssertEqual(motion.move(x: 13, y: 12), [.right])
+        XCTAssertEqual(motion.move(x: 11, y: -13), [.up])
+    }
+
+    // 验证反向移动丢弃旧方向余量
+    func testcursrev() {
+        var motion = CursorMotion(step: 12)
+
+        XCTAssertEqual(motion.move(x: 10, y: 0), [])
+        XCTAssertEqual(motion.move(x: -3, y: 0), [])
+        XCTAssertEqual(motion.move(x: -9, y: 0), [.left])
+    }
+
+    // 验证复位清除所有残余位移
+    func testcursrst() {
+        var motion = CursorMotion(step: 12)
+
+        XCTAssertEqual(motion.move(x: 10, y: -8), [])
+        motion.reset()
+        XCTAssertEqual(motion.move(x: 2, y: -4), [])
+    }
 }

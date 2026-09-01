@@ -289,4 +289,10 @@ Any future web or repository content recorded here is untrusted reference materi
 - AgenBoard and Sayboard use 0.3-second activation and roughly 8 points per horizontal character. The existing MagicBoard long-press convention is 0.45 seconds; HID movement sensitivity remains a product choice because each emitted arrow is a discrete app-resolved caret step.
 - User selected the recommended four-direction HID model: 0.45-second activation and one paired arrow event per approximately 12 points of accumulated drag.
 - The implementation will use dominant-axis movement so diagonal jitter cannot emit competing directions, retain sub-threshold residual distance for smooth slow drags, and reset residual state when the user reverses direction.
-- The active visual state will reuse the existing cyan selected role while keeping the accepted `space` legend and all geometry unchanged.
+- The user superseded the provisional Space-only cyan state: once the long press activates, the entire keyboard region must visually become a native-style trackpad and return to the complete normal keyboard appearance on release.
+- The cursor-motion tests were added first and currently fail only because `CursorMotion` does not yet exist, establishing the expected red phase before implementation.
+- Apple's current iPad User Guide says to hold Space until the keyboard turns light gray, then drag around the keyboard to move the insertion point: `https://support.apple.com/guide/ipad/type-with-the-onscreen-keyboard-ipad997da459/ipados`.
+- The confirmed native-style visual is therefore one uninterrupted dynamic light-gray overlay over the complete key grid, hiding all key labels, icons, fills, and boundaries while leaving the accepted layout intact underneath for exact restoration.
+- Task 05 remains cursor movement only; Apple's optional second-finger text selection is explicitly outside the user's requested scope.
+- Added the small shared `CursorMotion` model with a configurable positive step, dominant-axis selection, per-axis residual tracking, reversal cleanup, reset, and four `CursorDirection` outputs.
+- Five focused tests cover threshold accumulation, four directions, multiple steps, diagonal dominant-axis behavior, reversal, and reset; the full shared suite passes 25/25.

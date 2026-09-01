@@ -277,3 +277,10 @@
 - Phases 18 and 19 are complete. Phase 20 requires target-device installation and tests in two foreground apps plus an Esc-aware app.
 - Re-read the accepted `DESIGN.md`; functional-key state styling already covers the five newly enabled keys, so no design-file change was required.
 - Ran the design lint with 0 findings and confirmed the post-write CodeGraph index is healthy.
+
+## 2026-09-02 — Task 05 cursor model completed
+
+- User accepted four-direction HID cursor movement at a 0.45-second activation threshold and approximately 12 points per arrow step.
+- User refined the visual requirement to the native full-keyboard trackpad state; Apple guidance confirms the keyboard becomes light gray while dragging the insertion point.
+- Added and verified the shared cursor-motion model after an expected missing-symbol red test phase.
+- The shared suite now passes 25 tests with 0 failures. Phase 23 proceeds with the Space recognizer, full-key-grid overlay, HID pairing, and cleanup.

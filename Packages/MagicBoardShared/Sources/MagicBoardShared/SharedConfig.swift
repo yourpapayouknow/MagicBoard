@@ -144,6 +144,84 @@ public struct InputState: Equatable, Sendable {
     }
 }
 
+// 标识光标移动方向
+public enum CursorDirection: Equatable, Sendable {
+    case left
+    case right
+    case up
+    case down
+}
+
+// 将触控板位移转换为离散方向步进
+public struct CursorMotion: Equatable, Sendable {
+    public let step: Double
+    private var residualX: Double
+    private var residualY: Double
+
+    // 创建指定步长的光标位移器
+    public init(step: Double) {
+        precondition(step > 0)
+        self.step = step
+        residualX = 0
+        residualY = 0
+    }
+
+    // 消费主轴位移并返回方向步进
+    public mutating func move(x: Double, y: Double) -> [CursorDirection] {
+        if abs(x) >= abs(y) {
+            residualY = 0
+            let result = Self.steps(
+                delta: x,
+                residual: residualX,
+                step: step,
+                negative: .left,
+                positive: .right
+            )
+            residualX = result.residual
+            return result.directions
+        }
+
+        residualX = 0
+        let result = Self.steps(
+            delta: y,
+            residual: residualY,
+            step: step,
+            negative: .up,
+            positive: .down
+        )
+        residualY = result.residual
+        return result.directions
+    }
+
+    // 清除未完成的方向位移
+    public mutating func reset() {
+        residualX = 0
+        residualY = 0
+    }
+
+    // 计算单轴完整步数与剩余位移
+    private static func steps(
+        delta: Double,
+        residual: Double,
+        step: Double,
+        negative: CursorDirection,
+        positive: CursorDirection
+    ) -> (directions: [CursorDirection], residual: Double) {
+        var total = residual
+        if total != 0, delta != 0, total.sign != delta.sign {
+            total = 0
+        }
+        total += delta
+
+        let count = Int(abs(total) / step)
+        guard count > 0 else { return ([], total) }
+
+        let direction = total < 0 ? negative : positive
+        let consumed = Double(count) * step * (total < 0 ? -1 : 1)
+        return (Array(repeating: direction, count: count), total - consumed)
+    }
+}
+
 // 表示共享容器诊断
 public struct GroupState: Equatable, Sendable {
     public let available: Bool
