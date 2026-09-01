@@ -284,3 +284,10 @@
 - User refined the visual requirement to the native full-keyboard trackpad state; Apple guidance confirms the keyboard becomes light gray while dragging the insertion point.
 - Added and verified the shared cursor-motion model after an expected missing-symbol red test phase.
 - The shared suite now passes 25 tests with 0 failures. Phase 23 proceeds with the Space recognizer, full-key-grid overlay, HID pairing, and cleanup.
+
+## 2026-09-02 — Task 05 controller wiring completed
+
+- Added the Space-only long-press recognizer while preserving the existing short-tap document-proxy action.
+- Added the uninterrupted dynamic light-gray overlay covering the complete keyboard extension surface during active cursor mode; release/cancellation restores the underlying accepted keyboard immediately.
+- Wired dominant-axis cursor steps to paired left/right/up/down HID events and added cleanup to rebuild and disappearance lifecycles.
+- Re-ran 25 shared tests successfully and completed the 2018 iPad Pro simulator Debug build. Phase 24 continues with versioning, Release packaging, archive verification, and target-device acceptance.

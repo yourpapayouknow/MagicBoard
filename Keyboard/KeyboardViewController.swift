@@ -92,12 +92,16 @@ private final class BoardButton: UIButton {
 // 管理键盘扩展界面
 final class KeyboardViewController: UIInputViewController {
     private let rows = UIStackView()
+    private let trackpad = UIView()
     private var theme = SharedConfig.ldthm()
     private var state = InputState()
     private var height: NSLayoutConstraint?
     private var buttons: [BoardButton] = []
     private let dragdist: CGFloat = 24
     private let dragreset: TimeInterval = 0.12
+    private var cursormotion = CursorMotion(step: 12)
+    private var cursorpoint: CGPoint?
+    private weak var cursorbutton: BoardButton?
     // 仅由主 RunLoop 触摸生命周期访问
     nonisolated(unsafe) private var deltimer: Timer?
 
@@ -123,6 +127,12 @@ final class KeyboardViewController: UIInputViewController {
         rows.translatesAutoresizingMaskIntoConstraints = false
         blur.contentView.addSubview(rows)
 
+        trackpad.backgroundColor = .systemGray4
+        trackpad.alpha = 0
+        trackpad.isHidden = true
+        trackpad.translatesAutoresizingMaskIntoConstraints = false
+        blur.contentView.addSubview(trackpad)
+
         height = view.heightAnchor.constraint(equalToConstant: 390)
         height?.priority = .init(999)
         height?.isActive = true
@@ -136,6 +146,10 @@ final class KeyboardViewController: UIInputViewController {
             rows.bottomAnchor.constraint(equalTo: blur.contentView.bottomAnchor, constant: -8),
             rows.leadingAnchor.constraint(equalTo: blur.contentView.leadingAnchor, constant: 8),
             rows.trailingAnchor.constraint(equalTo: blur.contentView.trailingAnchor, constant: -8),
+            trackpad.topAnchor.constraint(equalTo: blur.contentView.topAnchor),
+            trackpad.bottomAnchor.constraint(equalTo: blur.contentView.bottomAnchor),
+            trackpad.leadingAnchor.constraint(equalTo: blur.contentView.leadingAnchor),
+            trackpad.trailingAnchor.constraint(equalTo: blur.contentView.trailingAnchor),
         ])
 
         bldkbd()
@@ -160,6 +174,7 @@ final class KeyboardViewController: UIInputViewController {
     // 停止离场触摸任务
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
+        stopcursor()
         stopdel()
         state.shftcncl()
         HIDBridge.shared.releaseAll()
@@ -167,6 +182,7 @@ final class KeyboardViewController: UIInputViewController {
 
     // 生成固定键盘布局
     private func bldkbd() {
+        stopcursor()
         stopdel()
         state.shftcncl()
         HIDBridge.shared.releaseAll()
@@ -425,6 +441,15 @@ final class KeyboardViewController: UIInputViewController {
                 action: #selector(hidup(_:)),
                 for: [.touchUpInside, .touchUpOutside, .touchCancel, .touchDragExit]
             )
+        } else if spec.kind == .space {
+            button.addTarget(self, action: #selector(prskey(_:)), for: .touchUpInside)
+            button.accessibilityHint = "长按并拖动移动光标"
+            let hold = UILongPressGestureRecognizer(target: self, action: #selector(crsrdrag(_:)))
+            hold.minimumPressDuration = 0.45
+            hold.allowableMovement = .greatestFiniteMagnitude
+            hold.cancelsTouchesInView = true
+            hold.delaysTouchesEnded = true
+            button.addGestureRecognizer(hold)
         } else if spec.kind == .next {
             button.addTarget(self, action: #selector(handleInputModeList(from:with:)), for: .allTouchEvents)
         } else if spec.kind == .language {
@@ -519,6 +544,81 @@ final class KeyboardViewController: UIInputViewController {
             let key = spec.kind.hidKey
         else { return }
         HIDBridge.shared.keyUp(key)
+    }
+
+    // 处理空格键触控板手势
+    @objc private func crsrdrag(_ sender: UILongPressGestureRecognizer) {
+        switch sender.state {
+        case .began:
+            begcursor(sender)
+        case .changed:
+            movecursor(sender)
+        case .ended:
+            movecursor(sender)
+            stopcursor()
+        case .cancelled, .failed:
+            stopcursor()
+        default:
+            break
+        }
+    }
+
+    // 开始全键盘触控板状态
+    private func begcursor(_ sender: UILongPressGestureRecognizer) {
+        guard let button = sender.view as? BoardButton else { return }
+        cursormotion.reset()
+        cursorpoint = sender.location(in: view)
+        cursorbutton = button
+        button.accessibilityValue = "光标移动"
+        rows.accessibilityElementsHidden = true
+        trackpad.layer.removeAllAnimations()
+        trackpad.isHidden = false
+        if UIAccessibility.isReduceMotionEnabled {
+            trackpad.alpha = 1
+        } else {
+            trackpad.alpha = 0
+            UIView.animate(withDuration: 0.15) {
+                self.trackpad.alpha = 1
+            }
+        }
+    }
+
+    // 将拖动位移转换为成对 HID 方向事件
+    private func movecursor(_ sender: UILongPressGestureRecognizer) {
+        guard let previous = cursorpoint else { return }
+        let current = sender.location(in: view)
+        cursorpoint = current
+        let directions = cursormotion.move(
+            x: Double(current.x - previous.x),
+            y: Double(current.y - previous.y)
+        )
+        for direction in directions {
+            sendcursor(direction)
+        }
+    }
+
+    // 发送一次完整光标方向按键
+    private func sendcursor(_ direction: CursorDirection) {
+        let key: MBHIDKey = switch direction {
+        case .left: .leftArrow
+        case .right: .rightArrow
+        case .up: .upArrow
+        case .down: .downArrow
+        }
+        guard HIDBridge.shared.keyDown(key) else { return }
+        HIDBridge.shared.keyUp(key)
+    }
+
+    // 结束触控板状态并恢复键盘
+    private func stopcursor() {
+        cursormotion.reset()
+        cursorpoint = nil
+        cursorbutton?.accessibilityValue = nil
+        cursorbutton = nil
+        rows.accessibilityElementsHidden = false
+        trackpad.layer.removeAllAnimations()
+        trackpad.alpha = 0
+        trackpad.isHidden = true
     }
 
     // 处理语言键长按 Caps Lock

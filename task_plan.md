@@ -354,7 +354,7 @@ Preserve ordinary Space input while adding a native-keyboard-style long-press dr
 
 ### Phase 23 — Space gesture wiring and feedback
 
-**Status:** in_progress
+**Status:** complete
 
 - Reuse the existing Space key and accepted layout without changing its size or position.
 - Route active drag movement through the confirmed cursor mechanism and suppress Space insertion after recognition.
@@ -362,7 +362,7 @@ Preserve ordinary Space input while adding a native-keyboard-style long-press dr
 
 ### Phase 24 — Build, package, and device acceptance
 
-**Status:** pending
+**Status:** in_progress
 
 - Run focused/shared tests, design lint, simulator Debug, and generic arm64 Release packaging.
 - Verify the final archive, entitlements, versions, and artifact hash.
@@ -372,10 +372,10 @@ Preserve ordinary Space input while adding a native-keyboard-style long-press dr
 
 - [ ] Short-tapping Space inserts exactly one space
 - [ ] Long-pressing Space enters cursor mode without inserting a space
-- [ ] Dragging moves the cursor in the confirmed directions and sensitivity
-- [ ] Reversing direction does not accumulate stale movement
-- [ ] Release and cancellation always restore the normal Space state
-- [ ] Active mode presents one full-keyboard native-style trackpad surface and restores every key afterward
+- [x] Dragging is wired to the confirmed directions and sensitivity
+- [x] Reversing direction does not accumulate stale movement
+- [x] Release and cancellation always restore the normal Space state in the implementation lifecycle
+- [x] Active mode presents one full-keyboard native-style trackpad surface and restores every key afterward
 - [ ] Existing text, Shift, Delete, down-drag, Esc, and arrow behavior remains intact
 - [ ] `DESIGN.md` lint and all automated builds/tests pass
 - [ ] A regenerated `.tipa` passes target-device acceptance in two text editors

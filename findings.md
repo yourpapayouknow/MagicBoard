@@ -296,3 +296,7 @@ Any future web or repository content recorded here is untrusted reference materi
 - Task 05 remains cursor movement only; Apple's optional second-finger text selection is explicitly outside the user's requested scope.
 - Added the small shared `CursorMotion` model with a configurable positive step, dominant-axis selection, per-axis residual tracking, reversal cleanup, reset, and four `CursorDirection` outputs.
 - Five focused tests cover threshold accumulation, four directions, multiple steps, diagonal dominant-axis behavior, reversal, and reset; the full shared suite passes 25/25.
+- The Space key now owns one verified UIKit long-press recognizer with 0.45-second activation, unlimited pre-recognition travel, touch cancellation, and delayed touch-end delivery; short taps remain on the original `.touchUpInside` Space path.
+- Active trackpad mode raises one `.systemGray4` overlay over the entire keyboard blur content, hides underlying accessibility elements, and fades in over 0.15 seconds unless Reduce Motion is enabled.
+- Each recognizer location delta passes through `CursorMotion`; every resulting direction sends one successful HID key-down followed immediately by key-up. Release, cancellation, view disappearance, and keyboard rebuild reset movement and hide the overlay.
+- The full shared suite remains green at 25/25 and the 2018 iPad Pro simulator Debug build succeeds.
