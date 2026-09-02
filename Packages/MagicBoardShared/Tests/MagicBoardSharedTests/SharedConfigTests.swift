@@ -355,80 +355,17 @@ final class SharedConfigTests: XCTestCase {
         XCTAssertFalse(state.contains(.rightCommand))
     }
 
-    // 验证单击修饰键进入一次性锁定
-    func testmodstick() {
+    // 验证单击修饰键立即解除活动状态
+    func testmodtap() {
         var state = ModifierState()
+        let keys: [ModifierKey] = [.control, .leftOption, .leftCommand, .rightCommand, .rightOption]
 
-        XCTAssertTrue(state.press(.control))
-        XCTAssertTrue(state.tap(.control))
-        XCTAssertTrue(state.isSticky(.control))
-        XCTAssertTrue(state.contains(.control))
-        XCTAssertEqual(state.consume(), [.control])
-        XCTAssertFalse(state.isActive)
-    }
-
-    // 验证再次单击已锁定修饰键会解除
-    func testmoduntgl() {
-        var state = ModifierState()
-
-        state.press(.leftOption)
-        XCTAssertTrue(state.tap(.leftOption))
-        XCTAssertTrue(state.press(.leftOption))
-        XCTAssertFalse(state.tap(.leftOption))
-        XCTAssertFalse(state.isActive)
-    }
-
-    // 验证多个锁定修饰键由同一有效键消费
-    func testmodcombo() {
-        var state = ModifierState()
-
-        state.press(.control)
-        state.tap(.control)
-        state.press(.leftCommand)
-        state.tap(.leftCommand)
-
-        XCTAssertEqual(state.consume(), [.control, .leftCommand])
-        XCTAssertFalse(state.isActive)
-    }
-
-    // 验证参与组合键的物理按住不会转为锁定
-    func testmodheld() {
-        var state = ModifierState()
-
-        state.press(.rightOption)
-        state.use()
-
-        XCTAssertFalse(state.tap(.rightOption))
-        XCTAssertFalse(state.isSticky(.rightOption))
-        XCTAssertFalse(state.isActive)
-    }
-
-    // 验证取消触摸恢复原有锁定状态
-    func testmodcncl() {
-        var state = ModifierState()
-
-        state.press(.control)
-        XCTAssertFalse(state.cancel(.control))
-
-        state.press(.rightCommand)
-        state.tap(.rightCommand)
-        state.press(.rightCommand)
-        XCTAssertTrue(state.cancel(.rightCommand))
-        XCTAssertTrue(state.isSticky(.rightCommand))
-    }
-
-    // 验证消费时保留仍被手指按住的修饰键
-    func testmodkeep() {
-        var state = ModifierState()
-
-        state.press(.leftCommand)
-        state.tap(.leftCommand)
-        state.press(.leftCommand)
-
-        XCTAssertEqual(state.consume(), [])
-        XCTAssertTrue(state.contains(.leftCommand))
-        XCTAssertFalse(state.isSticky(.leftCommand))
-        XCTAssertFalse(state.tap(.leftCommand))
+        for key in keys {
+            XCTAssertTrue(state.press(key))
+            state.tap(key)
+            XCTAssertFalse(state.contains(key))
+            XCTAssertFalse(state.isActive)
+        }
     }
 
     // 验证未越过阈值时保留位移

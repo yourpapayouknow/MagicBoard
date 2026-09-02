@@ -55,91 +55,46 @@ public enum ModifierKey: Hashable, Sendable {
     case rightOption
 }
 
-// 管理物理按住与一次性锁定修饰键
+// 管理全部按住的物理修饰键
 public struct ModifierState: Equatable, Sendable {
-    private var held: Set<ModifierKey>
-    private var sticky: Set<ModifierKey>
-    private var used: Set<ModifierKey>
+    private var active: Set<ModifierKey>
 
     // 创建空修饰键状态
     public init() {
-        held = []
-        sticky = []
-        used = []
+        active = []
     }
 
     // 判断是否存在活动修饰键
     public var isActive: Bool {
-        !held.isEmpty || !sticky.isEmpty
+        !active.isEmpty
     }
 
     // 判断指定修饰键是否活动
     public func contains(_ key: ModifierKey) -> Bool {
-        held.contains(key) || sticky.contains(key)
-    }
-
-    // 判断指定修饰键是否一次性锁定
-    public func isSticky(_ key: ModifierKey) -> Bool {
-        sticky.contains(key)
+        active.contains(key)
     }
 
     // 记录修饰键按下并返回是否改变
     @discardableResult
     public mutating func press(_ key: ModifierKey) -> Bool {
-        guard held.insert(key).inserted else { return false }
-        used.remove(key)
-        return true
+        active.insert(key).inserted
     }
 
-    // 强制释放指定修饰键并返回是否改变
+    // 记录修饰键释放并返回是否改变
     @discardableResult
     public mutating func release(_ key: ModifierKey) -> Bool {
-        let active = contains(key)
-        held.remove(key)
-        sticky.remove(key)
-        used.remove(key)
-        return active
+        active.remove(key) != nil
     }
 
-    // 完成修饰键单击并返回是否仍活动
+    // 完成修饰键单击并立即释放
     @discardableResult
     public mutating func tap(_ key: ModifierKey) -> Bool {
-        guard held.remove(key) != nil else { return contains(key) }
-        if used.remove(key) != nil {
-            return contains(key)
-        }
-        if sticky.remove(key) == nil {
-            sticky.insert(key)
-        }
-        return contains(key)
-    }
-
-    // 取消修饰键触摸并返回是否仍活动
-    @discardableResult
-    public mutating func cancel(_ key: ModifierKey) -> Bool {
-        guard held.remove(key) != nil else { return contains(key) }
-        used.remove(key)
-        return contains(key)
-    }
-
-    // 标记当前物理修饰键已参与组合键
-    public mutating func use() {
-        used.formUnion(held)
-    }
-
-    // 消费锁定状态并返回需要抬起的修饰键
-    public mutating func consume() -> Set<ModifierKey> {
-        use()
-        let released = sticky.subtracting(held)
-        sticky.removeAll()
-        return released
+        release(key)
     }
 
     // 清空全部活动修饰键
     public mutating func reset() {
-        held.removeAll()
-        sticky.removeAll()
-        used.removeAll()
+        active.removeAll()
     }
 }
 

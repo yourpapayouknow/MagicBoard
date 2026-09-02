@@ -715,7 +715,6 @@ final class KeyboardViewController: UIInputViewController {
         guard HIDBridge.shared.keyDown(key) else { return }
         button.hidactive = true
         state.shftuse()
-        modifiers.use()
     }
 
     // 发送 HID 按键抬起事件
@@ -731,7 +730,7 @@ final class KeyboardViewController: UIInputViewController {
             rsthid()
             return
         }
-        finmods()
+        updmods()
     }
 
     // 开始物理修饰键触摸
@@ -742,10 +741,9 @@ final class KeyboardViewController: UIInputViewController {
             let modifier = spec.kind.modifierKey,
             let key = spec.kind.hidKey
         else { return }
-        let active = modifiers.contains(modifier)
         guard modifiers.press(modifier) else { return }
         state.shftuse()
-        guard active || HIDBridge.shared.keyDown(key) else {
+        guard HIDBridge.shared.keyDown(key) else {
             modifiers.release(modifier)
             updmods()
             return
@@ -760,7 +758,8 @@ final class KeyboardViewController: UIInputViewController {
             let modifier = spec.kind.modifierKey,
             let key = spec.kind.hidKey
         else { return }
-        if !modifiers.tap(modifier), !HIDBridge.shared.keyUp(key) {
+        guard modifiers.tap(modifier) else { return }
+        if !HIDBridge.shared.keyUp(key) {
             rsthid()
             return
         }
@@ -774,7 +773,8 @@ final class KeyboardViewController: UIInputViewController {
             let modifier = spec.kind.modifierKey,
             let key = spec.kind.hidKey
         else { return }
-        if !modifiers.cancel(modifier), !HIDBridge.shared.keyUp(key) {
+        guard modifiers.release(modifier) else { return }
+        if !HIDBridge.shared.keyUp(key) {
             rsthid()
             return
         }
@@ -795,9 +795,7 @@ final class KeyboardViewController: UIInputViewController {
                 ? theme.primary.uiclr
                 : theme.accent.uiclr.withAlphaComponent(0.24)
             button.configuration = config
-            button.accessibilityValue = modifiers.isSticky(modifier)
-                ? "已锁定"
-                : (active ? "已按下" : nil)
+            button.accessibilityValue = active ? "已按下" : nil
             if active {
                 button.accessibilityTraits.insert(.selected)
             } else {
@@ -874,35 +872,12 @@ final class KeyboardViewController: UIInputViewController {
     private func sndhid(_ key: MBHIDKey) -> Bool {
         guard HIDBridge.shared.keyDown(key) else { return false }
         state.shftuse()
-        modifiers.use()
         guard HIDBridge.shared.keyUp(key) else {
             rsthid()
             return false
         }
-        finmods()
-        return true
-    }
-
-    // 返回共享修饰键对应的 HID usage
-    private func hidmod(_ modifier: ModifierKey) -> MBHIDKey {
-        switch modifier {
-        case .control: .control
-        case .leftOption: .leftOption
-        case .leftCommand: .leftCommand
-        case .rightCommand: .rightCommand
-        case .rightOption: .rightOption
-        }
-    }
-
-    // 完成有效键并消费一次性修饰键
-    private func finmods() {
-        for modifier in modifiers.consume() {
-            if !HIDBridge.shared.keyUp(hidmod(modifier)) {
-                rsthid()
-                return
-            }
-        }
         updmods()
+        return true
     }
 
     // 释放全部 HID 与本地触摸状态
