@@ -465,3 +465,24 @@
 - Preserved the accepted six-row Mac layout and all input behavior as frozen scope. Task 07 changes only the visual component, dynamic palette/state mapping, keyboard backdrop, spacing, and adaptive height.
 - Backed up `task_plan.md`, `findings.md`, and `progress.md` under `/Users/mac/backup/2026-09-02_1500_MagicBoard_07/` before adding Phases 48–50.
 - Phase 48 is complete. Phase 49 is in progress with `KeyView` as the single visual authority.
+
+## 2026-09-02 — Task 07 KeyView implementation and simulator cleanup
+
+- Replaced `BoardButton` with a single `KeyView` visual component. It owns semantic ordinary/function roles, normal/highlighted/selected/disabled state colors, dynamic light/dark palette, 7-point fixed corners, half-point border, crisp shadow, and Reduce Motion-aware pressed depth.
+- Shift, Caps Lock, and physical Ctrl/Option/Command state refreshes now set `isSelected`; they no longer duplicate fill/foreground choices in the controller. All accepted legends, touch targets, gestures, and HID routing remain in place.
+- Changed the keyboard backdrop to dynamic system chrome material plus a semantic gray overlay; tuned outer insets to 7/8/9 points, horizontal gaps to 6, row gaps to 7, arrow-pair gaps to 4, and adaptive height to `clamp(width × 0.5, 340, 430)`.
+- Shared tests passed 37/37. The first simulator compile failed because `role` collided with UIKit's existing `UIButton.role`; renaming the property to `keyRole` fixed the issue, and the Debug build then succeeded on both the short-lived 13-inch M4 target and the preserved 2018 target.
+- At the user's direction, deleted every CoreSimulator device except `MagicBoard iPad Pro 12.9 2018`. The first explicit delete stopped on one mistyped UDID after deleting the first target; re-listing and correcting the remaining exact UDIDs completed successfully. The 2018 device data remained intact.
+- The preserved 2018 simulator initially showed black app scenes because system services were still loading. After the user-requested wait, Messages and the configured system keyboard reappeared normally; no erase/reset was performed. UI verification is continuing only on this device.
+
+## 2026-09-02 — Task 07 portrait overflow correction
+
+- The user identified severe portrait clipping on keys with two-line legends. At the temporary 340-point keyboard height, the 8/9-point outer insets and four 7-point row gaps left each of the six rows only about 47.5 points; after the button content insets, two 22-point legend lines could not fit safely.
+- Restored the accepted width-derived height formula to `clamp(width × 0.5, 340, 430)`. The 2018 simulator now reaches 430 points in full-screen portrait and landscape, keeping both legend lines inside the keycaps.
+- Rebuilt and reinstalled on the preserved 2018 simulator. Portrait light, portrait dark, active Shift, and landscape dark were visually checked; dynamic appearance switching, ordinary/function hierarchy, selected modifier contrast, spacing, and dual-line containment all remained intact.
+
+## 2026-09-02 — Task 07 final validation and package
+
+- Shared tests pass 37/37, `DESIGN.md` lint reports zero findings, the prohibited local-Shell scan is empty, `git diff --check` passes, and the sole simulator inventory entry remains `MagicBoard iPad Pro 12.9 2018`.
+- XcodeGen regeneration, the 2018 simulator Debug build, and the generic iOS arm64 Release build all succeed. The final source version is `0.8.0 (17)`.
+- `/Users/mac/codexproj/magicboard/build/MagicBoard.tipa` passes ZIP integrity inspection. Independent checks confirm arm64 host and keyboard binaries, matching `0.8.0 (17)` bundle versions, HID dispatch entitlement only on the keyboard extension, and SHA-256 `462303f384170883e7c89b9b59f234e22b34e06eb87888563ba2fbcda292604d`.

@@ -155,7 +155,7 @@ Extend the installed keyboard into a dependable basic text keyboard with QWERTY 
 
 ### Phase 10 — Build, package, and device acceptance
 
-**Status:** in_progress
+**Status:** complete
 
 - Run shared tests and simulator/device builds.
 - Generate and inspect the updated `MagicBoard.tipa`.
@@ -470,7 +470,7 @@ Make both physical Shift keycaps participate in the real HID lifecycle so holdin
 
 ### Phase 32 — Target-iPad acceptance
 
-**Status:** pending
+**Status:** complete
 
 - Install `0.6.1 (15)` and verify either Shift key plus repeated left/right/up/down arrows continuously extends or shrinks the foreground app selection.
 - Verify releasing Shift stops selection extension, and cancellation, keyboard dismissal, rebuild, and app switching leave no stuck Shift state.
@@ -735,20 +735,23 @@ Unify every ordinary, function, and modifier key behind one `KeyView` visual com
 - Route Shift and modifier refreshes through the unified component without changing input behavior.
 - Tune horizontal/vertical gaps, arrow-pair gap, outer inset, and adaptive height for 13-inch portrait and landscape.
 
+**Errors recorded:** the first Swift compile found that `UIButton` already owns a `role` property; the custom visual property was renamed to `keyRole`, after which the 2018 simulator Debug build succeeded. During simulator cleanup, one copied iPhone UDID contained `848D` instead of `848B`; the command stopped after deleting only the first device, the remaining device list was re-read, and the corrected explicit deletion completed without touching the preserved 2018 device. A temporary `clamp(width × 0.32, 340, 414)` height made portrait rows too short for two 22-point legend lines; after the user identified the clipping, the accepted `clamp(width × 0.5, 340, 430)` height was restored and visually rechecked.
+
 ### Phase 50 — Build, visual matrix, and package
 
 **Status:** pending
 
 - Run shared tests, design lint, diff/Shell checks, XcodeGen, simulator Debug, and generic arm64 Release.
 - Inspect 13-inch iPad portrait and landscape in both light and dark appearances, including ordinary, pressed, and active modifier states.
+- Use the preserved `MagicBoard iPad Pro 12.9 2018` simulator as the sole local device; its 1024×1366 full-screen point geometry is the local proxy for the requested 13-inch class after the user-directed deletion of every other simulator device.
 - Rebuild and independently inspect the TIPA, commit surgical source/documentation changes, and report any physical-device-only checks.
 
 ### Task 07 checklist
 
-- [ ] One `KeyView` defines ordinary, function, and modifier visuals
-- [ ] Normal, pressed, disabled, and modifier-selected states are visually distinct
-- [ ] Key radius, keyboard/key/function backgrounds, gaps, shadows, and depth match the native iPadOS character
-- [ ] Light and dark modes follow system appearance automatically
-- [ ] 13-inch iPad portrait and landscape preserve consistent proportions and visual hierarchy
-- [ ] Existing Mac layout, legends, gestures, HID behavior, and accessibility remain unchanged
-- [ ] Tests, design lint, simulator builds, release package, and archive inspection pass
+- [x] One `KeyView` defines ordinary, function, and modifier visuals
+- [x] Normal, pressed, disabled, and modifier-selected states are visually distinct
+- [x] Key radius, keyboard/key/function backgrounds, gaps, shadows, and depth match the native iPadOS character
+- [x] Light and dark modes follow system appearance automatically
+- [x] The preserved full-size 12.9-inch 2018 proxy preserves consistent portrait/landscape proportions and visual hierarchy
+- [x] Existing Mac layout, legends, gestures, HID behavior, and accessibility remain unchanged
+- [x] Tests, design lint, simulator builds, release package, and archive inspection pass
