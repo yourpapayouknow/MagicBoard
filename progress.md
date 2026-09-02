@@ -448,3 +448,12 @@
 - CodeGraph isolated the change to `InputState`, the existing F key touch routing, and the existing drag overlay helpers.
 - The current touch-down HID dispatch would misfire a standard F event before Pan recognition, so the approved repair defers each F tap to successful completion and emits a complete pair there.
 - Added Phases 45–47 and focused red tests for successful F-layer Shift consumption before implementation.
+
+## 2026-09-02 — F-row dual-layer interaction completed locally
+
+- Added `InputState.usefn()` with two focused tests; the expected red run failed only on the missing transition, then the full suite passed 37/37 after implementation.
+- Routed F1–F12 taps to successful touch completion and reused the existing Pan recognizer, 24-point threshold, progress transforms, and 120 ms reset. F cancellations now clear only the pending layer and emit no HID event.
+- Generalized only the upper transient drag view so it can render each existing SF Symbol; the lower caption continues using the existing label path and accepted geometry.
+- Simulator Debug acceptance passed: Shift shows icon-only F keys, F10 consumes one-shot Shift and restores the stack, Shift+F4 opens search, and ordinary F1 reports key code 112.
+- Computer Use cannot synthesize the existing character-key Pan drag either, so final motion feel and down-drag dispatch remain explicit target-iPad touch checks.
+- Source committed as `e66ea40`. Release packaging and independent inspection passed for `/Users/mac/codexproj/magicboard/build/MagicBoard.tipa`, version `0.7.0 (16)`, 154,072 bytes, SHA-256 `bc8e7800c2fb55f8ab4a8f91c730753be420a34de9342c49d142fd59ca703125`.

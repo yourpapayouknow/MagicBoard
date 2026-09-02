@@ -422,3 +422,10 @@ Any future web or repository content recorded here is untrusted reference materi
 - Existing transient drag layers are labels. Supporting the already-present F-row SF Symbols requires widening only the upper transient view to `UIView`; the lower F caption remains a label and the same transforms apply to both.
 - `InputState.shifted` already represents both one-shot and held Shift, while `shiftHeld` distinguishes the physical sources. F-row presentation should use `shifted`; a successful F action needs one focused transition that clears one-shot Shift or marks held Shift used without changing Caps Lock.
 - F-row geometry, weights, symbols, colors, HID mappings, entitlement scope, and the single event bridge are outside the change surface.
+
+## 2026-09-02 — F-row dual-layer validation
+
+- The shared state suite passes 37/37, including one-shot consumption plus held-Shift/Caps preservation. `DESIGN.md` lint reports no findings, and both the iPad Pro 2018 simulator Debug build and generic arm64 Release build succeed.
+- Simulator visual acceptance confirms one-shot Shift removes all F captions and centers the existing SF Symbols. F10 then restores the stacked row automatically, Shift+F4 opens system search, and an unshifted F1 still reports standard JavaScript key code 112.
+- Computer Use mouse drags do not trigger the already-accepted character-key Pan gesture either, so the absence of an automated F-row drag result is an input-synthesis limitation rather than a functional comparison failure. Physical touch remains the authoritative motion acceptance.
+- The rebuilt TIPA is 154,072 bytes with SHA-256 `bc8e7800c2fb55f8ab4a8f91c730753be420a34de9342c49d142fd59ca703125`; ZIP, arm64 binaries, version parity, IOKit linkage/imports, and `ldid` entitlements all pass independent inspection.

@@ -75,3 +75,12 @@
 - **Where（在哪个上下文）**：工作目录 `/Users/mac/codexproj/magicboard`；历史文件、Git `master` 分支与最终 TIPA 产物。
 - **Why（目的/背景）**：用户希望不中断地完成剩余交付步骤，而不是停在本地构建结果。
 - **How（如何实现/决策过程）**：提交 `task_plan.md`、`findings.md`、`progress.md`，确认 CodeGraph 为 8 个文件、207 个节点、217 条边；保留目标 iPadOS 16.x 的物理 Shift 多点触控作为唯一未自动化验收项，并准备按 F1–F12 图标顺序逐项测试。
+
+### 第 9 轮对话（2026-09-02 18:18）
+
+- **Who（谁参与）**：用户（MagicBoard 项目负责人）+ AI（Assistant / Codex）。
+- **What（做了什么）**：将 F1–F12 的动效与操作改为和现有双层字符键一致：默认轻点发送标准 F 键；无 Shift 下滑超过 24pt 时，上层 SF Symbol 移到中央、下层 F 标签缩小淡出并发送图标系统动作；单次 Shift 和物理按住 Shift 都切换为仅显示居中图标，成功动作后单次 Shift 自动解除；Caps Lock 不影响功能行。取消/失败触摸不发送任何 F 或系统 HID。新增 2 条 Shift 消费测试，完整共享套件 37/37 通过。重建 `/Users/mac/codexproj/magicboard/build/MagicBoard.tipa`，版本 `0.7.0 (16)`，大小 154,072 字节，SHA-256 为 `bc8e7800c2fb55f8ab4a8f91c730753be420a34de9342c49d142fd59ca703125`。
+- **When（何时发生）**：2026-09-02 18:18（Asia/Shanghai）。
+- **Where（在哪个上下文）**：工作目录 `/Users/mac/codexproj/magicboard`；主要修改 `Keyboard/KeyboardViewController.swift`、`Packages/MagicBoardShared/Sources/MagicBoardShared/SharedConfig.swift`、对应测试、`DESIGN.md` 与三份计划记录；模拟器为 `MagicBoard iPad Pro 12.9 2018`（iOS 18.4）。
+- **Why（目的/背景）**：用户指出 F 行不仅要有双层视觉，还必须复用双排按键的下滑触发和 Shift 上层显示逻辑，避免形成另一套割裂的操作方式。
+- **How（如何实现/决策过程）**：通过提问工具确认单次 Shift 与物理按住都参与上层切换；CodeGraph 证明原 F 键在 `touchDown` 立即发 HID，若直接增加 Pan 会先误发普通 F。因而将 F 轻点改为在有效 `touchUpInside` 后发送完整 down/up 对，并让 F 行复用既有 `dragkey`、24pt 阈值、进度变换和 120ms 复位。只把上层临时视图由标签扩为通用 `UIView` 以容纳原 SF Symbol。模拟器确认 Shift 后图标居中、F10 后自动恢复、Shift+F4 呼出搜索、普通 F1 仍为键码 112；Computer Use 鼠标拖动同样无法触发现有字符 Pan，因此最终下滑触感留给实体触摸验收。设计 lint、模拟器 Debug、arm64 Release、ZIP/架构/IOKit/`ldid` 权限检查全部通过，源实现提交为 `e66ea40`。
