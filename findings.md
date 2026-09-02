@@ -321,3 +321,18 @@ Any future web or repository content recorded here is untrusted reference materi
 - Extracted signing data confirms the host has only the App Group entitlement, while the keyboard has the same App Group plus `com.apple.private.hid.client.event-dispatch = true`. The keyboard links IOKit and imports the four expected `IOHIDEvent*` symbols.
 - CodeGraph remained unavailable with `Transport closed` on both post-write retries. The required pre-write CodeGraph context succeeded; final source correctness is supported by direct compiler, test, diff, binary, and archive evidence.
 - `xcrun devicectl list devices` reports no connected target device, so Command+A/C/V/Z, an app-specific Command shortcut, and one Control/Option combination remain target-iPad acceptance items.
+
+## Held Shift with HID arrows bug
+
+- The user completed every Function 05 device-acceptance item successfully, including Command+A/C/V/Z, an app-specific Command shortcut, and Control/Option combinations.
+- Device reproduction then found that holding Shift while pressing arrow keys moves the caret instead of continuously extending selection.
+- Direct source evidence shows `KeyKind.shift` has no `MBHIDKey`, and `shftdown/shftup/shftcncl` only mutate `InputState` plus keycap presentation. The foreground app never receives Shift HID down/up.
+- Arrow handlers independently dispatch only their arrow usage through `HIDBridge`; therefore the foreground app correctly interprets the event as unmodified caret movement.
+- `InputState.shftused` is set only by proxy character emission and drag output, so a Shift+arrow chord also fails to mark the held Shift gesture as used and may leave an unwanted one-shot Shift latch after release.
+- Apple IOKit usage declarations confirm Left Shift `0xE1` and Right Shift `0xE5`.
+- CodeGraph impact is limited to the shared `InputState` transitions and keyboard controller touch/HID routing. Layout, host app, entitlements, and the single HID client are unaffected.
+- The approved repair tracks left/right physical Shift keys inside the existing Shift state machine, dispatches their independent HID lifecycle, and marks the state used when another HID key begins; ordinary Shift-only proxy character output remains unchanged.
+- The implemented `InputState` now owns a `Set<ShiftKey>` so simultaneous left/right holds release independently while the original one-shot, Caps Lock, character, drag, and cancellation transitions remain intact.
+- Both Shift keycaps send their verified HID usages on touch down/up/cancel. Arrow, trackpad-direction, Delete, ordinary control, and Control/Option/Command entry paths mark a held Shift gesture used, preventing a post-chord one-shot latch.
+- The existing `HIDBridge.activeKeys` set and `releaseAll` path already support the two added usages, so rebuild, disappearance, and teardown require no second HID client or cleanup mechanism.
+- Local evidence is complete: 34/34 shared tests, `DESIGN.md` lint, iPad Pro simulator Debug, generic arm64 Release, ZIP integrity, version, architecture, HID imports, and entitlements all pass. Continuous selection behavior still requires target-iPad touch acceptance because the simulator cannot reproduce this private-HID keyboard-extension flow.

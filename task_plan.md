@@ -417,7 +417,7 @@ Enable the existing Control, left/right Option, and left/right Command keycaps a
 
 ### Phase 28 — Foreground-app acceptance
 
-**Status:** pending
+**Status:** complete
 
 - Verify Command+A, Command+C, Command+V, Command+Z, and one app-specific Command shortcut on the target device.
 - Verify at least one Control combination and one Option combination are recognized by foreground apps.
@@ -429,8 +429,59 @@ Enable the existing Control, left/right Option, and left/right Command keycaps a
 - [x] Control, Option, and Command send real HID down/up events with cancellation cleanup
 - [x] Modifier + A–Z sends paired HID keyboard events
 - [x] Modifier-active letters never call `textDocumentProxy.insertText`
-- [ ] Command+A/C/V/Z work in a foreground app
-- [ ] At least one foreground-app-specific Command shortcut works
-- [ ] At least one Control and one Option combination are recognized by foreground apps
+- [x] Command+A/C/V/Z work in a foreground app
+- [x] At least one foreground-app-specific Command shortcut works
+- [x] At least one Control and one Option combination are recognized by foreground apps
 - [x] No shortcut behavior is hard-coded inside MagicBoard
 - [x] Shared tests, design lint, simulator build, and arm64 package checks pass
+
+## Function 05 bugfix — held Shift with HID keys
+
+### Goal
+
+Make both physical Shift keycaps participate in the real HID lifecycle so holding Shift while pressing or repeating arrow keys continuously selects text in the foreground app, without changing existing proxy-generated character behavior or leaving Shift latched/stuck after a chord.
+
+### Phase 29 — Root cause and state-machine tests
+
+**Status:** complete
+
+- Preserve the accepted one-shot Shift, Caps Lock, held character, drag alternate, and cancellation semantics.
+- Add physical left/right Shift identity to `InputState` and focused red tests for held HID use, repeated use, independent left/right release, cancellation, and final latch behavior.
+- Verify Left/Right Shift USB HID usages against the installed Apple IOKit usage table.
+
+**Expected red test:** the first shared-suite run failed only because the new `ShiftKey`, `shiftHeld`, and `shftuse` APIs did not exist. After the minimum state-machine extension, all 34 tests passed.
+
+### Phase 30 — Shift HID lifecycle wiring
+
+**Status:** complete
+
+- Map the existing left and right Shift keycaps to HID usages `0xE1` and `0xE5` without changing layout or styling.
+- Send Shift down/up on touch down/up/outside/cancel and mark the shared state machine used when another HID key begins.
+- Preserve proxy text output while Shift alone is held; allow Shift to combine naturally with the existing Command/Control/Option HID path.
+- Release all Shift HID state on rebuild, disappearance, and teardown through the existing `releaseAll` cleanup.
+
+### Phase 31 — Regression validation and package
+
+**Status:** complete
+
+- Run the full shared suite, `DESIGN.md` lint, simulator Debug, generic arm64 Release packaging, and independent archive checks.
+- Verify no changes to accepted key geometry, proxy behavior, modifier shortcut routing, or entitlements.
+- Regenerate the TIPA and hand off held-Shift arrow selection plus stuck-key cancellation checks for target-iPad acceptance.
+
+### Phase 32 — Target-iPad acceptance
+
+**Status:** pending
+
+- Install `0.6.1 (15)` and verify either Shift key plus repeated left/right/up/down arrows continuously extends or shrinks the foreground app selection.
+- Verify releasing Shift stops selection extension, and cancellation, keyboard dismissal, rebuild, and app switching leave no stuck Shift state.
+- Recheck one-shot Shift, held Shift character entry, Caps Lock, Command/Control/Option chords, standalone arrows, and Space trackpad behavior.
+
+### Held-Shift bugfix completion checklist
+
+- [x] Left and right Shift emit their own HID down/up usages
+- [ ] Holding either Shift allows repeated arrow selection
+- [x] Releasing one of two held Shift keys leaves the other active
+- [x] Using an HID chord prevents an extra one-shot Shift latch on release
+- [x] Touch cancellation, rebuild, disappearance, and teardown cannot leave Shift stuck
+- [ ] Existing Shift/Caps/proxy text, Command/Control/Option, Esc/arrows, and trackpad behavior regressions pass
+- [x] Tests, lint, simulator Debug, arm64 Release, and TIPA checks pass

@@ -329,3 +329,24 @@
 - The independent verification command was initially rejected before execution because it included temporary-directory deletion; the read-only variant passed and left `/tmp/magicboard-verify.NdcwmH` intact.
 - Post-write CodeGraph status retries both returned `Transport closed`; the successful pre-write context plus compiler/test/archive evidence remain authoritative for this turn.
 - No target iPad is connected through `devicectl`, so Phase 27 is complete and Phase 28 awaits installation plus foreground-app acceptance for Command+A/C/V/Z, one app-specific Command shortcut, and Control/Option combinations.
+
+## 2026-09-02 — Function 05 accepted; held-Shift bug diagnosed
+
+- User confirmed the complete Function 05 modifier acceptance checklist passes perfectly on the target iPad, completing Phase 28.
+- User reported a new reproducible bug: holding Shift while pressing direction keys moves the caret instead of continuously selecting text.
+- Verified a clean Git baseline at `f50a642`, restored planning/history context, and re-read the accepted `DESIGN.md`.
+- CodeGraph and direct source inspection prove Shift exists only in proxy-oriented `InputState`; no Shift HID event is sent, while arrows send only their own HID usage.
+- Confirmed the second state defect: arrow use never marks `shftused`, so the release transition can incorrectly preserve a one-shot Shift state after the chord.
+- Verified Left/Right Shift usages `0xE1/0xE5` against the installed Apple IOKit declarations.
+- User approved a thorough state-machine repair after root-cause and impact disclosure. Added Phases 29–31; Phase 29 proceeds with focused failing tests before implementation.
+
+## 2026-09-02 — Held-Shift HID repair completed locally
+
+- Added four focused tests before implementation. The expected red run failed only on the missing `ShiftKey`, `shiftHeld`, and `shftuse` APIs; the completed shared suite passes 34/34.
+- Replaced the single held Boolean with independent left/right Shift sources while preserving the existing one-shot and proxy character semantics.
+- Mapped the existing Shift keycaps to real Left/Right Shift usages `0xE1/0xE5` and wired touch down/up/cancel to the sole existing `HIDBridge`.
+- Marked held Shift used when arrows, trackpad directions, Delete, ordinary controls, or Control/Option/Command chords begin, preventing an unwanted Shift latch after a chord.
+- `xcodegen`, `DESIGN.md` lint, prohibited-Shell scan, iPad Pro simulator Debug, generic arm64 Release, and `git diff --check` pass.
+- Generated `/Users/mac/codexproj/magicboard/build/MagicBoard.tipa` at `0.6.1 (15)`, 149,696 bytes, SHA-256 `628efef7b280951ad946cf1af8377ec98cd9d2a875eeb6c42fced4b319bc462e`.
+- Independent extraction confirms ZIP integrity, arm64 host/extension binaries, matching version/build, four expected IOKit HID imports, host App Group entitlement, and keyboard App Group plus HID event-dispatch entitlement.
+- Phases 29–31 are complete. Phase 32 remains for target-iPad Shift+arrow continuous-selection and regression acceptance.
