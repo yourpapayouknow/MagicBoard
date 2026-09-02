@@ -14,6 +14,18 @@ private enum KeyKind: Int {
     case next
     case dismiss
     case escape
+    case f1
+    case f2
+    case f3
+    case f4
+    case f5
+    case f6
+    case f7
+    case f8
+    case f9
+    case f10
+    case f11
+    case f12
     case leftArrow
     case rightArrow
     case upArrow
@@ -30,6 +42,18 @@ private enum KeyKind: Int {
         switch self {
         case .tab: .tab
         case .escape: .escape
+        case .f1: .F1
+        case .f2: .F2
+        case .f3: .F3
+        case .f4: .F4
+        case .f5: .F5
+        case .f6: .F6
+        case .f7: .F7
+        case .f8: .F8
+        case .f9: .F9
+        case .f10: .F10
+        case .f11: .F11
+        case .f12: .F12
         case .leftArrow: .leftArrow
         case .rightArrow: .rightArrow
         case .upArrow: .upArrow
@@ -39,6 +63,25 @@ private enum KeyKind: Int {
         case .leftCommand: .leftCommand
         case .rightCommand: .rightCommand
         case .rightOption: .rightOption
+        default: nil
+        }
+    }
+
+    // 返回 Shift 图标层对应的系统 HID usage
+    var systemKey: MBHIDSystemKey? {
+        switch self {
+        case .f1: .brightnessDown
+        case .f2: .brightnessUp
+        case .f3: .showWindows
+        case .f4: .search
+        case .f5: .voiceCommand
+        case .f6: .doNotDisturb
+        case .f7: .previousTrack
+        case .f8: .playPause
+        case .f9: .nextTrack
+        case .f10: .mute
+        case .f11: .volumeDown
+        case .f12: .volumeUp
         default: nil
         }
     }
@@ -118,6 +161,7 @@ private final class BoardButton: UIButton {
     var dragupper: UILabel?
     var draglower: UILabel?
     var hidactive = false
+    var hidsystem: MBHIDSystemKey?
 }
 
 // 管理键盘扩展界面
@@ -243,22 +287,22 @@ final class KeyboardViewController: UIInputViewController {
         rows.addArrangedSubview(mkrow(btmrow()))
     }
 
-    // 创建 Mac 功能键占位行
+    // 创建 Mac 双层功能键行
     private func fnrow() -> [KeySpec] {
         [
             ctl("Esc", kind: .escape, weight: 1.5, align: .leading, fontSize: 17),
-            ph("F1", image: "sun.min", align: .bottom, fontSize: 13, stackIcon: true),
-            ph("F2", image: "sun.max", align: .bottom, fontSize: 13, stackIcon: true),
-            ph("F3", image: "rectangle.3.group", align: .bottom, fontSize: 13, stackIcon: true),
-            ph("F4", image: "magnifyingglass", align: .bottom, fontSize: 13, stackIcon: true),
-            ph("F5", image: "mic", align: .bottom, fontSize: 13, stackIcon: true),
-            ph("F6", image: "moon", align: .bottom, fontSize: 13, stackIcon: true),
-            ph("F7", image: "backward", align: .bottom, fontSize: 13, stackIcon: true),
-            ph("F8", image: "playpause", align: .bottom, fontSize: 13, stackIcon: true),
-            ph("F9", image: "forward", align: .bottom, fontSize: 13, stackIcon: true),
-            ph("F10", image: "speaker.slash", align: .bottom, fontSize: 13, stackIcon: true),
-            ph("F11", image: "speaker.wave.1", align: .bottom, fontSize: 13, stackIcon: true),
-            ph("F12", image: "speaker.wave.3", align: .bottom, fontSize: 13, stackIcon: true),
+            ctl("F1", image: "sun.min", kind: .f1, align: .bottom, fontSize: 13, stackIcon: true),
+            ctl("F2", image: "sun.max", kind: .f2, align: .bottom, fontSize: 13, stackIcon: true),
+            ctl("F3", image: "rectangle.3.group", kind: .f3, align: .bottom, fontSize: 13, stackIcon: true),
+            ctl("F4", image: "magnifyingglass", kind: .f4, align: .bottom, fontSize: 13, stackIcon: true),
+            ctl("F5", image: "mic", kind: .f5, align: .bottom, fontSize: 13, stackIcon: true),
+            ctl("F6", image: "moon", kind: .f6, align: .bottom, fontSize: 13, stackIcon: true),
+            ctl("F7", image: "backward", kind: .f7, align: .bottom, fontSize: 13, stackIcon: true),
+            ctl("F8", image: "playpause", kind: .f8, align: .bottom, fontSize: 13, stackIcon: true),
+            ctl("F9", image: "forward", kind: .f9, align: .bottom, fontSize: 13, stackIcon: true),
+            ctl("F10", image: "speaker.slash", kind: .f10, align: .bottom, fontSize: 13, stackIcon: true),
+            ctl("F11", image: "speaker.wave.1", kind: .f11, align: .bottom, fontSize: 13, stackIcon: true),
+            ctl("F12", image: "speaker.wave.3", kind: .f12, align: .bottom, fontSize: 13, stackIcon: true),
             ctl(image: "keyboard.chevron.compact.down", kind: .dismiss),
         ]
     }
@@ -440,6 +484,7 @@ final class KeyboardViewController: UIInputViewController {
         weight: CGFloat = 1,
         align: KeyAlign = .center,
         fontSize: CGFloat = 17,
+        stackIcon: Bool = false,
         hidKey: MBHIDKey? = nil,
         shiftKey: ShiftKey? = nil
     ) -> KeySpec {
@@ -450,29 +495,9 @@ final class KeyboardViewController: UIInputViewController {
             weight: weight,
             align: align,
             fontSize: fontSize,
+            stackIcon: stackIcon,
             hidKey: hidKey,
             shiftKey: shiftKey
-        )
-    }
-
-    // 创建任务三占位描述
-    private func ph(
-        _ title: String = "",
-        image: String? = nil,
-        weight: CGFloat = 1,
-        align: KeyAlign = .center,
-        fontSize: CGFloat = 11,
-        stackIcon: Bool = false
-    ) -> KeySpec {
-        KeySpec(
-            title,
-            image: image,
-            kind: .placeholder,
-            weight: weight,
-            enabled: false,
-            align: align,
-            fontSize: fontSize,
-            stackIcon: stackIcon
         )
     }
 
@@ -640,6 +665,18 @@ final class KeyboardViewController: UIInputViewController {
         case .next: "下一个键盘"
         case .dismiss: "收起键盘"
         case .escape: "Esc"
+        case .f1: "F1，按住 Shift 调低亮度"
+        case .f2: "F2，按住 Shift 调高亮度"
+        case .f3: "F3，按住 Shift 显示所有窗口"
+        case .f4: "F4，按住 Shift 搜索"
+        case .f5: "F5，按住 Shift 听写"
+        case .f6: "F6，按住 Shift 切换勿扰模式"
+        case .f7: "F7，按住 Shift 上一首"
+        case .f8: "F8，按住 Shift 播放或暂停"
+        case .f9: "F9，按住 Shift 下一首"
+        case .f10: "F10，按住 Shift 静音"
+        case .f11: "F11，按住 Shift 调低音量"
+        case .f12: "F12，按住 Shift 调高音量"
         case .leftArrow: "左方向键"
         case .rightArrow: "右方向键"
         case .upArrow: "上方向键"
@@ -684,7 +721,8 @@ final class KeyboardViewController: UIInputViewController {
         case .dismiss:
             rsthid()
             dismissKeyboard()
-        case .tab, .escape, .leftArrow, .rightArrow, .upArrow, .downArrow,
+        case .tab, .escape, .f1, .f2, .f3, .f4, .f5, .f6, .f7, .f8, .f9, .f10, .f11, .f12,
+             .leftArrow, .rightArrow, .upArrow, .downArrow,
              .control, .leftOption, .leftCommand, .rightCommand, .rightOption:
             break
         case .next, .placeholder:
@@ -709,10 +747,14 @@ final class KeyboardViewController: UIInputViewController {
     @objc private func hiddown(_ sender: UIButton) {
         guard
             let button = sender as? BoardButton,
-            let spec = button.spec,
-            let key = spec.kind.hidKey
+            let spec = button.spec
         else { return }
-        guard HIDBridge.shared.keyDown(key) else { return }
+        if state.shiftHeld, let system = spec.kind.systemKey {
+            guard HIDBridge.shared.systemKeyDown(system) else { return }
+            button.hidsystem = system
+        } else {
+            guard let key = spec.kind.hidKey, HIDBridge.shared.keyDown(key) else { return }
+        }
         button.hidactive = true
         state.shftuse()
     }
@@ -721,12 +763,19 @@ final class KeyboardViewController: UIInputViewController {
     @objc private func hidup(_ sender: UIButton) {
         guard
             let button = sender as? BoardButton,
-            button.hidactive,
-            let spec = button.spec,
-            let key = spec.kind.hidKey
+            button.hidactive
         else { return }
         button.hidactive = false
-        guard HIDBridge.shared.keyUp(key) else {
+        let sent: Bool
+        if let system = button.hidsystem {
+            button.hidsystem = nil
+            sent = HIDBridge.shared.systemKeyUp(system)
+        } else if let key = button.spec?.kind.hidKey {
+            sent = HIDBridge.shared.keyUp(key)
+        } else {
+            return
+        }
+        guard sent else {
             rsthid()
             return
         }
@@ -888,6 +937,7 @@ final class KeyboardViewController: UIInputViewController {
         modifiers.reset()
         for button in buttons {
             button.hidactive = false
+            button.hidsystem = nil
         }
         HIDBridge.shared.releaseAll()
         rfrshft()

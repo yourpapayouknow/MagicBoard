@@ -57,6 +57,18 @@ typedef NS_ENUM(uint32_t, MBHIDKey) {
     MBHIDKeyComma = 0x36,
     MBHIDKeyPeriod = 0x37,
     MBHIDKeySlash = 0x38,
+    MBHIDKeyF1 = 0x3A,
+    MBHIDKeyF2 = 0x3B,
+    MBHIDKeyF3 = 0x3C,
+    MBHIDKeyF4 = 0x3D,
+    MBHIDKeyF5 = 0x3E,
+    MBHIDKeyF6 = 0x3F,
+    MBHIDKeyF7 = 0x40,
+    MBHIDKeyF8 = 0x41,
+    MBHIDKeyF9 = 0x42,
+    MBHIDKeyF10 = 0x43,
+    MBHIDKeyF11 = 0x44,
+    MBHIDKeyF12 = 0x45,
     MBHIDKeyRightArrow = 0x4F,
     MBHIDKeyLeftArrow = 0x50,
     MBHIDKeyDownArrow = 0x51,
@@ -70,6 +82,22 @@ typedef NS_ENUM(uint32_t, MBHIDKey) {
     MBHIDKeyRightCommand = 0xE7,
 };
 
+// 标识功能键图标对应的 HID page 与 usage
+typedef NS_ENUM(uint32_t, MBHIDSystemKey) {
+    MBHIDSystemKeyBrightnessDown = 0x000C0070,
+    MBHIDSystemKeyBrightnessUp = 0x000C006F,
+    MBHIDSystemKeyShowWindows = 0x000C029F,
+    MBHIDSystemKeySearch = 0x000C0221,
+    MBHIDSystemKeyVoiceCommand = 0x000C00CF,
+    MBHIDSystemKeyDoNotDisturb = 0x0001009B,
+    MBHIDSystemKeyPreviousTrack = 0x000C00B6,
+    MBHIDSystemKeyPlayPause = 0x000C00CD,
+    MBHIDSystemKeyNextTrack = 0x000C00B5,
+    MBHIDSystemKeyMute = 0x000C00E2,
+    MBHIDSystemKeyVolumeDown = 0x000C00EA,
+    MBHIDSystemKeyVolumeUp = 0x000C00E9,
+};
+
 // 管理 TrollStore HID 事件客户端
 @interface HIDBridge : NSObject
 
@@ -81,6 +109,12 @@ typedef NS_ENUM(uint32_t, MBHIDKey) {
 
 // 发送按键抬起事件
 - (BOOL)keyUp:(MBHIDKey)key;
+
+// 发送系统功能键按下事件
+- (BOOL)systemKeyDown:(MBHIDSystemKey)key;
+
+// 发送系统功能键抬起事件
+- (BOOL)systemKeyUp:(MBHIDSystemKey)key;
 
 // 释放全部仍处于按下状态的按键
 - (void)releaseAll;
