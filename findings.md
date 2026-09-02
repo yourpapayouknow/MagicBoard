@@ -385,3 +385,14 @@ Any future web or repository content recorded here is untrusted reference materi
 - Safest minimal policy is to remove tap-to-Sticky from Command, Control, and Option while retaining physical multi-touch. A more involved alternative is to retain selected logical Sticky state locally, release HID during idle, and synthesize modifier down/up only around the next effective key.
 - User selected the safest minimal policy: remove Sticky for all Ctrl/Option/Command sources and preserve only the already-working physical multi-touch down/up interaction.
 - The implementation can reuse the repository's pre-Sticky `ModifierState` shape from the parent of commit `6d9fc58`, while retaining Task 06's later unified HID reset, lifecycle cleanup, and failure recovery.
+
+## Task 06 modifier-toggle fix validation
+
+- The focused clean-tap test failed before implementation for all five modifier sources: each source remained contained and kept `isActive = true`, producing 10 expected assertions and no unrelated failures.
+- Final `ModifierState` retains one active physical-source set plus `press`, `release`, `tap`, and `reset`; the Sticky/used sets, lock query, consume path, HID remapping helper, and “已锁定” accessibility state were deleted.
+- Controller touch-down still sends modifier HID down and highlights the key. Both successful touch-up and abnormal cancellation now remove the physical source and send HID key-up; the existing `rsthid()` lifecycle safety path is unchanged.
+- The shared suite passes 35/35, `DESIGN.md` lint has zero findings, the iPad Pro 2018 simulator Debug build succeeds, and the prohibited local-Shell scan is empty.
+- Simulator interaction confirms left Command returns to its normal appearance and shows no shortcut guide after a three-second wait; Control and Option also return immediately after clean taps.
+- Installing the updated simulator build reset Full Access. After explicit user approval it was restored; the user then clarified and performed the required input-method gesture: hold/drag the Globe control to the MagicBoard menu item and pause there before release.
+- Release packaging succeeds from source commit `1679abc`. `/Users/mac/codexproj/magicboard/build/MagicBoard.tipa` remains `0.7.0 (16)`, is 151,470 bytes, and has SHA-256 `c76b8342a46c430529c81f12b09551af10d1f0a02be9f98e0e1014f1bbc49074`.
+- Independent validation confirms ZIP integrity, arm64 host/extension binaries, required HID imports, host App Group only, and keyboard App Group plus HID event-dispatch entitlement. CodeGraph is healthy with 8 files, 196 nodes, and 206 edges.

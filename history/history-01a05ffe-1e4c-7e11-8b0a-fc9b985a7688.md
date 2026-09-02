@@ -39,3 +39,21 @@
 - **Where（在哪个上下文）**：工作目录 `/Users/mac/codexproj/magicboard`；比较了 Xcode DerivedData 中 `Debug-iphonesimulator/MagicBoard.app/PlugIns/MagicBoardKeyboard.appex` 的签名权限与 TrollStore Release 包。
 - **Why（目的/背景）**：用户指出模拟器中的功能键并非仅视觉可用，而是 Cmd、方向键等均有真实效果，要求重新判断 TrollStore 是否必要。
 - **How（如何实现/决策过程）**：使用 `codesign -d --entitlements` 直接读取模拟器扩展，确认私有 HID entitlement 被嵌入并能在 Simulator 环境运行。由此区分“功能能否运行”和“实体设备能否通过常规签名安装”两个问题：模拟器足以验证 HID 功能；实体设备的普通开发者/App Store provisioning profile 仍不会授权该私有 entitlement，因此完整功能的设备安装仍需 TrollStore 或 Apple 正式授予相应权限。
+
+### 第 5 轮对话（2026-09-02 11:36）
+
+- **Who（谁参与）**：用户（MagicBoard 项目负责人）+ AI（Assistant / Codex）。
+- **What（做了什么）**：诊断并修复 Ctrl、Option、Command 单击 Sticky 导致修饰键持续按下的问题。根据 Apple 官方 iPadOS 指南评估 Command 快捷键指引、Hover Text 激活修饰键和 VoiceOver Control–Option 修饰键冲突；用户最终选择取消全部修饰键单击锁定，仅保留物理多点触控。新增五来源轻点回归测试，红测出现 10 个预期断言；实现后共享测试 35/35 通过。
+- **When（何时发生）**：2026-09-02 11:36–17:25（Asia/Shanghai）。
+- **Where（在哪个上下文）**：工作目录 `/Users/mac/codexproj/magicboard`；主要修改 `Packages/MagicBoardShared/Sources/MagicBoardShared/SharedConfig.swift`、对应测试和 `Keyboard/KeyboardViewController.swift`。
+- **Why（目的/背景）**：用户发现单击 Command 后 Sticky 会把 HID 修饰键持续保持，触发 iPadOS 系统快捷键指引浮窗，并要求查询系统快捷键行为后判断 Ctrl/Option 是否也应取消 Toggle。
+- **How（如何实现/决策过程）**：先检查 Git、历史记录及 CodeGraph 状态，确认根因为 `ModifierState.tap()` 的 `held → sticky` 转换。通过 `autocli` 检索并读取 Apple 官方外接键盘、Hover Text、VoiceOver 与 Sticky Keys 文档；首次 `--query` 参数与本机 CLI 不兼容，改用已验证的位置参数。用户选择全部取消后，复用 Sticky 之前的单活动集合结构，同时保留 Task 06 后续的生命周期清理。完成测试、设计 lint、Shell 扫描、模拟器 Debug 和交互验收。
+
+### 第 6 轮对话（2026-09-02 17:25）
+
+- **Who（谁参与）**：用户（MagicBoard 项目负责人）+ AI（Assistant / Codex）。
+- **What（做了什么）**：用户纠正模拟器输入法切换方式并代为切换到 MagicBoard；随后完成 Command、Ctrl、Option 单击释放的模拟器验收以及最终 Release 打包。生成 `/Users/mac/codexproj/magicboard/build/MagicBoard.tipa`，版本 `0.7.0 (16)`，大小 151,470 字节，SHA-256 为 `c76b8342a46c430529c81f12b09551af10d1f0a02be9f98e0e1014f1bbc49074`。
+- **When（何时发生）**：2026-09-02 17:25（Asia/Shanghai）。
+- **Where（在哪个上下文）**：本机 `MagicBoard iPad Pro 12.9 2018` 模拟器和 `/Users/mac/codexproj/magicboard/build/MagicBoard.tipa`。
+- **Why（目的/背景）**：Computer Use 的普通点击/拖动未能打开 iPadOS 输入法长按选择菜单，用户说明必须拖动地球图标并在目标输入法上停留，随后主动完成切换，使最终交互验收可以继续。
+- **How（如何实现/决策过程）**：读取用户切换后的 MagicBoard 界面；单击左 Command 后等待三秒，确认无持续高亮且没有快捷键指引，随后分别单击 Ctrl 与 Option 确认同样立即恢复。提交源代码 `1679abc`，运行 Zsh TIPA 构建脚本，并独立核验 ZIP、arm64、版本、IOKit HID 导入和最小权限位置。最终 CodeGraph 健康，源码改动删除 161 行 Sticky 专用逻辑并新增 28 行直接释放逻辑与测试。

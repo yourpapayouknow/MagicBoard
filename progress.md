@@ -412,3 +412,13 @@
 - Added Phases 39–40. No product code has changed while the exact Control/Option policy awaits user confirmation.
 - After one empty selection response, the repeated focused prompt succeeded: user chose to cancel Sticky for all modifiers and keep physical multi-touch only.
 - Phase 39 is complete. Phase 40 starts with a failing clean-tap regression test, then removes only Sticky-specific state/controller paths while preserving Task 06 lifecycle cleanup.
+
+## 2026-09-02 — Modifier toggle conflicts fixed
+
+- Replaced six Sticky-specific tests with one five-source clean-tap regression. The expected red run produced 10 assertions only because every modifier remained active after tap.
+- Removed Sticky/used state and its consume/accessibility/controller branches while preserving physical multi-touch down/up, cyan held highlighting, HID failure recovery, and the unified `rsthid()` lifecycle cleanup.
+- Final shared suite passes 35/35; design lint, Shell scan, `git diff --check`, iPad Pro 2018 simulator Debug, and generic arm64 Release all pass.
+- Simulator interaction confirms Command has no lingering highlight or shortcut-guide popup after three seconds, and Ctrl/Option also release immediately.
+- The updated install reset Full Access; user approved restoring it and then manually switched to MagicBoard by holding/dragging the Globe key to the target input method, a gesture Computer Use could not reproduce reliably.
+- Source committed as `1679abc`. Rebuilt `/Users/mac/codexproj/magicboard/build/MagicBoard.tipa` at `0.7.0 (16)`, 151,470 bytes, SHA-256 `c76b8342a46c430529c81f12b09551af10d1f0a02be9f98e0e1014f1bbc49074`.
+- Phase 40 is complete; only Phase 36 target-device physical multi-touch and lifecycle acceptance remains.
