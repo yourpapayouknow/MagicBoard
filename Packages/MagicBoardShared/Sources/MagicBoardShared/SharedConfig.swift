@@ -40,6 +40,12 @@ public enum BoardLang: Equatable, Sendable {
     case chinese
 }
 
+// 标识左右物理 Shift
+public enum ShiftKey: Hashable, Sendable {
+    case left
+    case right
+}
+
 // 标识底部物理修饰键
 public enum ModifierKey: Hashable, Sendable {
     case control
@@ -91,7 +97,7 @@ public struct InputState: Equatable, Sendable {
     public private(set) var language: BoardLang
     public private(set) var shifted: Bool
     public private(set) var capsLocked: Bool
-    private var shftheld: Bool
+    private var shiftkeys: Set<ShiftKey>
     private var shftstart: Bool
     private var shftused: Bool
 
@@ -104,7 +110,7 @@ public struct InputState: Equatable, Sendable {
         self.language = language
         self.shifted = shifted
         self.capsLocked = capsLocked
-        shftheld = false
+        shiftkeys = []
         shftstart = false
         shftused = false
     }
@@ -114,32 +120,52 @@ public struct InputState: Equatable, Sendable {
         shifted != capsLocked
     }
 
+    // 判断是否按住任一 Shift
+    public var shiftHeld: Bool {
+        !shiftkeys.isEmpty
+    }
+
     // 切换单次 Shift
     public mutating func tglshft() {
         shifted.toggle()
     }
 
     // 开始 Shift 触摸
-    public mutating func shftdown() {
-        guard !shftheld else { return }
-        shftheld = true
+    public mutating func shftdown(_ key: ShiftKey = .left) {
+        guard shiftkeys.insert(key).inserted else { return }
+        guard shiftkeys.count == 1 else {
+            shifted = true
+            return
+        }
         shftstart = shifted
         shftused = false
         shifted = true
     }
 
     // 完成 Shift 触摸
-    public mutating func shftup() {
-        guard shftheld else { return }
+    public mutating func shftup(_ key: ShiftKey = .left) {
+        guard shiftkeys.remove(key) != nil else { return }
+        guard shiftkeys.isEmpty else { return }
         shifted = !shftstart && !shftused
         rstshft()
     }
 
     // 取消 Shift 触摸
-    public mutating func shftcncl() {
-        guard shftheld else { return }
+    public mutating func shftcncl(_ key: ShiftKey? = nil) {
+        guard shiftHeld else { return }
+        if let key {
+            shiftkeys.remove(key)
+        } else {
+            shiftkeys.removeAll()
+        }
+        guard shiftkeys.isEmpty else { return }
         shifted = shftstart
         rstshft()
+    }
+
+    // 标记 Shift 已用于组合键
+    public mutating func shftuse() {
+        if shiftHeld { shftused = true }
     }
 
     // 切换 Caps Lock
@@ -164,8 +190,8 @@ public struct InputState: Equatable, Sendable {
         } else {
             output = shifted ? (alternate ?? value) : value
         }
-        if shftheld {
-            shftused = true
+        if shiftHeld {
+            shftuse()
         } else {
             shifted = false
         }
@@ -178,13 +204,13 @@ public struct InputState: Equatable, Sendable {
         alternate: String? = nil,
         letter: Bool = true
     ) -> String {
-        if shftheld { shftused = true }
+        shftuse()
         return letter ? value.uppercased() : (alternate ?? value)
     }
 
     // 清理 Shift 触摸记录
     private mutating func rstshft() {
-        shftheld = false
+        shiftkeys.removeAll()
         shftstart = false
         shftused = false
     }

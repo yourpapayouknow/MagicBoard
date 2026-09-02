@@ -231,6 +231,68 @@ final class SharedConfigTests: XCTestCase {
         XCTAssertFalse(state.shifted)
     }
 
+    // 验证 HID 组合使用后不保留单次 Shift
+    func testshfthiduse() {
+        var state = InputState()
+
+        state.shftdown(.left)
+        XCTAssertTrue(state.shiftHeld)
+        state.shftuse()
+        state.shftuse()
+        XCTAssertTrue(state.shifted)
+        state.shftup(.left)
+
+        XCTAssertFalse(state.shiftHeld)
+        XCTAssertFalse(state.shifted)
+    }
+
+    // 验证左右 Shift 独立释放
+    func testshftpairs() {
+        var state = InputState()
+
+        state.shftdown(.left)
+        state.shftdown(.right)
+        state.shftuse()
+        state.shftup(.left)
+
+        XCTAssertTrue(state.shiftHeld)
+        XCTAssertTrue(state.shifted)
+        state.shftup(.right)
+        XCTAssertFalse(state.shiftHeld)
+        XCTAssertFalse(state.shifted)
+    }
+
+    // 验证左右 Shift 逐个取消恢复初始状态
+    func testshftpaircncl() {
+        var state = InputState()
+
+        state.shftdown(.left)
+        state.shftdown(.right)
+        state.shftcncl(.left)
+
+        XCTAssertTrue(state.shiftHeld)
+        XCTAssertTrue(state.shifted)
+        state.shftcncl(.right)
+        XCTAssertFalse(state.shiftHeld)
+        XCTAssertFalse(state.shifted)
+    }
+
+    // 验证双 Shift 空松开仍只锁定一次
+    func testshftpairlock() {
+        var state = InputState()
+
+        state.shftdown(.left)
+        state.shftdown(.right)
+        state.shftup(.left)
+        XCTAssertTrue(state.shiftHeld)
+        state.shftup(.right)
+
+        XCTAssertFalse(state.shiftHeld)
+        XCTAssertTrue(state.shifted)
+        XCTAssertEqual(state.emit("a"), "A")
+        XCTAssertFalse(state.shifted)
+    }
+
     // 验证修饰键默认状态
     func testmodsinit() {
         let state = ModifierState()

@@ -61,8 +61,10 @@ typedef NS_ENUM(uint32_t, MBHIDKey) {
     MBHIDKeyDownArrow = 0x51,
     MBHIDKeyUpArrow = 0x52,
     MBHIDKeyControl = 0xE0,
+    MBHIDKeyLeftShift = 0xE1,
     MBHIDKeyLeftOption = 0xE2,
     MBHIDKeyLeftCommand = 0xE3,
+    MBHIDKeyRightShift = 0xE5,
     MBHIDKeyRightOption = 0xE6,
     MBHIDKeyRightCommand = 0xE7,
 };

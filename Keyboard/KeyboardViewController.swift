@@ -76,6 +76,7 @@ private struct KeySpec {
     let fontSize: CGFloat
     let stackIcon: Bool
     let hidKey: MBHIDKey?
+    let shiftKey: ShiftKey?
 
     // 创建按键描述
     init(
@@ -90,7 +91,8 @@ private struct KeySpec {
         align: KeyAlign = .center,
         fontSize: CGFloat = 11,
         stackIcon: Bool = false,
-        hidKey: MBHIDKey? = nil
+        hidKey: MBHIDKey? = nil,
+        shiftKey: ShiftKey? = nil
     ) {
         self.title = title
         self.image = image
@@ -104,6 +106,7 @@ private struct KeySpec {
         self.fontSize = fontSize
         self.stackIcon = stackIcon
         self.hidKey = hidKey
+        self.shiftKey = shiftKey
     }
 }
 
@@ -271,11 +274,25 @@ final class KeyboardViewController: UIInputViewController {
                 ctl("return", kind: .enter, weight: 1.9, align: .trailing),
             ],
             [
-                ctl("shift", kind: .shift, weight: 2.25, align: .leading),
+                ctl(
+                    "shift",
+                    kind: .shift,
+                    weight: 2.25,
+                    align: .leading,
+                    hidKey: .leftShift,
+                    shiftKey: .left
+                ),
                 ltr("Z"), ltr("X"), ltr("C"), ltr("V"), ltr("B"), ltr("N"), ltr("M"),
                 txt(",", alternate: "<", zhBase: "，", zhAlt: "《"),
                 txt(".", alternate: ">", zhBase: "。", zhAlt: "》"), txt("/", alternate: "?"),
-                ctl("shift", kind: .shift, weight: 2.25, align: .trailing),
+                ctl(
+                    "shift",
+                    kind: .shift,
+                    weight: 2.25,
+                    align: .trailing,
+                    hidKey: .rightShift,
+                    shiftKey: .right
+                ),
             ],
         ]
     }
@@ -409,9 +426,20 @@ final class KeyboardViewController: UIInputViewController {
         kind: KeyKind,
         weight: CGFloat = 1,
         align: KeyAlign = .center,
-        fontSize: CGFloat = 17
+        fontSize: CGFloat = 17,
+        hidKey: MBHIDKey? = nil,
+        shiftKey: ShiftKey? = nil
     ) -> KeySpec {
-        KeySpec(title, image: image, kind: kind, weight: weight, align: align, fontSize: fontSize)
+        KeySpec(
+            title,
+            image: image,
+            kind: kind,
+            weight: weight,
+            align: align,
+            fontSize: fontSize,
+            hidKey: hidKey,
+            shiftKey: shiftKey
+        )
     }
 
     // 创建任务三占位描述
@@ -617,6 +645,7 @@ final class KeyboardViewController: UIInputViewController {
     // 处理全部可用按键
     @objc private func prskey(_ sender: UIButton) {
         guard let spec = (sender as? BoardButton)?.spec else { return }
+        if spec.kind != .shift { state.shftuse() }
         switch spec.kind {
         case .text:
             inptxt(spec, drag: false)
@@ -669,6 +698,7 @@ final class KeyboardViewController: UIInputViewController {
             let spec = (sender as? BoardButton)?.spec,
             let key = spec.kind.hidKey
         else { return }
+        state.shftuse()
         HIDBridge.shared.keyDown(key)
     }
 
@@ -690,6 +720,7 @@ final class KeyboardViewController: UIInputViewController {
             let key = spec.kind.hidKey,
             modifiers.press(modifier)
         else { return }
+        state.shftuse()
         guard HIDBridge.shared.keyDown(key) else {
             modifiers.release(modifier)
             return
@@ -741,6 +772,7 @@ final class KeyboardViewController: UIInputViewController {
     // 开始全键盘触控板状态
     private func begcursor(_ sender: UILongPressGestureRecognizer) {
         guard let button = sender.view as? BoardButton else { return }
+        state.shftuse()
         cursormotion.reset()
         cursorpoint = sender.location(in: view)
         cursorbutton = button
@@ -810,19 +842,37 @@ final class KeyboardViewController: UIInputViewController {
 
     // 开始 Shift 触摸
     @objc private func shftdown(_ sender: UIButton) {
-        state.shftdown()
+        guard
+            let spec = (sender as? BoardButton)?.spec,
+            let shift = spec.shiftKey,
+            let key = spec.hidKey
+        else { return }
+        state.shftdown(shift)
+        HIDBridge.shared.keyDown(key)
         rfrshft()
     }
 
     // 完成 Shift 触摸
     @objc private func shftup(_ sender: UIButton) {
-        state.shftup()
+        guard
+            let spec = (sender as? BoardButton)?.spec,
+            let shift = spec.shiftKey,
+            let key = spec.hidKey
+        else { return }
+        HIDBridge.shared.keyUp(key)
+        state.shftup(shift)
         rfrshft()
     }
 
     // 取消 Shift 触摸
     @objc private func shftcncl(_ sender: UIButton) {
-        state.shftcncl()
+        guard
+            let spec = (sender as? BoardButton)?.spec,
+            let shift = spec.shiftKey,
+            let key = spec.hidKey
+        else { return }
+        HIDBridge.shared.keyUp(key)
+        state.shftcncl(shift)
         rfrshft()
     }
 
@@ -871,6 +921,7 @@ final class KeyboardViewController: UIInputViewController {
     // 开始 Delete 删除与延迟
     @objc private func deldown(_ sender: UIButton) {
         stopdel()
+        state.shftuse()
         if modifiers.isActive {
             sndhid(.delete)
             return
