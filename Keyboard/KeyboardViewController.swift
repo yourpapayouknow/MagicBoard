@@ -97,6 +97,14 @@ private enum KeyKind: Int {
         default: nil
         }
     }
+
+    // 判断是否为可连续触发的方向键
+    var isArrow: Bool {
+        switch self {
+        case .leftArrow, .rightArrow, .upArrow, .downArrow: true
+        default: false
+        }
+    }
 }
 
 // 标识键帽内容对齐
@@ -346,6 +354,7 @@ final class KeyboardViewController: UIInputViewController {
     private var cursorpoint: CGPoint?
     private weak var cursorbutton: KeyView?
     private let keyimpact = UIImpactFeedbackGenerator(style: .light)
+    private var arrshft: Set<ObjectIdentifier> = []
     // 仅由主 RunLoop 触摸生命周期访问
     nonisolated(unsafe) private var deltimer: Timer?
 
@@ -804,6 +813,13 @@ final class KeyboardViewController: UIInputViewController {
             drag.delaysTouchesBegan = false
             drag.delaysTouchesEnded = false
             button.addGestureRecognizer(drag)
+        } else if spec.kind.isArrow {
+            button.addTarget(self, action: #selector(arrdown(_:)), for: .touchDown)
+            button.addTarget(
+                self,
+                action: #selector(arrup(_:)),
+                for: [.touchUpInside, .touchUpOutside, .touchCancel, .touchDragExit]
+            )
         } else if spec.kind.hidKey != nil {
             button.addTarget(self, action: #selector(hiddown(_:)), for: .touchDown)
             button.addTarget(self, action: #selector(hidup(_:)), for: .touchUpInside)
@@ -1091,6 +1107,49 @@ final class KeyboardViewController: UIInputViewController {
         (sender as? KeyView)?.hidactive = false
     }
 
+    // 按下方向键并保持 HID 自动重复
+    @objc private func arrdown(_ sender: UIButton) {
+        guard
+            let button = sender as? KeyView,
+            !button.hidactive,
+            let key = button.spec?.kind.hidKey
+        else { return }
+        if state.shifted, !state.shiftHeld {
+            if arrshft.isEmpty, !HIDBridge.shared.keyDown(.leftShift) { return }
+            arrshft.insert(ObjectIdentifier(button))
+        }
+        guard HIDBridge.shared.keyDown(key) else {
+            if !relarrshft(button) { rsthid() }
+            return
+        }
+        button.hidactive = true
+        state.shftuse()
+    }
+
+    // 释放方向键并停止 HID 自动重复
+    @objc private func arrup(_ sender: UIButton) {
+        guard let button = sender as? KeyView else { return }
+        let key = button.spec?.kind.hidKey
+        let keysent = !button.hidactive || key.map(HIDBridge.shared.keyUp) == true
+        button.hidactive = false
+        let shiftsent = relarrshft(button)
+        guard keysent, shiftsent else {
+            rsthid()
+            return
+        }
+        updmods()
+    }
+
+    // 释放轻点锁定产生的方向键 Shift
+    private func relarrshft(_ button: KeyView) -> Bool {
+        guard arrshft.remove(ObjectIdentifier(button)) != nil else { return true }
+        let leftheld = buttons.contains { item in
+            item.hidactive && item.spec?.kind == .shift && item.spec?.hidKey == .leftShift
+        }
+        guard arrshft.isEmpty, !leftheld else { return true }
+        return HIDBridge.shared.keyUp(.leftShift)
+    }
+
     // 记录功能键轻点选择层
     @objc private func fndown(_ sender: UIButton) {
         guard
@@ -1293,6 +1352,7 @@ final class KeyboardViewController: UIInputViewController {
             button.touchvalid = false
             hidepop(button)
         }
+        arrshft.removeAll()
         HIDBridge.shared.releaseAll()
         rfrshft()
         updmods()

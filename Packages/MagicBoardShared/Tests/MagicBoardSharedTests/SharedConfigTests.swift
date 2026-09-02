@@ -246,6 +246,24 @@ final class SharedConfigTests: XCTestCase {
         XCTAssertFalse(state.shifted)
     }
 
+    // 验证单次 Shift 在连续 HID 方向动作间保持
+    func testshftarrs() {
+        var state = InputState()
+
+        state.shftdown(.left)
+        state.shftup(.left)
+        XCTAssertTrue(state.shifted)
+        XCTAssertFalse(state.shiftHeld)
+
+        state.shftuse()
+        state.shftuse()
+        XCTAssertTrue(state.shifted)
+
+        state.shftdown(.left)
+        state.shftup(.left)
+        XCTAssertFalse(state.shifted)
+    }
+
     // 验证功能层动作消费单次 Shift
     func testfnshftuse() {
         var state = InputState(shifted: true)
