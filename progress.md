@@ -360,3 +360,20 @@
 - Added Phases 33–36 with explicit state-machine, lifecycle, build/package, and target-iPad success checks.
 - The minimum design distinguishes held, Sticky, and used physical touches; modifier taps combine, the same Sticky key toggles off, and only a successfully completed non-modifier HID key consumes Sticky state.
 - Phase 33 proceeds with focused failing tests before the shared state implementation.
+
+## 2026-09-02 — Task 06 modifier model completed
+
+- Added six focused Sticky tests before implementation; the expected red run failed only on the five new transition/query APIs.
+- Replaced the single active set with held, Sticky, and used source sets while preserving the existing `press`, `release`, `contains`, and `reset` contract.
+- Added tap-to-lock, tap-again unlock, cancellation restoration, multi-Sticky consumption, physical-chord use, and held-source preservation transitions.
+- Re-ran the complete shared suite: 40 tests passed with 0 failures. Phase 33 is complete and Phase 34 is in progress.
+
+## 2026-09-02 — Task 06 controller wiring completed
+
+- Split successful modifier taps from outside/cancel/drag-exit endings so only a clean tap can create or toggle Sticky state.
+- Added per-button HID completion tracking and consume Sticky modifiers only after successful non-modifier HID key-up; physical held modifiers remain down until their own touch ends.
+- Reused the existing cyan selected state for held and Sticky modifiers and added selected accessibility traits plus “已按下”/“已锁定” values.
+- Centralized Shift/modifier state reset, HID `releaseAll`, timer/trackpad cleanup, and keycap refresh in one idempotent path.
+- Wired that reset to rebuild, dismissal, system next-keyboard touch-down, view disappearance, and extension-host resign/background notifications.
+- The first two simulator compiles identified the exact Swift-imported extension notification names; the compiler-declared names resolved the issue and the complete arm64/x86_64 simulator Debug build passed.
+- Re-ran all 40 shared tests, `git diff --check`, and the prohibited local-Shell scan successfully. Phase 34 is complete and Phase 35 is in progress.

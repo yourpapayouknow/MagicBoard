@@ -115,6 +115,7 @@ private final class BoardButton: UIButton {
     var spec: KeySpec?
     var dragupper: UILabel?
     var draglower: UILabel?
+    var hidactive = false
 }
 
 // 管理键盘扩展界面
@@ -136,6 +137,7 @@ final class KeyboardViewController: UIInputViewController {
 
     // 清理扩展计时器
     deinit {
+        NotificationCenter.default.removeObserver(self)
         deltimer?.invalidate()
         HIDBridge.shared.releaseAll()
     }
@@ -144,6 +146,19 @@ final class KeyboardViewController: UIInputViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .clear
+        let center = NotificationCenter.default
+        center.addObserver(
+            self,
+            selector: #selector(rsthid),
+            name: .NSExtensionHostWillResignActive,
+            object: nil
+        )
+        center.addObserver(
+            self,
+            selector: #selector(rsthid),
+            name: .NSExtensionHostDidEnterBackground,
+            object: nil
+        )
 
         let blur = UIVisualEffectView(effect: UIBlurEffect(style: .systemUltraThinMaterial))
         blur.translatesAutoresizingMaskIntoConstraints = false
@@ -205,18 +220,14 @@ final class KeyboardViewController: UIInputViewController {
         super.viewWillDisappear(animated)
         stopcursor()
         stopdel()
-        state.shftcncl()
-        modifiers.reset()
-        HIDBridge.shared.releaseAll()
+        rsthid()
     }
 
     // 生成固定键盘布局
     private func bldkbd() {
         stopcursor()
         stopdel()
-        state.shftcncl()
-        modifiers.reset()
-        HIDBridge.shared.releaseAll()
+        rsthid()
         buttons.removeAll(keepingCapacity: true)
         for item in rows.arrangedSubviews {
             rows.removeArrangedSubview(item)
@@ -567,11 +578,8 @@ final class KeyboardViewController: UIInputViewController {
 
         if spec.kind.modifierKey != nil {
             button.addTarget(self, action: #selector(moddown(_:)), for: .touchDown)
-            button.addTarget(
-                self,
-                action: #selector(modup(_:)),
-                for: [.touchUpInside, .touchUpOutside, .touchCancel, .touchDragExit]
-            )
+            button.addTarget(self, action: #selector(modtap(_:)), for: .touchUpInside)
+            button.addTarget(self, action: #selector(modcncl(_:)), for: [.touchUpOutside, .touchCancel, .touchDragExit])
         } else if spec.kind.hidKey != nil {
             button.addTarget(self, action: #selector(hiddown(_:)), for: .touchDown)
             button.addTarget(
@@ -589,6 +597,7 @@ final class KeyboardViewController: UIInputViewController {
             hold.delaysTouchesEnded = true
             button.addGestureRecognizer(hold)
         } else if spec.kind == .next {
+            button.addTarget(self, action: #selector(rsthid), for: .touchDown)
             button.addTarget(self, action: #selector(handleInputModeList(from:with:)), for: .allTouchEvents)
         } else if spec.kind == .language {
             button.addTarget(self, action: #selector(prskey(_:)), for: .touchUpInside)
@@ -670,6 +679,7 @@ final class KeyboardViewController: UIInputViewController {
                 textDocumentProxy.insertText(" ")
             }
         case .dismiss:
+            rsthid()
             dismissKeyboard()
         case .escape, .leftArrow, .rightArrow, .upArrow, .downArrow,
              .control, .leftOption, .leftCommand, .rightCommand, .rightOption:
@@ -695,20 +705,30 @@ final class KeyboardViewController: UIInputViewController {
     // 发送 HID 按键按下事件
     @objc private func hiddown(_ sender: UIButton) {
         guard
-            let spec = (sender as? BoardButton)?.spec,
+            let button = sender as? BoardButton,
+            let spec = button.spec,
             let key = spec.kind.hidKey
         else { return }
+        guard HIDBridge.shared.keyDown(key) else { return }
+        button.hidactive = true
         state.shftuse()
-        HIDBridge.shared.keyDown(key)
+        modifiers.use()
     }
 
     // 发送 HID 按键抬起事件
     @objc private func hidup(_ sender: UIButton) {
         guard
-            let spec = (sender as? BoardButton)?.spec,
+            let button = sender as? BoardButton,
+            button.hidactive,
+            let spec = button.spec,
             let key = spec.kind.hidKey
         else { return }
-        HIDBridge.shared.keyUp(key)
+        button.hidactive = false
+        guard HIDBridge.shared.keyUp(key) else {
+            rsthid()
+            return
+        }
+        finmods()
     }
 
     // 开始物理修饰键触摸
@@ -717,39 +737,70 @@ final class KeyboardViewController: UIInputViewController {
             let button = sender as? BoardButton,
             let spec = button.spec,
             let modifier = spec.kind.modifierKey,
-            let key = spec.kind.hidKey,
-            modifiers.press(modifier)
+            let key = spec.kind.hidKey
         else { return }
+        let active = modifiers.contains(modifier)
+        guard modifiers.press(modifier) else { return }
         state.shftuse()
-        guard HIDBridge.shared.keyDown(key) else {
+        guard active || HIDBridge.shared.keyDown(key) else {
             modifiers.release(modifier)
+            updmods()
             return
         }
-        updmod(button, active: true)
+        updmods()
     }
 
-    // 完成或取消物理修饰键触摸
-    @objc private func modup(_ sender: UIButton) {
+    // 完成修饰键单击
+    @objc private func modtap(_ sender: UIButton) {
         guard
-            let button = sender as? BoardButton,
-            let spec = button.spec,
+            let spec = (sender as? BoardButton)?.spec,
             let modifier = spec.kind.modifierKey,
-            let key = spec.kind.hidKey,
-            modifiers.release(modifier)
+            let key = spec.kind.hidKey
         else { return }
-        HIDBridge.shared.keyUp(key)
-        updmod(button, active: false)
+        if !modifiers.tap(modifier), !HIDBridge.shared.keyUp(key) {
+            rsthid()
+            return
+        }
+        updmods()
     }
 
-    // 更新修饰键活动外观
-    private func updmod(_ button: BoardButton, active: Bool) {
-        guard var config = button.configuration else { return }
-        config.baseForegroundColor = active ? .systemBackground : .label
-        config.baseBackgroundColor = active
-            ? theme.primary.uiclr
-            : theme.accent.uiclr.withAlphaComponent(0.24)
-        button.configuration = config
-        button.accessibilityValue = active ? "已按下" : nil
+    // 取消修饰键触摸
+    @objc private func modcncl(_ sender: UIButton) {
+        guard
+            let spec = (sender as? BoardButton)?.spec,
+            let modifier = spec.kind.modifierKey,
+            let key = spec.kind.hidKey
+        else { return }
+        if !modifiers.cancel(modifier), !HIDBridge.shared.keyUp(key) {
+            rsthid()
+            return
+        }
+        updmods()
+    }
+
+    // 刷新全部修饰键活动外观
+    private func updmods() {
+        for button in buttons {
+            guard
+                let spec = button.spec,
+                let modifier = spec.kind.modifierKey,
+                var config = button.configuration
+            else { continue }
+            let active = modifiers.contains(modifier)
+            config.baseForegroundColor = active ? .systemBackground : .label
+            config.baseBackgroundColor = active
+                ? theme.primary.uiclr
+                : theme.accent.uiclr.withAlphaComponent(0.24)
+            button.configuration = config
+            button.accessibilityValue = modifiers.isSticky(modifier)
+                ? "已锁定"
+                : (active ? "已按下" : nil)
+            if active {
+                button.accessibilityTraits.insert(.selected)
+            } else {
+                button.accessibilityTraits.remove(.selected)
+            }
+        }
     }
 
     // 处理空格键触控板手势
@@ -816,9 +867,53 @@ final class KeyboardViewController: UIInputViewController {
     }
 
     // 发送一次完整 HID 按键
-    private func sndhid(_ key: MBHIDKey) {
-        guard HIDBridge.shared.keyDown(key) else { return }
-        HIDBridge.shared.keyUp(key)
+    @discardableResult
+    private func sndhid(_ key: MBHIDKey) -> Bool {
+        guard HIDBridge.shared.keyDown(key) else { return false }
+        state.shftuse()
+        modifiers.use()
+        guard HIDBridge.shared.keyUp(key) else {
+            rsthid()
+            return false
+        }
+        finmods()
+        return true
+    }
+
+    // 返回共享修饰键对应的 HID usage
+    private func hidmod(_ modifier: ModifierKey) -> MBHIDKey {
+        switch modifier {
+        case .control: .control
+        case .leftOption: .leftOption
+        case .leftCommand: .leftCommand
+        case .rightCommand: .rightCommand
+        case .rightOption: .rightOption
+        }
+    }
+
+    // 完成有效键并消费一次性修饰键
+    private func finmods() {
+        for modifier in modifiers.consume() {
+            if !HIDBridge.shared.keyUp(hidmod(modifier)) {
+                rsthid()
+                return
+            }
+        }
+        updmods()
+    }
+
+    // 释放全部 HID 与本地触摸状态
+    @objc private func rsthid() {
+        stopcursor()
+        stopdel()
+        state.shftcncl()
+        modifiers.reset()
+        for button in buttons {
+            button.hidactive = false
+        }
+        HIDBridge.shared.releaseAll()
+        rfrshft()
+        updmods()
     }
 
     // 结束触控板状态并恢复键盘

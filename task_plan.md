@@ -503,24 +503,28 @@ Extend the accepted Ctrl/Option/Command HID path with two complementary interact
 
 ### Phase 33 — Modifier state-machine tests
 
-**Status:** in_progress
+**Status:** complete
 
 - Extend the existing `ModifierState` rather than add a second state owner.
 - Add focused tests for tap-to-Sticky, tap-again unlock, multi-Sticky combinations, physical hold use, consume-after-success, independent left/right sources, cancellation restoration, and full reset.
 - Run the shared suite first with expected failures for the new transition API, then implement the minimum model and rerun it.
 
+**Expected red test:** the first run failed only on the intentionally missing `tap`, `cancel`, `use`, `consume`, and `isSticky` APIs. The minimum held/Sticky/used model then passed all 40 shared tests.
+
 ### Phase 34 — Controller routing and lifecycle cleanup
 
-**Status:** pending
+**Status:** complete
 
 - Split modifier touch completion from cancellation so only `.touchUpInside` can toggle Sticky state.
 - Consume Sticky state after successful text, Space, Return, Delete, Esc, arrow, and drag-generated HID completion while preserving held modifiers.
 - Refresh all modifier keycaps and accessibility state from the shared model after every transition.
 - Release all HID and local modifier/Shift state on internal/system input-mode switches, keyboard dismissal/rebuild, view disappearance, app resignation/backgrounding, and abnormal touch cancellation.
 
+**Errors recorded:** the first simulator compile showed that the extension notification constants were already notification-name values; removing an extra wrapper exposed the Swift 3 renamed-member diagnostics. Using the compiler-declared `.NSExtensionHostWillResignActive` and `.NSExtensionHostDidEnterBackground` names resolved both errors, and the next full build passed.
+
 ### Phase 35 — Automated validation and package
 
-**Status:** pending
+**Status:** in_progress
 
 - Run the complete shared suite, `DESIGN.md` lint, prohibited-shell scan, XcodeGen regeneration, simulator Debug build, generic arm64 Release package, and archive inspection.
 - Verify the diff changes no key geometry, shortcut interpretation, entitlement scope, or independent HID event client.
