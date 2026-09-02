@@ -579,3 +579,28 @@ Turn the existing visible `tab` placeholder into a real HID Tab key without chan
 - [x] Tab completion consumes Sticky modifiers
 - [x] iPad Pro 2018 simulator visual state matches `DESIGN.md`
 - [x] Tests, lint, builds, archive checks, and Git cleanliness pass
+
+## Task 06 bugfix — modifier toggle system conflicts
+
+### Goal
+
+Prevent a clean modifier tap from leaving a raw HID modifier held long enough to activate iPadOS system overlays or accessibility commands, while preserving the user-selected subset of physical multi-touch and/or one-shot modifier behavior.
+
+### Phase 39 — System-behavior research and scope decision
+
+**Status:** complete
+
+- Confirm the reported Command shortcut-guide behavior against Apple documentation and the local held/Sticky state transitions.
+- Evaluate Control and Option against iPadOS accessibility and modifier-key behaviors.
+- Obtain the user's explicit scope choice before changing the established Task 06 interaction contract.
+
+**Error recorded:** the first `autocli google search` invocation used the skill example's `--query` option, but the installed CLI requires a positional keyword. The corrected positional form completed all searches successfully.
+
+### Phase 40 — Focused state repair and validation
+
+**Status:** in_progress
+
+- Add or revise focused modifier-state tests for the approved toggle policy, then apply the smallest compatible state/controller change.
+- Verify physical multi-touch release, cancellation, lifecycle cleanup, visual state, shared tests, design lint, simulator behavior, arm64 packaging, and archive integrity.
+
+**Approved policy:** remove tap-to-Sticky from all five Ctrl/Option/Command keycaps and retain physical multi-touch holding only.

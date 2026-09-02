@@ -402,3 +402,13 @@
 - Installed the build in the simulator and visually confirmed unchanged Tab geometry, label alignment, and enabled functional-key color. A Ctrl Sticky tap highlighted Ctrl, and completing Tab automatically cleared it.
 - Committed the source repair as `351ee21`, rebuilt the arm64 TrollStore package, and independently verified archive integrity, versions, architecture, HID imports, and entitlement placement.
 - Final artifact: `/Users/mac/codexproj/magicboard/build/MagicBoard.tipa`, version `0.7.0 (16)`, 159,680 bytes, SHA-256 `6be54d51d8f3ca5eeecd2177083a5d32d4ba1d4eb4fa19a226e560c25d745bd4`.
+
+## 2026-09-02 — Task 06 modifier-toggle bug diagnosed
+
+- User reported that tapping Command leaves it logically held and opens the iPadOS shortcut-guide overlay, then confirmed Command Sticky must be removed and requested an official iPadOS review before deciding Control/Option.
+- Verified a clean Git baseline and found no runtime log evidence; CodeGraph directly identifies the clean-tap `held → sticky` transition as the complete cause.
+- Official Apple guidance confirms held Command opens app shortcut guidance, held Control can activate Hover Text, Option or Command can be configured as the same activation modifier, and Control–Option can serve as the VoiceOver modifier.
+- The installed `autocli` rejected the documented `--query` form once; its verified positional keyword form completed the official-source searches and page extraction.
+- Added Phases 39–40. No product code has changed while the exact Control/Option policy awaits user confirmation.
+- After one empty selection response, the repeated focused prompt succeeded: user chose to cancel Sticky for all modifiers and keep physical multi-touch only.
+- Phase 39 is complete. Phase 40 starts with a failing clean-tap regression test, then removes only Sticky-specific state/controller paths while preserving Task 06 lifecycle cleanup.
