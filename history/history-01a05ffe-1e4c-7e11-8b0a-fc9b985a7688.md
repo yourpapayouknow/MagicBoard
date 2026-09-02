@@ -21,3 +21,12 @@
 - **Where（在哪个上下文）**：工作目录 `/Users/mac/codexproj/magicboard`；代码改动位于 `Keyboard/HIDBridge.h` 与 `Keyboard/KeyboardViewController.swift`，验证使用现有 `MagicBoard iPad Pro 12.9 2018` 模拟器。
 - **Why（目的/背景）**：用户发现此前键盘视觉中虽有 Tab 标签，但该键始终没有真实功能；要求补齐，并提示纯视觉部分可直接使用本机已有 iPad Pro 2018 模拟器验收。
 - **How（如何实现/决策过程）**：先用 CodeGraph确认 Tab 缺少枚举与 HID 映射，再读取现有 `DESIGN.md`，核对 Apple SDK 中 Tab usage 为 `0x2B`。采用最小原位修复，复用既有 HID down/up、outside/cancel 清理和 Sticky 消费链路，不改变键位尺寸或新增状态机。模拟器中确认 Tab 保持 1.5 单位宽、小写左下角标签及启用强调色；进一步轻点 Ctrl 进入 Sticky 高亮，再点击 Tab，观察 Ctrl 高亮自动解除。最后提交源代码、重建 TIPA，并检查 ZIP、arm64、版本、IOKit 导入和权限范围。
+
+### 第 3 轮对话（2026-09-02 11:20）
+
+- **Who（谁参与）**：用户（MagicBoard 项目负责人）+ AI（Assistant / Codex）。
+- **What（做了什么）**：澄清 MagicBoard 对 TrollStore 的真实依赖边界：主 App、键盘界面和公开的 `UITextDocumentProxy` 输入能力本身不依赖 TrollStore，但当前 Ctrl/Option/Command 组合键、Esc、方向键、Tab、实体 Shift 及四向触控板使用私有 HID 事件派发，实体设备版本需要键盘扩展获得 Apple 不向普通第三方签名开放的 HID entitlement，因此当前完整功能包仍依赖 TrollStore。
+- **When（何时发生）**：2026-09-02 11:20（Asia/Shanghai）。
+- **Where（在哪个上下文）**：工作目录 `/Users/mac/codexproj/magicboard`；核对了 `Keyboard/MagicBoardKeyboard.entitlements`、`Keyboard/HIDBridge.m` 与 `scripts/build-tipa.zsh`。
+- **Why（目的/背景）**：用户看到 App 在 iPad 模拟器中可以正常启动并显示键盘，因而询问项目是否实际上无需 TrollStore。
+- **How（如何实现/决策过程）**：从本地工程直接确认键盘扩展携带 `com.apple.private.hid.client.event-dispatch = true`，通过 `IOHIDEventCreateKeyboardEvent` 和 `IOHIDEventSystemClientDispatchEvent` 发送物理键事件；打包脚本关闭常规代码签名并用 `ldid` 注入权限。解释模拟器不使用实体设备的普通签名/权限链，能显示 UI 和运行公开能力不能证明私有 HID 派发可在普通签名设备上工作。给出完整 TrollStore 版与删减 HID 的普通分发版两条产品路径。
