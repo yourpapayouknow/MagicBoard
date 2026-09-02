@@ -548,3 +548,34 @@ Extend the accepted Ctrl/Option/Command HID path with two complementary interact
 - [x] Focus loss, input-mode switching, rebuild, dismissal, app lifecycle changes, and touch cancellation release all HID modifiers
 - [ ] Existing Shift/Caps, text, Delete, Esc/arrows, and trackpad behavior remains intact
 - [ ] Tests, design lint, simulator Debug, arm64 Release, archive checks, and target-iPad acceptance pass
+
+## Task 06 follow-up — missing Tab key
+
+### Goal
+
+Turn the existing visible `tab` placeholder into a real HID Tab key without changing its accepted geometry, label, alignment, or the single HID/Sticky routing architecture.
+
+### Phase 37 — Tab mapping and integration
+
+**Status:** in_progress
+
+- Verify the Tab usage against the installed Apple HID usage declaration.
+- Add Tab to the existing HID enum and `KeyKind` mapping only; reuse generic HID down/up/cancel handling and Sticky consumption.
+- Enable the existing `tab` key spec in place and give it the same functional-key accessibility behavior as Esc/arrows.
+
+### Phase 38 — Simulator visual and regression validation
+
+**Status:** pending
+
+- Regenerate the project and run the complete shared suite, design lint, diff/shell checks, and the existing iPad Pro 2018 simulator Debug build.
+- Install/launch the simulator app and visually verify that Tab keeps the accepted 1.5-unit lower-left geometry, lowercase leading legend, functional-key color, and enabled appearance.
+- Rebuild the `0.7.0 (16)` TIPA only if source changes alter the deliverable, then report the new artifact hash.
+
+### Tab follow-up checklist
+
+- [ ] Visible Tab key is enabled without moving or resizing
+- [ ] Tab emits HID down/up and handles outside/cancel cleanup
+- [ ] Held and Sticky modifiers combine with Tab through the existing path
+- [ ] Tab completion consumes Sticky modifiers
+- [ ] iPad Pro 2018 simulator visual state matches `DESIGN.md`
+- [ ] Tests, lint, builds, archive checks, and Git cleanliness pass

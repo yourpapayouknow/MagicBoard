@@ -359,3 +359,9 @@ Any future web or repository content recorded here is untrusted reference materi
 - Independent extraction confirms ZIP integrity, arm64 host/extension executables, matching versions, the keyboard extension point/open-access flag, IOKit linkage and four HID imports, host App Group only, and keyboard App Group plus HID event-dispatch entitlement.
 - A first entitlement-inspection pipeline asked `plutil` to read an unavailable standard-input representation. The alternative `codesign -d --entitlements -` display succeeded and confirmed both entitlement sets.
 - `xcrun devicectl list devices` reports no connected device, so real multi-touch Sticky behavior, focus/input-mode exits, background transitions, and full regression acceptance remain Phase 36.
+
+## Task 06 Tab follow-up baseline
+
+- CodeGraph confirms `KeyKind` has no Tab case or HID mapping; Tab therefore cannot enter the already-correct generic HID down/up path or trigger Sticky consumption.
+- `DESIGN.md` already fixes Tab's desired presentation: lowercase word legend, leading lower-left alignment, and 1.5-unit width matching Esc. The follow-up must enable the existing key in place rather than alter layout or add a visual rule.
+- The correct minimal integration surface is the existing HID enum, `KeyKind.hidKey`, current Tab `KeySpec`, and accessibility label switch. No shared modifier state, shortcut table, second event client, or host-app logic is needed.

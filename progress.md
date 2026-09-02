@@ -387,3 +387,10 @@
 - The first entitlement pipeline could not feed the codesign representation into `plutil`; direct codesign entitlement display provided the required independent evidence without repeating the failed approach.
 - CodeGraph is healthy after implementation with 8 indexed files, 206 nodes, and 416 edges; the Git worktree was clean before this final planning/history update.
 - No target iPad is connected through `devicectl`. Phase 35 is complete; Phase 36 remains for physical multi-touch, input-mode/focus/lifecycle cleanup, and regression acceptance.
+
+## 2026-09-02 — Task 06 Tab follow-up started
+
+- User identified that the visible Tab key had remained an unimplemented placeholder throughout earlier work and requested simulator-based visual verification where TrollStore is unnecessary.
+- Verified a clean Git worktree, re-read `DESIGN.md`, and used CodeGraph to confirm Tab is absent from `KeyKind` and the HID mapping.
+- Backed up the planning files under `/Users/mac/backup/2026-09-02_任务06_Tab补齐/` and added Phases 37–38.
+- The minimal repair will enable the existing 1.5-unit lowercase leading Tab key in place and reuse generic HID/Sticky handling; Phase 37 is in progress.
