@@ -457,3 +457,11 @@
 - Simulator Debug acceptance passed: Shift shows icon-only F keys, F10 consumes one-shot Shift and restores the stack, Shift+F4 opens search, and ordinary F1 reports key code 112.
 - Computer Use cannot synthesize the existing character-key Pan drag either, so final motion feel and down-drag dispatch remain explicit target-iPad touch checks.
 - Source committed as `e66ea40`. Release packaging and independent inspection passed for `/Users/mac/codexproj/magicboard/build/MagicBoard.tipa`, version `0.7.0 (16)`, 154,072 bytes, SHA-256 `bc8e7800c2fb55f8ab4a8f91c730753be420a34de9342c49d142fd59ca703125`.
+
+## 2026-09-02 — Task 07 native visual refactor started
+
+- Verified a clean Git worktree and re-read the complete `design-md` and `planning-with-files` instructions plus the existing `DESIGN.md`.
+- Used CodeGraph before raw source inspection. The graph found the shared modifier/theme symbols but no `KeyView`; direct inspection then confirmed visual decisions are duplicated inside `mkkey`, `rfrshft()`, and `updmods()`.
+- Preserved the accepted six-row Mac layout and all input behavior as frozen scope. Task 07 changes only the visual component, dynamic palette/state mapping, keyboard backdrop, spacing, and adaptive height.
+- Backed up `task_plan.md`, `findings.md`, and `progress.md` under `/Users/mac/backup/2026-09-02_1500_MagicBoard_07/` before adding Phases 48–50.
+- Phase 48 is complete. Phase 49 is in progress with `KeyView` as the single visual authority.

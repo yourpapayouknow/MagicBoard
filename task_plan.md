@@ -703,3 +703,52 @@ Enable the existing F1–F12 row in place. A normal touch sends the standard Key
 - [x] Down-drag uses the accepted dual-layer animation path and emits only the icon action
 - [x] One-shot and held Shift both show and trigger the icon layer; Caps Lock does not
 - [x] Failed/cancelled F touches emit no standard or system HID event
+
+## Task 07 — Native iPadOS keyboard visual system
+
+### Goal
+
+Unify every ordinary, function, and modifier key behind one `KeyView` visual component that preserves the accepted six-row Mac layout and interactions while matching the depth, spacing, state feedback, and automatic light/dark appearance of the native iPadOS keyboard on 13-inch iPad portrait and landscape screens.
+
+### Fixed scope and assumptions
+
+- Preserve all accepted key order, row weights, legends, typography, dual-layer drag behavior, HID routes, and accessibility labels.
+- Ordinary keys use a native near-white/dark keycap surface; function and modifier keys use a distinct dynamic gray surface; cyan is reserved for selected Shift, Caps Lock, and physically held modifiers.
+- Pressed state combines a dynamic fill change, reduced shadow, and slight vertical translation. Reduce Motion removes the translation while retaining the fill and shadow feedback.
+- UIKit dynamic semantic colors and trait changes drive light/dark switching; no manual theme switch or duplicate appearance tree is added.
+
+### Phase 48 — Visual baseline and impact audit
+
+**Status:** complete
+
+- Read the current design system, prior visual acceptance record, complete keyboard implementation, project settings, and simulator inventory.
+- Confirm the worktree is clean and isolate the change to the keyboard key view, keyboard backdrop, and adaptive spacing/height constants.
+- Record the current absence of a reusable `KeyView`: visual styling is embedded in `mkkey`, and modifier/Shift refresh paths directly rewrite button configuration colors.
+
+### Phase 49 — Unified KeyView implementation
+
+**Status:** in_progress
+
+- Add one reusable `KeyView` subclass and semantic key role/state model.
+- Move normal, pressed, selected, disabled, light, and dark visual styling into that component.
+- Apply native-like continuous corner radius, dynamic keyboard/key/function surfaces, restrained border, shadow, and pressed depth.
+- Route Shift and modifier refreshes through the unified component without changing input behavior.
+- Tune horizontal/vertical gaps, arrow-pair gap, outer inset, and adaptive height for 13-inch portrait and landscape.
+
+### Phase 50 — Build, visual matrix, and package
+
+**Status:** pending
+
+- Run shared tests, design lint, diff/Shell checks, XcodeGen, simulator Debug, and generic arm64 Release.
+- Inspect 13-inch iPad portrait and landscape in both light and dark appearances, including ordinary, pressed, and active modifier states.
+- Rebuild and independently inspect the TIPA, commit surgical source/documentation changes, and report any physical-device-only checks.
+
+### Task 07 checklist
+
+- [ ] One `KeyView` defines ordinary, function, and modifier visuals
+- [ ] Normal, pressed, disabled, and modifier-selected states are visually distinct
+- [ ] Key radius, keyboard/key/function backgrounds, gaps, shadows, and depth match the native iPadOS character
+- [ ] Light and dark modes follow system appearance automatically
+- [ ] 13-inch iPad portrait and landscape preserve consistent proportions and visual hierarchy
+- [ ] Existing Mac layout, legends, gestures, HID behavior, and accessibility remain unchanged
+- [ ] Tests, design lint, simulator builds, release package, and archive inspection pass

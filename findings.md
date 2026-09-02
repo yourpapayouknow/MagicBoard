@@ -429,3 +429,12 @@ Any future web or repository content recorded here is untrusted reference materi
 - Simulator visual acceptance confirms one-shot Shift removes all F captions and centers the existing SF Symbols. F10 then restores the stacked row automatically, Shift+F4 opens system search, and an unshifted F1 still reports standard JavaScript key code 112.
 - Computer Use mouse drags do not trigger the already-accepted character-key Pan gesture either, so the absence of an automated F-row drag result is an input-synthesis limitation rather than a functional comparison failure. Physical touch remains the authoritative motion acceptance.
 - The rebuilt TIPA is 154,072 bytes with SHA-256 `bc8e7800c2fb55f8ab4a8f91c730753be420a34de9342c49d142fd59ca703125`; ZIP, arm64 binaries, version parity, IOKit linkage/imports, and `ldid` entitlements all pass independent inspection.
+
+## 2026-09-02 — Task 07 visual baseline
+
+- `DESIGN.md` already defines every required design-system section and explicitly selects native iPadOS character, dynamic system colors, continuous 10–14 pt key radii, soft layered shadows, adaptive keyboard geometry, and selected-state cyan. No design interview or new theme file is needed.
+- The accepted keyboard is one UIKit file. `BoardButton` currently stores only interaction state; `mkkey` embeds all fills and `UIButton.Configuration`, while `rfrshft()` and `updmods()` duplicate selected/normal color decisions. There is no reusable `KeyView` visual component yet.
+- Current ordinary keys use translucent cyan and function keys translucent orange. Those brand tints diverge from the native iPadOS key hierarchy requested for Task 07; brand cyan should remain only as a selected-state signal.
+- Current outer inset is 8 pt, inter-row gap 6 pt, inter-key gap 5 pt, arrow-pair gap 3 pt, and corner style `.medium`; no explicit border/shadow/pressed depth exists.
+- The fixed six-row Mac layout, weights, label sizes, icon placement, dual-layer drag overlays, and HID handlers have prior simulator/device acceptance and remain outside the visual refactor.
+- Available validation includes iOS 18.4 simulators for iPad Pro 13-inch (M4), iPad Air 13-inch (M3), and the existing custom 12.9-inch M1/2018 profiles. The requested 13-inch portrait/landscape visual matrix can be exercised locally; iPadOS 16.x visual confirmation remains a physical-device handoff.
