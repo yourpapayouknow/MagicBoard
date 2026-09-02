@@ -485,3 +485,62 @@ Make both physical Shift keycaps participate in the real HID lifecycle so holdin
 - [x] Touch cancellation, rebuild, disappearance, and teardown cannot leave Shift stuck
 - [ ] Existing Shift/Caps/proxy text, Command/Control/Option, Esc/arrows, and trackpad behavior regressions pass
 - [x] Tests, lint, simulator Debug, arm64 Release, and TIPA checks pass
+
+## Task 06 — Sticky Modifier and resilient modifier cleanup
+
+### Goal
+
+Extend the accepted Ctrl/Option/Command HID path with two complementary interactions: physical multi-touch holding and one-shot Sticky Modifier taps. A Sticky modifier stays active until the next successfully completed non-modifier HID key, while every focus, input-mode, lifecycle, rebuild, and cancellation exit releases HID state and visual selection together.
+
+### Confirmed implementation boundaries
+
+- A clean tap on an inactive Ctrl/Option/Command key enables one-shot Sticky state; a second clean tap on the same Sticky key disables it.
+- Tapping additional modifier keys combines them without consuming existing Sticky modifiers.
+- Pressing another effective HID key while a modifier finger remains down uses physical-hold behavior and does not latch that held modifier after release.
+- Sticky modifiers are consumed only after a non-modifier HID event completes successfully; cancelled gestures and failed HID dispatch do not consume them.
+- Internal language changes, the system next-keyboard control, keyboard dismissal/rebuild, view disappearance, app resignation/backgrounding, and touch cancellation all converge on one idempotent HID reset path.
+- Active held and Sticky modifiers keep the existing primary-cyan selected appearance; accessibility value distinguishes “已按下” from “已锁定”. No layout or design-token change is required.
+
+### Phase 33 — Modifier state-machine tests
+
+**Status:** in_progress
+
+- Extend the existing `ModifierState` rather than add a second state owner.
+- Add focused tests for tap-to-Sticky, tap-again unlock, multi-Sticky combinations, physical hold use, consume-after-success, independent left/right sources, cancellation restoration, and full reset.
+- Run the shared suite first with expected failures for the new transition API, then implement the minimum model and rerun it.
+
+### Phase 34 — Controller routing and lifecycle cleanup
+
+**Status:** pending
+
+- Split modifier touch completion from cancellation so only `.touchUpInside` can toggle Sticky state.
+- Consume Sticky state after successful text, Space, Return, Delete, Esc, arrow, and drag-generated HID completion while preserving held modifiers.
+- Refresh all modifier keycaps and accessibility state from the shared model after every transition.
+- Release all HID and local modifier/Shift state on internal/system input-mode switches, keyboard dismissal/rebuild, view disappearance, app resignation/backgrounding, and abnormal touch cancellation.
+
+### Phase 35 — Automated validation and package
+
+**Status:** pending
+
+- Run the complete shared suite, `DESIGN.md` lint, prohibited-shell scan, XcodeGen regeneration, simulator Debug build, generic arm64 Release package, and archive inspection.
+- Verify the diff changes no key geometry, shortcut interpretation, entitlement scope, or independent HID event client.
+- Bump host/extension together for the Task 06 package and report version, SHA-256, and source commit.
+
+### Phase 36 — Target-iPad acceptance
+
+**Status:** pending
+
+- Verify held Ctrl/Option/Command multi-touch chords and one-shot Sticky chords in foreground apps.
+- Verify combined Sticky modifiers, tap-again unlock, automatic one-shot consumption, touch cancellation, keyboard dismissal, input-method switching, and foreground/background transitions never leave a modifier stuck.
+- Recheck held Shift, one-shot Shift/Caps, Esc/arrows, Space trackpad, ordinary typing, and Delete behavior.
+
+### Task 06 completion checklist
+
+- [ ] Ctrl, Option, and Command support physical multi-touch holding
+- [ ] Ctrl, Option, and Command support one-shot Sticky taps
+- [ ] Sticky modifiers combine and a second tap unlocks the same modifier
+- [ ] The next successfully completed effective HID key consumes Sticky state
+- [ ] Active modifiers have clear selected styling and accessible state text
+- [ ] Focus loss, input-mode switching, rebuild, dismissal, app lifecycle changes, and touch cancellation release all HID modifiers
+- [ ] Existing Shift/Caps, text, Delete, Esc/arrows, and trackpad behavior remains intact
+- [ ] Tests, design lint, simulator Debug, arm64 Release, archive checks, and target-iPad acceptance pass

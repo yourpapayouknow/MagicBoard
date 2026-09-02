@@ -336,3 +336,14 @@ Any future web or repository content recorded here is untrusted reference materi
 - Both Shift keycaps send their verified HID usages on touch down/up/cancel. Arrow, trackpad-direction, Delete, ordinary control, and Control/Option/Command entry paths mark a held Shift gesture used, preventing a post-chord one-shot latch.
 - The existing `HIDBridge.activeKeys` set and `releaseAll` path already support the two added usages, so rebuild, disappearance, and teardown require no second HID client or cleanup mechanism.
 - Local evidence is complete: 34/34 shared tests, `DESIGN.md` lint, iPad Pro simulator Debug, generic arm64 Release, ZIP integrity, version, architecture, HID imports, and entitlements all pass. Continuous selection behavior still requires target-iPad touch acceptance because the simulator cannot reproduce this private-HID keyboard-extension flow.
+
+## Task 06 Sticky Modifier baseline
+
+- The worktree is clean at `43f2ee1`. The accepted Function 05 implementation already provides one `HIDBridge`, five physical Ctrl/Option/Command usages, full visible-key HID mappings, and cyan active-key styling; Task 06 should extend state transitions only.
+- `ModifierState` currently stores one active set, so touch-up always releases HID. It cannot distinguish an ongoing finger hold from a one-shot Sticky lock or remember whether another key participated in the touch.
+- Modifier touch-up-inside, touch-up-outside, touch-cancel, and drag-exit currently share `modup`; Sticky requires separating successful tap completion from cancellation so abnormal endings can never create a lock.
+- A robust model needs three facts per modifier source: physically held, Sticky, and whether the current physical touch was used in a chord. The HID-active state is the union of held and Sticky sources.
+- Consuming Sticky after a successful non-modifier HID key must release only Sticky sources that are no longer physically held. This preserves physical-hold behavior when a user touches an already-Sticky modifier and then forms a chord.
+- Modifier key taps are not themselves effective keys, so several Sticky modifiers can be combined before the foreground-app key is sent. Shift remains its existing independent modifier state and must not prematurely consume Ctrl/Option/Command Sticky state.
+- The existing `DESIGN.md` selected-state rule already provides the requested clear highlight. Reusing that primary-cyan state plus “已按下”/“已锁定” accessibility values is sufficient and avoids a new visual token.
+- Existing cleanup is duplicated between rebuild and disappearance. Task 06 should centralize modifier/Shift state reset, HID `releaseAll`, and keycap refresh, then call it from input-mode and application-lifecycle exits as well.

@@ -350,3 +350,13 @@
 - Generated `/Users/mac/codexproj/magicboard/build/MagicBoard.tipa` at `0.6.1 (15)`, 149,696 bytes, SHA-256 `628efef7b280951ad946cf1af8377ec98cd9d2a875eeb6c42fced4b319bc462e`.
 - Independent extraction confirms ZIP integrity, arm64 host/extension binaries, matching version/build, four expected IOKit HID imports, host App Group entitlement, and keyboard App Group plus HID event-dispatch entitlement.
 - Phases 29–31 are complete. Phase 32 remains for target-iPad Shift+arrow continuous-selection and regression acceptance.
+
+## 2026-09-02 — Task 06 started
+
+- Verified a clean Git worktree at `43f2ee1` and re-read the accepted `DESIGN.md`.
+- Used CodeGraph to identify the existing shared `ModifierState`, controller touch handlers, visual update path, and sole HID bridge as the complete Task 06 change surface.
+- Applied the `design-md` and `planning-with-files` skills; the existing selected-key visual rule covers Sticky highlighting without changing `DESIGN.md`.
+- Backed up `task_plan.md`, `findings.md`, and `progress.md` under `/Users/mac/backup/2026-09-02_任务06_Sticky_Modifier/` before this planning update.
+- Added Phases 33–36 with explicit state-machine, lifecycle, build/package, and target-iPad success checks.
+- The minimum design distinguishes held, Sticky, and used physical touches; modifier taps combine, the same Sticky key toggles off, and only a successfully completed non-modifier HID key consumes Sticky state.
+- Phase 33 proceeds with focused failing tests before the shared state implementation.
