@@ -107,6 +107,51 @@ private enum KeyAlign {
     case trailing
 }
 
+// 标识键帽视觉角色
+private enum KeyRole {
+    case ordinary
+    case function
+}
+
+// 提供键盘动态视觉颜色
+private enum KeyPalette {
+    static let board = UIColor { traits in
+        traits.userInterfaceStyle == .dark
+            ? UIColor(white: 0.11, alpha: 0.88)
+            : UIColor(white: 0.78, alpha: 0.72)
+    }
+    static let ordinary = UIColor { traits in
+        traits.userInterfaceStyle == .dark
+            ? UIColor(white: 0.39, alpha: 1)
+            : UIColor(white: 0.99, alpha: 1)
+    }
+    static let function = UIColor { traits in
+        traits.userInterfaceStyle == .dark
+            ? UIColor(white: 0.25, alpha: 1)
+            : UIColor(white: 0.67, alpha: 1)
+    }
+    static let ordinaryPressed = UIColor { traits in
+        traits.userInterfaceStyle == .dark
+            ? UIColor(white: 0.49, alpha: 1)
+            : UIColor(white: 0.82, alpha: 1)
+    }
+    static let functionPressed = UIColor { traits in
+        traits.userInterfaceStyle == .dark
+            ? UIColor(white: 0.35, alpha: 1)
+            : UIColor(white: 0.57, alpha: 1)
+    }
+    static let border = UIColor { traits in
+        traits.userInterfaceStyle == .dark
+            ? UIColor.white.withAlphaComponent(0.10)
+            : UIColor.white.withAlphaComponent(0.42)
+    }
+    static let shadow = UIColor { traits in
+        traits.userInterfaceStyle == .dark
+            ? UIColor.black.withAlphaComponent(0.88)
+            : UIColor.black.withAlphaComponent(0.52)
+    }
+}
+
 // 描述单个按键
 private struct KeySpec {
     let title: String
@@ -155,13 +200,128 @@ private struct KeySpec {
     }
 }
 
-// 保存按键描述
-private final class BoardButton: UIButton {
+// 统一呈现全部键帽视觉与状态
+private final class KeyView: UIButton {
     var spec: KeySpec?
     var dragupper: UIView?
     var draglower: UILabel?
     var hidactive = false
     var fnupper: Bool?
+    var keyRole: KeyRole = .function {
+        didSet { setNeedsUpdateConfiguration() }
+    }
+    var activeTint = UIColor.systemCyan {
+        didSet { setNeedsUpdateConfiguration() }
+    }
+
+    // 创建键帽并接入统一状态刷新
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        configurationUpdateHandler = { [weak self] _ in
+            self?.updvsl()
+        }
+        layer.masksToBounds = false
+    }
+
+    // 禁止从归档创建键帽
+    required init?(coder: NSCoder) {
+        nil
+    }
+
+    // 同步选中态辅助语义
+    override var isSelected: Bool {
+        didSet {
+            if isSelected {
+                accessibilityTraits.insert(.selected)
+            } else {
+                accessibilityTraits.remove(.selected)
+            }
+            setNeedsUpdateConfiguration()
+        }
+    }
+
+    // 刷新按压层次
+    override var isHighlighted: Bool {
+        didSet {
+            setNeedsUpdateConfiguration()
+            upddpth(animated: !UIAccessibility.isReduceMotionEnabled)
+        }
+    }
+
+    // 更新键帽阴影路径
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        layer.shadowPath = UIBezierPath(
+            roundedRect: bounds,
+            cornerRadius: 7
+        ).cgPath
+    }
+
+    // 响应系统浅深色变化
+    override func traitCollectionDidChange(_ previousTraitCollection: UITraitCollection?) {
+        super.traitCollectionDidChange(previousTraitCollection)
+        guard previousTraitCollection == nil
+            || traitCollection.hasDifferentColorAppearance(comparedTo: previousTraitCollection)
+        else { return }
+        setNeedsUpdateConfiguration()
+        upddpth(animated: false)
+    }
+
+    // 应用当前键帽语义颜色
+    private func updvsl() {
+        guard var config = configuration else { return }
+        let fill: UIColor
+        if !isEnabled {
+            fill = .secondarySystemFill
+        } else if isSelected {
+            fill = isHighlighted ? activeTint.withAlphaComponent(0.78) : activeTint
+        } else {
+            fill = switch (keyRole, isHighlighted) {
+            case (.ordinary, false): KeyPalette.ordinary
+            case (.ordinary, true): KeyPalette.ordinaryPressed
+            case (.function, false): KeyPalette.function
+            case (.function, true): KeyPalette.functionPressed
+            }
+        }
+        config.baseForegroundColor = !isEnabled
+            ? .tertiaryLabel
+            : isSelected ? .white : .label
+        config.baseBackgroundColor = fill
+        config.cornerStyle = .fixed
+        config.background.cornerRadius = 7
+        config.background.strokeColor = isSelected
+            ? UIColor.white.withAlphaComponent(0.24)
+            : KeyPalette.border
+        config.background.strokeWidth = 0.5
+        configuration = config
+        upddpth(animated: false)
+    }
+
+    // 应用原生键帽按压深度
+    private func upddpth(animated: Bool) {
+        let pressed = isHighlighted && isEnabled
+        let changes = {
+            self.transform = pressed && !UIAccessibility.isReduceMotionEnabled
+                ? CGAffineTransform(translationX: 0, y: 1.25).scaledBy(x: 0.995, y: 0.98)
+                : .identity
+            self.layer.shadowOpacity = pressed ? 0.10 : 0.42
+            self.layer.shadowRadius = pressed ? 0.25 : 0.75
+            self.layer.shadowOffset = CGSize(width: 0, height: pressed ? 0.5 : 1.75)
+            self.traitCollection.performAsCurrent {
+                self.layer.shadowColor = KeyPalette.shadow.cgColor
+            }
+        }
+        guard animated else {
+            UIView.performWithoutAnimation(changes)
+            return
+        }
+        UIView.animate(
+            withDuration: 0.08,
+            delay: 0,
+            options: [.allowUserInteraction, .beginFromCurrentState, .curveEaseOut],
+            animations: changes
+        )
+    }
 }
 
 // 管理键盘扩展界面
@@ -172,12 +332,12 @@ final class KeyboardViewController: UIInputViewController {
     private var state = InputState()
     private var modifiers = ModifierState()
     private var height: NSLayoutConstraint?
-    private var buttons: [BoardButton] = []
+    private var buttons: [KeyView] = []
     private let dragdist: CGFloat = 24
     private let dragreset: TimeInterval = 0.12
     private var cursormotion = CursorMotion(step: 12)
     private var cursorpoint: CGPoint?
-    private weak var cursorbutton: BoardButton?
+    private weak var cursorbutton: KeyView?
     // 仅由主 RunLoop 触摸生命周期访问
     nonisolated(unsafe) private var deltimer: Timer?
 
@@ -191,7 +351,7 @@ final class KeyboardViewController: UIInputViewController {
     // 构建键盘容器
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = .clear
+        view.backgroundColor = KeyPalette.board
         let center = NotificationCenter.default
         center.addObserver(
             self,
@@ -206,14 +366,15 @@ final class KeyboardViewController: UIInputViewController {
             object: nil
         )
 
-        let blur = UIVisualEffectView(effect: UIBlurEffect(style: .systemUltraThinMaterial))
+        let blur = UIVisualEffectView(effect: UIBlurEffect(style: .systemChromeMaterial))
+        blur.contentView.backgroundColor = KeyPalette.board
         blur.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(blur)
 
         rows.axis = .vertical
         rows.alignment = .fill
         rows.distribution = .fillEqually
-        rows.spacing = 6
+        rows.spacing = 7
         rows.translatesAutoresizingMaskIntoConstraints = false
         blur.contentView.addSubview(rows)
 
@@ -233,9 +394,9 @@ final class KeyboardViewController: UIInputViewController {
             blur.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             blur.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             rows.topAnchor.constraint(equalTo: blur.contentView.topAnchor, constant: 8),
-            rows.bottomAnchor.constraint(equalTo: blur.contentView.bottomAnchor, constant: -8),
-            rows.leadingAnchor.constraint(equalTo: blur.contentView.leadingAnchor, constant: 8),
-            rows.trailingAnchor.constraint(equalTo: blur.contentView.trailingAnchor, constant: -8),
+            rows.bottomAnchor.constraint(equalTo: blur.contentView.bottomAnchor, constant: -9),
+            rows.leadingAnchor.constraint(equalTo: blur.contentView.leadingAnchor, constant: 7),
+            rows.trailingAnchor.constraint(equalTo: blur.contentView.trailingAnchor, constant: -7),
             trackpad.topAnchor.constraint(equalTo: blur.contentView.topAnchor),
             trackpad.bottomAnchor.constraint(equalTo: blur.contentView.bottomAnchor),
             trackpad.leadingAnchor.constraint(equalTo: blur.contentView.leadingAnchor),
@@ -507,7 +668,7 @@ final class KeyboardViewController: UIInputViewController {
         row.axis = .horizontal
         row.alignment = .fill
         row.distribution = .fill
-        row.spacing = 5
+        row.spacing = 6
 
         var base: (item: UIView, weight: CGFloat)?
         for spec in specs {
@@ -533,16 +694,18 @@ final class KeyboardViewController: UIInputViewController {
         pair.axis = .vertical
         pair.alignment = .fill
         pair.distribution = .fillEqually
-        pair.spacing = 3
+        pair.spacing = 4
         pair.addArrangedSubview(mkkey(ctl(image: "arrow.up", kind: .upArrow)))
         pair.addArrangedSubview(mkkey(ctl(image: "arrow.down", kind: .downArrow)))
         return pair
     }
 
     // 创建单个键帽
-    private func mkkey(_ spec: KeySpec) -> BoardButton {
-        let button = BoardButton(type: .system)
+    private func mkkey(_ spec: KeySpec) -> KeyView {
+        let button = KeyView(type: .system)
         button.spec = spec
+        button.keyRole = spec.kind == .text || spec.kind == .space ? .ordinary : .function
+        button.activeTint = theme.primary.uiclr
         buttons.append(button)
         button.isEnabled = spec.enabled
         button.accessibilityLabel = aclabel(spec)
@@ -551,7 +714,7 @@ final class KeyboardViewController: UIInputViewController {
         }
 
         var config = UIButton.Configuration.filled()
-        config.cornerStyle = .medium
+        config.cornerStyle = .fixed
         config.title = spec.title.isEmpty ? nil : spec.title
         config.image = spec.image.flatMap(UIImage.init(systemName:))
         config.imagePlacement = spec.stackIcon ? .top : .leading
@@ -589,20 +752,9 @@ final class KeyboardViewController: UIInputViewController {
         let selected = (spec.kind == .shift && state.shifted)
             || (spec.kind == .language && state.capsLocked)
             || (spec.kind.modifierKey.map { modifiers.contains($0) } ?? false)
-        if spec.kind == .placeholder {
-            config.baseForegroundColor = .tertiaryLabel
-            config.baseBackgroundColor = .secondarySystemFill
-        } else if selected {
-            config.baseForegroundColor = .systemBackground
-            config.baseBackgroundColor = theme.primary.uiclr
-        } else if spec.kind == .text || spec.kind == .space {
-            config.baseForegroundColor = .label
-            config.baseBackgroundColor = theme.primary.uiclr.withAlphaComponent(0.18)
-        } else {
-            config.baseForegroundColor = .label
-            config.baseBackgroundColor = theme.accent.uiclr.withAlphaComponent(0.24)
-        }
         button.configuration = config
+        button.isSelected = selected
+        button.setNeedsUpdateConfiguration()
         button.titleLabel?.numberOfLines = 2
         button.titleLabel?.textAlignment = .center
 
@@ -669,7 +821,7 @@ final class KeyboardViewController: UIInputViewController {
 
     // 切换功能行上下层图例
     private func fnstyle(
-        _ button: BoardButton,
+        _ button: KeyView,
         spec: KeySpec,
         config: inout UIButton.Configuration
     ) {
@@ -718,7 +870,7 @@ final class KeyboardViewController: UIInputViewController {
 
     // 处理全部可用按键
     @objc private func prskey(_ sender: UIButton) {
-        guard let spec = (sender as? BoardButton)?.spec else { return }
+        guard let spec = (sender as? KeyView)?.spec else { return }
         if spec.kind != .shift { state.shftuse() }
         switch spec.kind {
         case .text:
@@ -771,7 +923,7 @@ final class KeyboardViewController: UIInputViewController {
     // 发送 HID 按键按下事件
     @objc private func hiddown(_ sender: UIButton) {
         guard
-            let button = sender as? BoardButton,
+            let button = sender as? KeyView,
             let key = button.spec?.kind.hidKey
         else { return }
         guard HIDBridge.shared.keyDown(key) else { return }
@@ -782,7 +934,7 @@ final class KeyboardViewController: UIInputViewController {
     // 发送 HID 按键抬起事件
     @objc private func hidup(_ sender: UIButton) {
         guard
-            let button = sender as? BoardButton,
+            let button = sender as? KeyView,
             button.hidactive
         else { return }
         button.hidactive = false
@@ -799,7 +951,7 @@ final class KeyboardViewController: UIInputViewController {
     // 记录功能键轻点选择层
     @objc private func fndown(_ sender: UIButton) {
         guard
-            let button = sender as? BoardButton,
+            let button = sender as? KeyView,
             button.spec?.kind.systemKey != nil
         else { return }
         button.fnupper = state.shifted
@@ -809,7 +961,7 @@ final class KeyboardViewController: UIInputViewController {
     // 完成功能键轻点
     @objc private func fnup(_ sender: UIButton) {
         guard
-            let button = sender as? BoardButton,
+            let button = sender as? KeyView,
             let spec = button.spec,
             let upper = button.fnupper
         else { return }
@@ -819,13 +971,13 @@ final class KeyboardViewController: UIInputViewController {
 
     // 取消功能键轻点
     @objc private func fncncl(_ sender: UIButton) {
-        (sender as? BoardButton)?.fnupper = nil
+        (sender as? KeyView)?.fnupper = nil
     }
 
     // 开始物理修饰键触摸
     @objc private func moddown(_ sender: UIButton) {
         guard
-            let button = sender as? BoardButton,
+            let button = sender as? KeyView,
             let spec = button.spec,
             let modifier = spec.kind.modifierKey,
             let key = spec.kind.hidKey
@@ -843,7 +995,7 @@ final class KeyboardViewController: UIInputViewController {
     // 完成修饰键单击
     @objc private func modtap(_ sender: UIButton) {
         guard
-            let spec = (sender as? BoardButton)?.spec,
+            let spec = (sender as? KeyView)?.spec,
             let modifier = spec.kind.modifierKey,
             let key = spec.kind.hidKey
         else { return }
@@ -858,7 +1010,7 @@ final class KeyboardViewController: UIInputViewController {
     // 取消修饰键触摸
     @objc private func modcncl(_ sender: UIButton) {
         guard
-            let spec = (sender as? BoardButton)?.spec,
+            let spec = (sender as? KeyView)?.spec,
             let modifier = spec.kind.modifierKey,
             let key = spec.kind.hidKey
         else { return }
@@ -875,21 +1027,11 @@ final class KeyboardViewController: UIInputViewController {
         for button in buttons {
             guard
                 let spec = button.spec,
-                let modifier = spec.kind.modifierKey,
-                var config = button.configuration
+                let modifier = spec.kind.modifierKey
             else { continue }
             let active = modifiers.contains(modifier)
-            config.baseForegroundColor = active ? .systemBackground : .label
-            config.baseBackgroundColor = active
-                ? theme.primary.uiclr
-                : theme.accent.uiclr.withAlphaComponent(0.24)
-            button.configuration = config
+            button.isSelected = active
             button.accessibilityValue = active ? "已按下" : nil
-            if active {
-                button.accessibilityTraits.insert(.selected)
-            } else {
-                button.accessibilityTraits.remove(.selected)
-            }
         }
     }
 
@@ -912,7 +1054,7 @@ final class KeyboardViewController: UIInputViewController {
 
     // 开始全键盘触控板状态
     private func begcursor(_ sender: UILongPressGestureRecognizer) {
-        guard let button = sender.view as? BoardButton else { return }
+        guard let button = sender.view as? KeyView else { return }
         state.shftuse()
         cursormotion.reset()
         cursorpoint = sender.location(in: view)
@@ -1029,7 +1171,7 @@ final class KeyboardViewController: UIInputViewController {
     // 开始 Shift 触摸
     @objc private func shftdown(_ sender: UIButton) {
         guard
-            let spec = (sender as? BoardButton)?.spec,
+            let spec = (sender as? KeyView)?.spec,
             let shift = spec.shiftKey,
             let key = spec.hidKey
         else { return }
@@ -1041,7 +1183,7 @@ final class KeyboardViewController: UIInputViewController {
     // 完成 Shift 触摸
     @objc private func shftup(_ sender: UIButton) {
         guard
-            let spec = (sender as? BoardButton)?.spec,
+            let spec = (sender as? KeyView)?.spec,
             let shift = spec.shiftKey,
             let key = spec.hidKey
         else { return }
@@ -1053,7 +1195,7 @@ final class KeyboardViewController: UIInputViewController {
     // 取消 Shift 触摸
     @objc private func shftcncl(_ sender: UIButton) {
         guard
-            let spec = (sender as? BoardButton)?.spec,
+            let spec = (sender as? KeyView)?.spec,
             let shift = spec.shiftKey,
             let key = spec.hidKey
         else { return }
@@ -1076,10 +1218,7 @@ final class KeyboardViewController: UIInputViewController {
                 }
                 button.accessibilityLabel = legend.title
             } else if spec.kind == .shift {
-                config.baseForegroundColor = state.shifted ? .systemBackground : .label
-                config.baseBackgroundColor = state.shifted
-                    ? theme.primary.uiclr
-                    : theme.accent.uiclr.withAlphaComponent(0.24)
+                button.isSelected = state.shifted
             } else if spec.kind.systemKey != nil {
                 fnstyle(button, spec: spec, config: &config)
             } else {
@@ -1158,7 +1297,7 @@ final class KeyboardViewController: UIInputViewController {
 
     // 处理字符键下拖
     @objc private func dragkey(_ sender: UIPanGestureRecognizer) {
-        guard let button = sender.view as? BoardButton, let spec = button.spec else { return }
+        guard let button = sender.view as? KeyView, let spec = button.spec else { return }
         let distance = max(sender.translation(in: button).y, 0)
 
         switch sender.state {
@@ -1185,7 +1324,7 @@ final class KeyboardViewController: UIInputViewController {
     }
 
     // 创建下拖临时图例
-    private func begdrag(_ button: BoardButton, spec: KeySpec) {
+    private func begdrag(_ button: KeyView, spec: KeySpec) {
         clrdrag(button)
         let function = spec.kind.systemKey != nil
         let upper: UIView
@@ -1216,7 +1355,7 @@ final class KeyboardViewController: UIInputViewController {
     }
 
     // 更新下拖临时图例
-    private func upddrag(_ button: BoardButton, spec: KeySpec, distance: CGFloat) {
+    private func upddrag(_ button: KeyView, spec: KeySpec, distance: CGFloat) {
         guard let upper = button.dragupper, let lower = button.draglower else { return }
         let progress = min(distance / dragdist, 1)
         let offset = min(11, button.bounds.height * 0.22)
@@ -1245,7 +1384,7 @@ final class KeyboardViewController: UIInputViewController {
     }
 
     // 复位下拖临时图例
-    private func rstdrag(_ button: BoardButton, spec: KeySpec, animated: Bool) {
+    private func rstdrag(_ button: KeyView, spec: KeySpec, animated: Bool) {
         guard let upper = button.dragupper, let lower = button.draglower else {
             button.titleLabel?.alpha = 1
             return
@@ -1301,7 +1440,7 @@ final class KeyboardViewController: UIInputViewController {
     }
 
     // 创建不可交互图例标签
-    private func mkdraglbl(_ text: String, size: CGFloat, button: BoardButton) -> UILabel {
+    private func mkdraglbl(_ text: String, size: CGFloat, button: KeyView) -> UILabel {
         let label = UILabel(frame: button.bounds)
         label.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         label.font = .systemFont(ofSize: size, weight: .medium)
@@ -1314,7 +1453,7 @@ final class KeyboardViewController: UIInputViewController {
     }
 
     // 创建不可交互图标视图
-    private func mkdragimg(_ name: String, button: BoardButton) -> UIImageView {
+    private func mkdragimg(_ name: String, button: KeyView) -> UIImageView {
         let image = UIImageView(frame: button.bounds)
         image.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         image.image = UIImage(systemName: name)?.withConfiguration(
@@ -1328,7 +1467,7 @@ final class KeyboardViewController: UIInputViewController {
     }
 
     // 移除下拖临时图例
-    private func clrdrag(_ button: BoardButton) {
+    private func clrdrag(_ button: KeyView) {
         button.dragupper?.layer.removeAllAnimations()
         button.draglower?.layer.removeAllAnimations()
         button.dragupper?.removeFromSuperview()
