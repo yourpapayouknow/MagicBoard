@@ -557,7 +557,7 @@ Turn the existing visible `tab` placeholder into a real HID Tab key without chan
 
 ### Phase 37 — Tab mapping and integration
 
-**Status:** in_progress
+**Status:** complete
 
 - Verify the Tab usage against the installed Apple HID usage declaration.
 - Add Tab to the existing HID enum and `KeyKind` mapping only; reuse generic HID down/up/cancel handling and Sticky consumption.
@@ -565,7 +565,7 @@ Turn the existing visible `tab` placeholder into a real HID Tab key without chan
 
 ### Phase 38 — Simulator visual and regression validation
 
-**Status:** pending
+**Status:** complete
 
 - Regenerate the project and run the complete shared suite, design lint, diff/shell checks, and the existing iPad Pro 2018 simulator Debug build.
 - Install/launch the simulator app and visually verify that Tab keeps the accepted 1.5-unit lower-left geometry, lowercase leading legend, functional-key color, and enabled appearance.
@@ -573,9 +573,9 @@ Turn the existing visible `tab` placeholder into a real HID Tab key without chan
 
 ### Tab follow-up checklist
 
-- [ ] Visible Tab key is enabled without moving or resizing
-- [ ] Tab emits HID down/up and handles outside/cancel cleanup
-- [ ] Held and Sticky modifiers combine with Tab through the existing path
-- [ ] Tab completion consumes Sticky modifiers
-- [ ] iPad Pro 2018 simulator visual state matches `DESIGN.md`
-- [ ] Tests, lint, builds, archive checks, and Git cleanliness pass
+- [x] Visible Tab key is enabled without moving or resizing
+- [x] Tab emits HID down/up and handles outside/cancel cleanup
+- [x] Held and Sticky modifiers combine with Tab through the existing path
+- [x] Tab completion consumes Sticky modifiers
+- [x] iPad Pro 2018 simulator visual state matches `DESIGN.md`
+- [x] Tests, lint, builds, archive checks, and Git cleanliness pass

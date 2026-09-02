@@ -365,3 +365,12 @@ Any future web or repository content recorded here is untrusted reference materi
 - CodeGraph confirms `KeyKind` has no Tab case or HID mapping; Tab therefore cannot enter the already-correct generic HID down/up path or trigger Sticky consumption.
 - `DESIGN.md` already fixes Tab's desired presentation: lowercase word legend, leading lower-left alignment, and 1.5-unit width matching Esc. The follow-up must enable the existing key in place rather than alter layout or add a visual rule.
 - The correct minimal integration surface is the existing HID enum, `KeyKind.hidKey`, current Tab `KeySpec`, and accessibility label switch. No shared modifier state, shortcut table, second event client, or host-app logic is needed.
+
+## Task 06 Tab follow-up validation
+
+- Apple's installed HID usage declaration confirms Keyboard Tab is usage `0x2B`; the bridge now exposes that exact value and `KeyKind.tab` maps to it.
+- Replacing the existing placeholder spec with the existing enabled-control factory preserves Tab's 1.5-unit geometry, lowercase leading legend, generic HID down/up/outside/cancel lifecycle, and successful-key Sticky consumption without adding a parallel path.
+- The existing iPad Pro 12.9-inch 2018 simulator visibly shows Tab in place with the accepted functional-key treatment. A live Ctrl Sticky tap highlights Ctrl, and completing Tab clears that highlight.
+- The full shared suite remains green at 40/40, `DESIGN.md` lint has zero findings, simulator Debug and generic arm64 Release builds succeed, and the prohibited local-Shell scan and diff checks pass.
+- Rebuilt `/Users/mac/codexproj/magicboard/build/MagicBoard.tipa` remains version `0.7.0 (16)`, is 159,680 bytes, and has SHA-256 `6be54d51d8f3ca5eeecd2177083a5d32d4ba1d4eb4fa19a226e560c25d745bd4` from source commit `351ee21`.
+- Independent extraction confirms ZIP integrity, arm64 host/extension binaries, matching bundle versions, both expected plists, required IOKit HID imports, host App Group only, and keyboard App Group plus HID event-dispatch entitlement.

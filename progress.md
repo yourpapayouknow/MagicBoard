@@ -394,3 +394,11 @@
 - Verified a clean Git worktree, re-read `DESIGN.md`, and used CodeGraph to confirm Tab is absent from `KeyKind` and the HID mapping.
 - Backed up the planning files under `/Users/mac/backup/2026-09-02_任务06_Tab补齐/` and added Phases 37–38.
 - The minimal repair will enable the existing 1.5-unit lowercase leading Tab key in place and reuse generic HID/Sticky handling; Phase 37 is in progress.
+
+## 2026-09-02 — Task 06 Tab follow-up completed
+
+- Added the verified Keyboard Tab HID usage `0x2B`, a `KeyKind.tab` mapping, the existing generic enabled-control spec, and a Tab accessibility label; no layout, state-machine, or bridge implementation was duplicated.
+- Re-ran all 40 shared tests, `DESIGN.md` lint, diff/Shell checks, and the existing iPad Pro 2018 simulator Debug build successfully.
+- Installed the build in the simulator and visually confirmed unchanged Tab geometry, label alignment, and enabled functional-key color. A Ctrl Sticky tap highlighted Ctrl, and completing Tab automatically cleared it.
+- Committed the source repair as `351ee21`, rebuilt the arm64 TrollStore package, and independently verified archive integrity, versions, architecture, HID imports, and entitlement placement.
+- Final artifact: `/Users/mac/codexproj/magicboard/build/MagicBoard.tipa`, version `0.7.0 (16)`, 159,680 bytes, SHA-256 `6be54d51d8f3ca5eeecd2177083a5d32d4ba1d4eb4fa19a226e560c25d745bd4`.
