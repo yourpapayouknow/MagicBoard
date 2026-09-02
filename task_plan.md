@@ -625,9 +625,10 @@ Enable the existing F1–F12 row in place. A normal touch sends the standard Key
 ### Confirmed behavior
 
 - Normal F1–F12 touches emit standard keyboard usages `0x3A...0x45`.
-- Held Shift selects the icon layer only while Shift is physically down; one-shot Shift does not select it.
+- Either one-shot Shift or a physically held Shift selects the icon layer; Caps Lock does not affect the function row.
+- An unshifted 24-point downward drag selects the icon layer and uses the same upper-center/lower-fade motion as the existing dual-layer character keys.
 - Icon actions map to brightness down/up, show all windows, system search, voice command, Do Not Disturb, previous track, play/pause, next track, mute, volume down, and volume up.
-- Down/up/cancel uses the existing paired HID lifecycle and stores the selected layer at touch-down so releasing Shift before the F key cannot mismatch the key-up event.
+- A normal F touch stores its selected layer at touch-down but dispatches the paired HID event only after a successful touch completion; down-drag commits only the icon action, while cancellation emits nothing.
 - Existing row geometry, legends, SF Symbols, alignment, spacing, and colors remain unchanged; only disabled state becomes enabled.
 
 ### Phase 41 — HID mapping and bridge integration
@@ -665,6 +666,30 @@ Enable the existing F1–F12 row in place. A normal touch sends the standard Key
 - Hold each left/right Shift key and verify F1–F12 perform the twelve icon actions, with special attention to show-all-windows, search, voice command, and Do Not Disturb on iPadOS 16.x.
 - Release/cancel F touches, dismiss/switch the keyboard, and background/foreground the app; confirm neither Keyboard-, Consumer-, nor Generic-Desktop-page usages remain held.
 
+### Phase 45 — Shared Shift consumption and F-row gesture routing
+
+**Status:** in_progress
+
+- Add a focused Shift transition that consumes one-shot Shift after a successful F action while preserving held-Shift release semantics and Caps Lock.
+- Route F keys through the existing down-drag recognizer instead of dispatching a standard F usage at touch-down.
+- Keep the selected tap layer stable from touch-down through completion and emit nothing for outside/cancelled/failed touches.
+
+### Phase 46 — Dual-layer F-row presentation
+
+**Status:** pending
+
+- Reuse the existing 24-point progress, lower-layer fade/scale, upper-layer centering, and 120 ms reset timing.
+- Render the F upper layer with the existing SF Symbol and the lower layer with the existing F caption.
+- Show only the centered icon for one-shot or held Shift, restore the stacked layout when Shift is consumed/released, and leave Caps Lock unrelated.
+
+### Phase 47 — Validation and package refresh
+
+**Status:** pending
+
+- Run focused/shared tests, `DESIGN.md` lint, diff/Shell checks, XcodeGen, and the iPad Pro 2018 simulator Debug build.
+- Verify unshifted tap, unshifted down-drag, one-shot Shift display/action, held-Shift state logic, and cancellation cleanup.
+- Rebuild and independently inspect the arm64 TIPA, then report the artifact hash and target-iPad-only acceptance items.
+
 ### F1–F12 follow-up checklist
 
 - [x] Normal touches send standard F1–F12
@@ -674,3 +699,6 @@ Enable the existing F1–F12 row in place. A normal touch sends the standard Key
 - [x] Tab focus navigation and all existing input behavior remain intact locally
 - [x] Tests, design lint, simulator Debug, arm64 Release, and archive checks pass
 - [ ] iPadOS 16.x physical Shift+F icon actions and cancellation pass on the target iPad
+- [ ] Down-drag uses the accepted dual-layer animation and emits only the icon action
+- [ ] One-shot and held Shift both show and trigger the icon layer; Caps Lock does not
+- [ ] Failed/cancelled F touches emit no standard or system HID event

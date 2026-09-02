@@ -441,3 +441,10 @@
 - A failed address-field set was resolved by focusing the field first. A `Command-L` attempt locked iPadOS rather than focusing Safari; Space unlocked it and coordinate focus plus the settable accessibility value completed navigation. No project state was affected.
 - Source implementation committed as `496cf91`. Final `/Users/mac/codexproj/magicboard/build/MagicBoard.tipa` is `0.7.0 (16)`, 151,842 bytes, SHA-256 `6ce6acd207b30f36b9bf115cb6c5cc15822be165b24020a8784aeafca3c31cd3`.
 - Local archive, architecture, plist, IOKit import, and entitlement checks pass. Phase 44 remains for target-iPadOS 16.x physical Shift+F1–F12 and cancellation acceptance.
+
+## 2026-09-02 — F-row dual-layer interaction refinement started
+
+- User chose full consistency with dual-layer character keys: downward drag selects the icon action, and both one-shot and physically held Shift switch the row to the icon layer; Caps Lock does not affect it.
+- CodeGraph isolated the change to `InputState`, the existing F key touch routing, and the existing drag overlay helpers.
+- The current touch-down HID dispatch would misfire a standard F event before Pan recognition, so the approved repair defers each F tap to successful completion and emits a complete pair there.
+- Added Phases 45–47 and focused red tests for successful F-layer Shift consumption before implementation.

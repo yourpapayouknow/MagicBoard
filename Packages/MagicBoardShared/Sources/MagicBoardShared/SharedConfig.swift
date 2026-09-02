@@ -174,6 +174,15 @@ public struct InputState: Equatable, Sendable {
         if shiftHeld { shftused = true }
     }
 
+    // 消费功能层动作使用的 Shift
+    public mutating func usefn() {
+        if shiftHeld {
+            shftuse()
+        } else {
+            shifted = false
+        }
+    }
+
     // 切换 Caps Lock
     public mutating func tglcaps() {
         capsLocked.toggle()

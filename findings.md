@@ -414,3 +414,11 @@ Any future web or repository content recorded here is untrusted reference materi
 - The only installed Simulator runtime is iOS 18.4, and Computer Use cannot synthesize the required simultaneous Shift touch plus F touch. The iPadOS 16.x response to show-all-windows, search, voice command, and Do Not Disturb usages remains a target-device acceptance item.
 - Final artifact `/Users/mac/codexproj/magicboard/build/MagicBoard.tipa` remains version `0.7.0 (16)`, is 151,842 bytes, and has SHA-256 `6ce6acd207b30f36b9bf115cb6c5cc15822be165b24020a8784aeafca3c31cd3` from source commit `496cf91`.
 - Independent extraction confirms ZIP integrity, arm64 host/extension binaries, matching versions, keyboard extension identity/open access, IOKit linkage and four HID imports, host App Group only, and keyboard App Group plus HID event-dispatch entitlement.
+
+## 2026-09-02 — F-row dual-layer interaction impact
+
+- The existing F keys dispatch HID on `touchDown`, while dual-layer character keys defer output until the Pan gesture completes. Adding the Pan recognizer without changing dispatch timing would send a normal F key before a downward drag could select the icon action.
+- The smallest safe integration is to reuse `dragkey`, `begdrag`, `upddrag`, and `rstdrag`, but make F taps store their selected layer at touch-down and dispatch a complete down/up pair only on `touchUpInside`.
+- Existing transient drag layers are labels. Supporting the already-present F-row SF Symbols requires widening only the upper transient view to `UIView`; the lower F caption remains a label and the same transforms apply to both.
+- `InputState.shifted` already represents both one-shot and held Shift, while `shiftHeld` distinguishes the physical sources. F-row presentation should use `shifted`; a successful F action needs one focused transition that clears one-shot Shift or marks held Shift used without changing Caps Lock.
+- F-row geometry, weights, symbols, colors, HID mappings, entitlement scope, and the single event bridge are outside the change surface.

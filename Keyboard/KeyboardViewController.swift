@@ -158,10 +158,10 @@ private struct KeySpec {
 // 保存按键描述
 private final class BoardButton: UIButton {
     var spec: KeySpec?
-    var dragupper: UILabel?
+    var dragupper: UIView?
     var draglower: UILabel?
     var hidactive = false
-    var hidsystem: MBHIDSystemKey?
+    var fnupper: Bool?
 }
 
 // 管理键盘扩展界面
@@ -582,6 +582,9 @@ final class KeyboardViewController: UIInputViewController {
             button.contentHorizontalAlignment = .right
             button.contentVerticalAlignment = .bottom
         }
+        if spec.kind.systemKey != nil {
+            fnstyle(button, spec: spec, config: &config)
+        }
 
         let selected = (spec.kind == .shift && state.shifted)
             || (spec.kind == .language && state.capsLocked)
@@ -607,6 +610,17 @@ final class KeyboardViewController: UIInputViewController {
             button.addTarget(self, action: #selector(moddown(_:)), for: .touchDown)
             button.addTarget(self, action: #selector(modtap(_:)), for: .touchUpInside)
             button.addTarget(self, action: #selector(modcncl(_:)), for: [.touchUpOutside, .touchCancel, .touchDragExit])
+        } else if spec.kind.systemKey != nil {
+            button.addTarget(self, action: #selector(fndown(_:)), for: .touchDown)
+            button.addTarget(self, action: #selector(fnup(_:)), for: .touchUpInside)
+            button.addTarget(
+                self,
+                action: #selector(fncncl(_:)),
+                for: [.touchUpOutside, .touchCancel, .touchDragExit]
+            )
+            let drag = UIPanGestureRecognizer(target: self, action: #selector(dragkey(_:)))
+            drag.maximumNumberOfTouches = 1
+            button.addGestureRecognizer(drag)
         } else if spec.kind.hidKey != nil {
             button.addTarget(self, action: #selector(hiddown(_:)), for: .touchDown)
             button.addTarget(
@@ -653,6 +667,17 @@ final class KeyboardViewController: UIInputViewController {
         return button
     }
 
+    // 切换功能行上下层图例
+    private func fnstyle(
+        _ button: BoardButton,
+        spec: KeySpec,
+        config: inout UIButton.Configuration
+    ) {
+        config.title = state.shifted ? nil : spec.title
+        button.contentVerticalAlignment = state.shifted ? .center : .bottom
+        button.accessibilityLabel = aclabel(spec)
+    }
+
     // 生成按键辅助标签
     private func aclabel(_ spec: KeySpec) -> String {
         switch spec.kind {
@@ -665,18 +690,18 @@ final class KeyboardViewController: UIInputViewController {
         case .next: "下一个键盘"
         case .dismiss: "收起键盘"
         case .escape: "Esc"
-        case .f1: "F1，按住 Shift 调低亮度"
-        case .f2: "F2，按住 Shift 调高亮度"
-        case .f3: "F3，按住 Shift 显示所有窗口"
-        case .f4: "F4，按住 Shift 搜索"
-        case .f5: "F5，按住 Shift 听写"
-        case .f6: "F6，按住 Shift 切换勿扰模式"
-        case .f7: "F7，按住 Shift 上一首"
-        case .f8: "F8，按住 Shift 播放或暂停"
-        case .f9: "F9，按住 Shift 下一首"
-        case .f10: "F10，按住 Shift 静音"
-        case .f11: "F11，按住 Shift 调低音量"
-        case .f12: "F12，按住 Shift 调高音量"
+        case .f1: "F1；下滑或 Shift：调低亮度"
+        case .f2: "F2；下滑或 Shift：调高亮度"
+        case .f3: "F3；下滑或 Shift：显示所有窗口"
+        case .f4: "F4；下滑或 Shift：搜索"
+        case .f5: "F5；下滑或 Shift：听写"
+        case .f6: "F6；下滑或 Shift：切换勿扰模式"
+        case .f7: "F7；下滑或 Shift：上一首"
+        case .f8: "F8；下滑或 Shift：播放或暂停"
+        case .f9: "F9；下滑或 Shift：下一首"
+        case .f10: "F10；下滑或 Shift：静音"
+        case .f11: "F11；下滑或 Shift：调低音量"
+        case .f12: "F12；下滑或 Shift：调高音量"
         case .leftArrow: "左方向键"
         case .rightArrow: "右方向键"
         case .upArrow: "上方向键"
@@ -747,14 +772,9 @@ final class KeyboardViewController: UIInputViewController {
     @objc private func hiddown(_ sender: UIButton) {
         guard
             let button = sender as? BoardButton,
-            let spec = button.spec
+            let key = button.spec?.kind.hidKey
         else { return }
-        if state.shiftHeld, let system = spec.kind.systemKey {
-            guard HIDBridge.shared.systemKeyDown(system) else { return }
-            button.hidsystem = system
-        } else {
-            guard let key = spec.kind.hidKey, HIDBridge.shared.keyDown(key) else { return }
-        }
+        guard HIDBridge.shared.keyDown(key) else { return }
         button.hidactive = true
         state.shftuse()
     }
@@ -766,20 +786,40 @@ final class KeyboardViewController: UIInputViewController {
             button.hidactive
         else { return }
         button.hidactive = false
-        let sent: Bool
-        if let system = button.hidsystem {
-            button.hidsystem = nil
-            sent = HIDBridge.shared.systemKeyUp(system)
-        } else if let key = button.spec?.kind.hidKey {
-            sent = HIDBridge.shared.keyUp(key)
-        } else {
-            return
-        }
-        guard sent else {
+        guard
+            let key = button.spec?.kind.hidKey,
+            HIDBridge.shared.keyUp(key)
+        else {
             rsthid()
             return
         }
         updmods()
+    }
+
+    // 记录功能键轻点选择层
+    @objc private func fndown(_ sender: UIButton) {
+        guard
+            let button = sender as? BoardButton,
+            button.spec?.kind.systemKey != nil
+        else { return }
+        button.fnupper = state.shifted
+        if state.shiftHeld { state.shftuse() }
+    }
+
+    // 完成功能键轻点
+    @objc private func fnup(_ sender: UIButton) {
+        guard
+            let button = sender as? BoardButton,
+            let spec = button.spec,
+            let upper = button.fnupper
+        else { return }
+        button.fnupper = nil
+        sndfn(spec, upper: upper)
+    }
+
+    // 取消功能键轻点
+    @objc private func fncncl(_ sender: UIButton) {
+        (sender as? BoardButton)?.fnupper = nil
     }
 
     // 开始物理修饰键触摸
@@ -929,6 +969,29 @@ final class KeyboardViewController: UIInputViewController {
         return true
     }
 
+    // 发送一次完整功能键动作
+    @discardableResult
+    private func sndfn(_ spec: KeySpec, upper: Bool) -> Bool {
+        let sent: Bool
+        if upper, let system = spec.kind.systemKey {
+            guard HIDBridge.shared.systemKeyDown(system) else { return false }
+            sent = HIDBridge.shared.systemKeyUp(system)
+        } else if let key = spec.kind.hidKey {
+            guard HIDBridge.shared.keyDown(key) else { return false }
+            sent = HIDBridge.shared.keyUp(key)
+        } else {
+            return false
+        }
+        guard sent else {
+            rsthid()
+            return false
+        }
+        state.usefn()
+        rfrshft()
+        updmods()
+        return true
+    }
+
     // 释放全部 HID 与本地触摸状态
     @objc private func rsthid() {
         stopcursor()
@@ -937,7 +1000,7 @@ final class KeyboardViewController: UIInputViewController {
         modifiers.reset()
         for button in buttons {
             button.hidactive = false
-            button.hidsystem = nil
+            button.fnupper = nil
         }
         HIDBridge.shared.releaseAll()
         rfrshft()
@@ -1017,12 +1080,15 @@ final class KeyboardViewController: UIInputViewController {
                 config.baseBackgroundColor = state.shifted
                     ? theme.primary.uiclr
                     : theme.accent.uiclr.withAlphaComponent(0.24)
+            } else if spec.kind.systemKey != nil {
+                fnstyle(button, spec: spec, config: &config)
             } else {
                 continue
             }
             button.configuration = config
             if button.dragupper != nil {
                 button.titleLabel?.alpha = 0
+                button.imageView?.alpha = 0
             }
         }
     }
@@ -1104,7 +1170,11 @@ final class KeyboardViewController: UIInputViewController {
             upddrag(button, spec: spec, distance: distance)
         case .ended:
             if distance >= dragdist {
-                inptxt(spec, drag: true)
+                if spec.kind.systemKey != nil {
+                    sndfn(spec, upper: true)
+                } else {
+                    inptxt(spec, drag: true)
+                }
             }
             rstdrag(button, spec: spec, animated: !UIAccessibility.isReduceMotionEnabled)
         case .cancelled, .failed:
@@ -1117,16 +1187,24 @@ final class KeyboardViewController: UIInputViewController {
     // 创建下拖临时图例
     private func begdrag(_ button: BoardButton, spec: KeySpec) {
         clrdrag(button)
-        let upper = mkdraglbl(
-            spec.letter ? spec.output.uppercased() : (spec.alternate ?? spec.output),
-            size: spec.letter ? 27 : (spec.alternate == nil ? 27 : 22),
-            button: button
-        )
+        let function = spec.kind.systemKey != nil
+        let upper: UIView
+        if function, let image = spec.image {
+            upper = mkdragimg(image, button: button)
+        } else {
+            upper = mkdraglbl(
+                spec.letter ? spec.output.uppercased() : (spec.alternate ?? spec.output),
+                size: spec.letter ? 27 : (spec.alternate == nil ? 27 : 22),
+                button: button
+            )
+        }
         let lower = mkdraglbl(
-            spec.letter
+            function
+                ? spec.title
+                : spec.letter
                 ? (state.uppercase ? spec.output.uppercased() : spec.output.lowercased())
                 : spec.output,
-            size: spec.letter ? 27 : (spec.alternate == nil ? 27 : 22),
+            size: function ? spec.fontSize : (spec.letter ? 27 : (spec.alternate == nil ? 27 : 22)),
             button: button
         )
         button.dragupper = upper
@@ -1134,6 +1212,7 @@ final class KeyboardViewController: UIInputViewController {
         button.addSubview(upper)
         button.addSubview(lower)
         button.titleLabel?.alpha = 0
+        button.imageView?.alpha = 0
     }
 
     // 更新下拖临时图例
@@ -1141,7 +1220,16 @@ final class KeyboardViewController: UIInputViewController {
         guard let upper = button.dragupper, let lower = button.draglower else { return }
         let progress = min(distance / dragdist, 1)
         let offset = min(11, button.bounds.height * 0.22)
-        let upperScale = spec.letter || spec.alternate == nil
+        if spec.kind.systemKey != nil, state.shifted {
+            upper.transform = .identity
+            lower.transform = CGAffineTransform(
+                translationX: 0,
+                y: offset
+            ).scaledBy(x: 0.55, y: 0.55)
+            lower.alpha = 0
+            return
+        }
+        let upperScale = spec.kind.systemKey != nil || spec.letter || spec.alternate == nil
             ? 1
             : 1 + ((27 / 22) - 1) * progress
         let lowerScale = 1 - (0.45 * progress)
@@ -1164,7 +1252,16 @@ final class KeyboardViewController: UIInputViewController {
         }
         let offset = min(11, button.bounds.height * 0.22)
         let restore = {
-            if spec.letter {
+            if spec.kind.systemKey != nil {
+                upper.transform = self.state.shifted
+                    ? .identity
+                    : CGAffineTransform(translationX: 0, y: -offset)
+                upper.alpha = 1
+                lower.transform = self.state.shifted
+                    ? CGAffineTransform(translationX: 0, y: offset).scaledBy(x: 0.55, y: 0.55)
+                    : CGAffineTransform(translationX: 0, y: offset)
+                lower.alpha = self.state.shifted ? 0 : 1
+            } else if spec.letter {
                 upper.transform = self.state.uppercase
                     ? .identity
                     : CGAffineTransform(translationX: 0, y: -offset)
@@ -1216,6 +1313,20 @@ final class KeyboardViewController: UIInputViewController {
         return label
     }
 
+    // 创建不可交互图标视图
+    private func mkdragimg(_ name: String, button: BoardButton) -> UIImageView {
+        let image = UIImageView(frame: button.bounds)
+        image.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        image.image = UIImage(systemName: name)?.withConfiguration(
+            UIImage.SymbolConfiguration(pointSize: 17, weight: .regular)
+        )
+        image.contentMode = .center
+        image.tintColor = .label
+        image.isUserInteractionEnabled = false
+        image.isAccessibilityElement = false
+        return image
+    }
+
     // 移除下拖临时图例
     private func clrdrag(_ button: BoardButton) {
         button.dragupper?.layer.removeAllAnimations()
@@ -1225,6 +1336,7 @@ final class KeyboardViewController: UIInputViewController {
         button.dragupper = nil
         button.draglower = nil
         button.titleLabel?.alpha = 1
+        button.imageView?.alpha = 1
     }
 }
 

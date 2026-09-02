@@ -246,6 +246,32 @@ final class SharedConfigTests: XCTestCase {
         XCTAssertFalse(state.shifted)
     }
 
+    // 验证功能层动作消费单次 Shift
+    func testfnshftuse() {
+        var state = InputState(shifted: true)
+
+        state.usefn()
+
+        XCTAssertFalse(state.shifted)
+        XCTAssertFalse(state.shiftHeld)
+    }
+
+    // 验证功能层动作保留 Caps Lock 与物理按住状态
+    func testfnholdcaps() {
+        var state = InputState(capsLocked: true)
+
+        state.shftdown(.left)
+        state.usefn()
+        XCTAssertTrue(state.shifted)
+        XCTAssertTrue(state.shiftHeld)
+        XCTAssertTrue(state.capsLocked)
+        state.shftup(.left)
+
+        XCTAssertFalse(state.shifted)
+        XCTAssertFalse(state.shiftHeld)
+        XCTAssertTrue(state.capsLocked)
+    }
+
     // 验证左右 Shift 独立释放
     func testshftpairs() {
         var state = InputState()
