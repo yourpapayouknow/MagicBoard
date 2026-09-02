@@ -57,3 +57,21 @@
 - **Where（在哪个上下文）**：本机 `MagicBoard iPad Pro 12.9 2018` 模拟器和 `/Users/mac/codexproj/magicboard/build/MagicBoard.tipa`。
 - **Why（目的/背景）**：Computer Use 的普通点击/拖动未能打开 iPadOS 输入法长按选择菜单，用户说明必须拖动地球图标并在目标输入法上停留，随后主动完成切换，使最终交互验收可以继续。
 - **How（如何实现/决策过程）**：读取用户切换后的 MagicBoard 界面；单击左 Command 后等待三秒，确认无持续高亮且没有快捷键指引，随后分别单击 Ctrl 与 Option 确认同样立即恢复。提交源代码 `1679abc`，运行 Zsh TIPA 构建脚本，并独立核验 ZIP、arm64、版本、IOKit HID 导入和最小权限位置。最终 CodeGraph 健康，源码改动删除 161 行 Sticky 专用逻辑并新增 28 行直接释放逻辑与测试。
+
+### 第 7 轮对话（2026-09-02 17:57）
+
+- **Who（谁参与）**：用户（MagicBoard 项目负责人）+ AI（Assistant / Codex）。
+- **What（做了什么）**：先完成 Tab 的真实功能验收，再把 F1–F12 双层行为纳入任务 06。Tab 在 `https://httpbin.org/forms/post` 中将焦点从 Customer name 移到 Telephone。F1–F12 普通点击发送标准 Keyboard HID `0x3A...0x45`；用户确认按住任一实体 Shift 时改发图标对应的亮度、窗口、搜索、听写、勿扰、媒体和音量事件。顶行原位启用且视觉结构不变。共享测试 35/35、设计 lint、模拟器 Debug、arm64 Release 和独立归档检查均通过。生成 `/Users/mac/codexproj/magicboard/build/MagicBoard.tipa`，版本 `0.7.0 (16)`，大小 151,842 字节，SHA-256 为 `6ce6acd207b30f36b9bf115cb6c5cc15822be165b24020a8784aeafca3c31cd3`。
+- **When（何时发生）**：2026-09-02 17:57（Asia/Shanghai）。
+- **Where（在哪个上下文）**：工作目录 `/Users/mac/codexproj/magicboard`；代码涉及 `Keyboard/HIDBridge.h`、`Keyboard/HIDBridge.m`、`Keyboard/KeyboardViewController.swift`；模拟器为 `MagicBoard iPad Pro 12.9 2018`（iOS 18.4）。
+- **Why（目的/背景）**：用户要求在确认 Tab 功能后继续实现顶行 F1–F12，并把该工作计入任务 06；进一步选择默认标准 F 键、物理按住 Shift 触发键帽图标系统功能的双层交互。
+- **How（如何实现/决策过程）**：使用 CodeGraph确认现有 Tab/F 占位与 HID 路径，读取 `DESIGN.md` 并通过提问工具确认双层语义及桥接影响。Apple 本机 HID usage 头文件确认所有标准值；现有 TrollVNC 参考证明同一 `IOHIDEventCreateKeyboardEvent` 可发送 Consumer page。将活动键追踪改为 `(page << 32) | usage`，保留唯一客户端和统一 `releaseAll()`；触摸开始时锁定所选系统 usage，避免 Shift 先释放导致 key-up 不匹配。模拟器键码页直接识别 F1/112、F6/117、F12/123。Computer Use 无法模拟两个同时触摸，且本机仅有 iOS 18.4 runtime，因此 iPadOS 16.x 的 Shift+F1–F12 系统层列为实机 Phase 44。源代码提交 `496cf91`，文档提交 `2f274da`。
+
+### 第 8 轮对话（2026-09-02 17:57）
+
+- **Who（谁参与）**：用户（MagicBoard 项目负责人）+ AI（Assistant / Codex）。
+- **What（做了什么）**：用户要求继续后，完成任务 06 F1–F12 的文档提交、CodeGraph 健康检查、Git 清洁度收尾及实机验收清单准备。
+- **When（何时发生）**：2026-09-02 17:57（Asia/Shanghai）。
+- **Where（在哪个上下文）**：工作目录 `/Users/mac/codexproj/magicboard`；历史文件、Git `master` 分支与最终 TIPA 产物。
+- **Why（目的/背景）**：用户希望不中断地完成剩余交付步骤，而不是停在本地构建结果。
+- **How（如何实现/决策过程）**：提交 `task_plan.md`、`findings.md`、`progress.md`，确认 CodeGraph 为 8 个文件、207 个节点、217 条边；保留目标 iPadOS 16.x 的物理 Shift 多点触控作为唯一未自动化验收项，并准备按 F1–F12 图标顺序逐项测试。
