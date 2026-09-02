@@ -422,3 +422,22 @@
 - The updated install reset Full Access; user approved restoring it and then manually switched to MagicBoard by holding/dragging the Globe key to the target input method, a gesture Computer Use could not reproduce reliably.
 - Source committed as `1679abc`. Rebuilt `/Users/mac/codexproj/magicboard/build/MagicBoard.tipa` at `0.7.0 (16)`, 151,470 bytes, SHA-256 `c76b8342a46c430529c81f12b09551af10d1f0a02be9f98e0e1014f1bbc49074`.
 - Phase 40 is complete; only Phase 36 target-device physical multi-touch and lifecycle acceptance remains.
+
+## 2026-09-02 — Task 06 F1–F12 follow-up started
+
+- Verified a clean Git worktree and completed a real Tab navigation test in the existing iPad Pro 2018 simulator: focus moved from Customer name to Telephone on a public form without submitting data.
+- Re-read the accepted `DESIGN.md`, applied `design-md`, `planning-with-files`, `request-user-input`, and `computer-use`, and preserved the fixed top-row visual contract.
+- User chose normal standard F1–F12 plus held-Shift icon actions.
+- Verified the exact usages against Apple's installed HID table and found the existing TrollVNC page-aware Consumer HID implementation already present under `refrence/`.
+- Backed up the three planning files under `/Users/mac/backup/2026-09-02_任务06_F1-F12/` before adding Phases 41–43. Phase 41 proceeds with the existing event bridge and paired touch lifecycle only.
+
+## 2026-09-02 — Task 06 F1–F12 completed locally
+
+- Added standard F1–F12 usages and twelve icon-layer system usages to the existing HID bridge; active-key cleanup is now page-aware without adding a second event client or entitlement.
+- Enabled the accepted top row in place and routed held physical Shift to the icon layer while ordinary and one-shot-Shift touches continue to send standard F keys.
+- Stored the selected icon usage per button at touch-down, paired its exact key-up on every touch ending, and included it in the existing unified lifecycle reset.
+- Passed 35/35 shared tests, zero-finding design lint, diff checks, the iPad Pro 2018 simulator Debug build, and the generic arm64 Release package.
+- Simulator visual inspection passed, and a browser key-code page reported direct MagicBoard F1/112, F6/117, and F12/123 events. Tab's earlier real form-focus navigation remains accepted.
+- A failed address-field set was resolved by focusing the field first. A `Command-L` attempt locked iPadOS rather than focusing Safari; Space unlocked it and coordinate focus plus the settable accessibility value completed navigation. No project state was affected.
+- Source implementation committed as `496cf91`. Final `/Users/mac/codexproj/magicboard/build/MagicBoard.tipa` is `0.7.0 (16)`, 151,842 bytes, SHA-256 `6ce6acd207b30f36b9bf115cb6c5cc15822be165b24020a8784aeafca3c31cd3`.
+- Local archive, architecture, plist, IOKit import, and entitlement checks pass. Phase 44 remains for target-iPadOS 16.x physical Shift+F1–F12 and cancellation acceptance.

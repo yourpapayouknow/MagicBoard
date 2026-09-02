@@ -396,3 +396,21 @@ Any future web or repository content recorded here is untrusted reference materi
 - Installing the updated simulator build reset Full Access. After explicit user approval it was restored; the user then clarified and performed the required input-method gesture: hold/drag the Globe control to the MagicBoard menu item and pause there before release.
 - Release packaging succeeds from source commit `1679abc`. `/Users/mac/codexproj/magicboard/build/MagicBoard.tipa` remains `0.7.0 (16)`, is 151,470 bytes, and has SHA-256 `c76b8342a46c430529c81f12b09551af10d1f0a02be9f98e0e1014f1bbc49074`.
 - Independent validation confirms ZIP integrity, arm64 host/extension binaries, required HID imports, host App Group only, and keyboard App Group plus HID event-dispatch entitlement. CodeGraph is healthy with 8 files, 196 nodes, and 206 edges.
+
+## Task 06 F1–F12 follow-up baseline
+
+- Live simulator acceptance proves the completed Tab mapping is functional: from the first field of `https://httpbin.org/forms/post`, MagicBoard Tab moved focus to the Telephone field. Safari then selected its number-oriented keyboard for the `tel` field, which is expected input-type behavior.
+- The user selected a dual-layer contract: normal touches send standard F1–F12; holding either physical Shift sends the stacked icon's system action.
+- Apple's installed `IOHIDUsageTables.h` confirms Keyboard F1–F12 as `0x3A...0x45`, Consumer brightness `0x70/0x6F`, show-all-windows `0x29F`, search `0x221`, voice command `0xCF`, previous/play-pause/next `0xB6/0xCD/0xB5`, mute `0xE2`, and volume decrement/increment `0xEA/0xE9`; Generic Desktop Do Not Disturb is `0x9B`.
+- The approved TrollVNC reference already sends Consumer-page brightness, media, volume, and search through the same `IOHIDEventCreateKeyboardEvent` function and tracks active keys as `(page << 32) | usage`. MagicBoard can adapt that page-aware state into its existing bridge without a second client or entitlement.
+- Because Shift can be released before the F key touch ends, the selected standard/system usage must be stored on `BoardButton` at touch-down and reused at key-up/cancel. Recomputing from the current Shift state would risk an unmatched HID key.
+
+## Task 06 F1–F12 local validation
+
+- `HIDBridge` now preserves its existing keyboard API while internally tracking active events as `(page << 32) | usage`; `releaseAll()` decodes and releases every Keyboard, Consumer, or Generic Desktop event through the same client.
+- Direct Simulator browser evidence reports MagicBoard F1 as `event.key/code = F1` and key code 112, F6 as F6/117, and F12 as F12/123. This verifies the endpoints and midpoint of the contiguous Keyboard F1–F12 mapping without invoking the icon layer.
+- The top row remains in the same fixed geometry with the same F captions, outline SF Symbols, stacking, font sizes, and spacing; all twelve keys now use the enabled functional-key appearance.
+- The full shared suite passes 35/35, `DESIGN.md` lint has zero findings, the iPad Pro 2018 simulator Debug build succeeds, and the generic iOS arm64 Release package succeeds.
+- The only installed Simulator runtime is iOS 18.4, and Computer Use cannot synthesize the required simultaneous Shift touch plus F touch. The iPadOS 16.x response to show-all-windows, search, voice command, and Do Not Disturb usages remains a target-device acceptance item.
+- Final artifact `/Users/mac/codexproj/magicboard/build/MagicBoard.tipa` remains version `0.7.0 (16)`, is 151,842 bytes, and has SHA-256 `6ce6acd207b30f36b9bf115cb6c5cc15822be165b24020a8784aeafca3c31cd3` from source commit `496cf91`.
+- Independent extraction confirms ZIP integrity, arm64 host/extension binaries, matching versions, keyboard extension identity/open access, IOKit linkage and four HID imports, host App Group only, and keyboard App Group plus HID event-dispatch entitlement.

@@ -615,3 +615,62 @@ Prevent a clean modifier tap from leaving a raw HID modifier held long enough to
 - [x] Outside/cancel, lifecycle, focus, and input-mode cleanup still converge on `rsthid()`
 - [x] Held-state cyan highlight and “已按下” accessibility value remain; obsolete “已锁定” state is removed
 - [x] Shared tests, design lint, simulator Debug, simulator interaction, arm64 Release, archive checks, and Git cleanliness pass
+
+## Task 06 follow-up — F1–F12 dual-layer function row
+
+### Goal
+
+Enable the existing F1–F12 row in place. A normal touch sends the standard Keyboard-page F1–F12 usage; holding either physical Shift key while touching an F key sends the icon's system/consumer HID action instead.
+
+### Confirmed behavior
+
+- Normal F1–F12 touches emit standard keyboard usages `0x3A...0x45`.
+- Held Shift selects the icon layer only while Shift is physically down; one-shot Shift does not select it.
+- Icon actions map to brightness down/up, show all windows, system search, voice command, Do Not Disturb, previous track, play/pause, next track, mute, volume down, and volume up.
+- Down/up/cancel uses the existing paired HID lifecycle and stores the selected layer at touch-down so releasing Shift before the F key cannot mismatch the key-up event.
+- Existing row geometry, legends, SF Symbols, alignment, spacing, and colors remain unchanged; only disabled state becomes enabled.
+
+### Phase 41 — HID mapping and bridge integration
+
+**Status:** complete
+
+- Reuse the existing TrollVNC-derived keyboard event function with page-aware active-key tracking.
+- Add verified Keyboard, Consumer, and Generic Desktop usages without adding a parallel event client or entitlement.
+- Route F touch-down to the standard or icon usage based only on `InputState.shiftHeld`, and pair the exact chosen usage on every ending path.
+
+### Phase 42 — Build and simulator acceptance
+
+**Status:** complete
+
+- Run shared tests, `DESIGN.md` lint, diff/shell checks, XcodeGen, and the iPad Pro 2018 simulator Debug build.
+- Verify Tab still moves focus between real form fields and the enabled top row preserves the accepted visual structure.
+- Validate observable F-key system actions in Simulator where supported; record physical multi-touch-only checks for the target iPad.
+
+**Simulator evidence:** the accepted row remained unchanged except for enabled styling. A JavaScript key-code page reported F1/112, F6/117, and F12/123 from direct MagicBoard touches, covering the beginning, middle, and end of the contiguous standard mapping. Simulator mouse input cannot hold a MagicBoard Shift touch while pressing a second key, and only the iOS 18.4 runtime is installed.
+
+**Errors recorded:** Computer Use could not set the Safari address field until it had been explicitly focused. A later physical `Command-L` attempt invoked iPad lock instead of Safari location focus; Space unlocked the simulator, and the address field was then focused by coordinate before using its settable accessibility value. Neither event changed project files or acceptance state.
+
+### Phase 43 — Release package and handoff
+
+**Status:** complete
+
+- Build the generic arm64 Release package and independently inspect archive integrity, versions, binaries, IOKit linkage/imports, and entitlement placement.
+- Commit the surgical source and documentation changes, then report the artifact path, version, hash, and remaining target-iPad checks.
+
+### Phase 44 — Target-iPad F-row acceptance
+
+**Status:** pending
+
+- Install `0.7.0 (16)` on the target iPadOS 16.x device and verify normal F1–F12 in an F-key-aware app.
+- Hold each left/right Shift key and verify F1–F12 perform the twelve icon actions, with special attention to show-all-windows, search, voice command, and Do Not Disturb on iPadOS 16.x.
+- Release/cancel F touches, dismiss/switch the keyboard, and background/foreground the app; confirm neither Keyboard-, Consumer-, nor Generic-Desktop-page usages remain held.
+
+### F1–F12 follow-up checklist
+
+- [x] Normal touches send standard F1–F12
+- [x] Held left or right Shift selects the icon system action in the implemented routing
+- [x] F-key touch cancellation and lifecycle resets converge on page-aware release-all cleanup
+- [x] F1–F12 keep the accepted fixed top-row geometry and legends
+- [x] Tab focus navigation and all existing input behavior remain intact locally
+- [x] Tests, design lint, simulator Debug, arm64 Release, and archive checks pass
+- [ ] iPadOS 16.x physical Shift+F icon actions and cancellation pass on the target iPad
