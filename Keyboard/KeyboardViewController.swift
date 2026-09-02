@@ -8,6 +8,7 @@ private enum KeyKind: Int {
     case shift
     case language
     case delete
+    case tab
     case enter
     case space
     case next
@@ -27,6 +28,7 @@ private enum KeyKind: Int {
     // 返回特殊键对应的 HID usage
     var hidKey: MBHIDKey? {
         switch self {
+        case .tab: .tab
         case .escape: .escape
         case .leftArrow: .leftArrow
         case .rightArrow: .rightArrow
@@ -272,7 +274,7 @@ final class KeyboardViewController: UIInputViewController {
                 txt("=", alternate: "+"), ctl("delete", kind: .delete, weight: 1.7, align: .trailing),
             ],
             [
-                ph("tab", weight: 1.5, align: .leading, fontSize: 17), ltr("Q"), ltr("W"), ltr("E"), ltr("R"), ltr("T"),
+                ctl("tab", kind: .tab, weight: 1.5, align: .leading, fontSize: 17), ltr("Q"), ltr("W"), ltr("E"), ltr("R"), ltr("T"),
                 ltr("Y"), ltr("U"), ltr("I"), ltr("O"), ltr("P"),
                 txt("[", alternate: "{", zhBase: "【", zhAlt: "「"),
                 txt("]", alternate: "}", zhBase: "】", zhAlt: "」"),
@@ -632,6 +634,7 @@ final class KeyboardViewController: UIInputViewController {
         case .shift: "Shift"
         case .language: "切换输入语言，长按切换 Caps Lock"
         case .delete: "删除"
+        case .tab: "Tab"
         case .enter: "换行"
         case .space: "空格"
         case .next: "下一个键盘"
@@ -681,7 +684,7 @@ final class KeyboardViewController: UIInputViewController {
         case .dismiss:
             rsthid()
             dismissKeyboard()
-        case .escape, .leftArrow, .rightArrow, .upArrow, .downArrow,
+        case .tab, .escape, .leftArrow, .rightArrow, .upArrow, .downArrow,
              .control, .leftOption, .leftCommand, .rightCommand, .rightOption:
             break
         case .next, .placeholder:
