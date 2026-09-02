@@ -205,8 +205,10 @@ private final class KeyView: UIButton {
     var spec: KeySpec?
     var dragupper: UIView?
     var draglower: UILabel?
+    var popup: UIView?
     var hidactive = false
     var fnupper: Bool?
+    var touchvalid = false
     var keyRole: KeyRole = .function {
         didSet { setNeedsUpdateConfiguration() }
     }
@@ -324,6 +326,11 @@ private final class KeyView: UIButton {
     }
 }
 
+// 启用系统键盘输入点击声
+private final class KeyInputView: UIInputView, UIInputViewAudioFeedback {
+    var enableInputClicksWhenVisible: Bool { true }
+}
+
 // 管理键盘扩展界面
 final class KeyboardViewController: UIInputViewController {
     private let rows = UIStackView()
@@ -338,6 +345,7 @@ final class KeyboardViewController: UIInputViewController {
     private var cursormotion = CursorMotion(step: 12)
     private var cursorpoint: CGPoint?
     private weak var cursorbutton: KeyView?
+    private let keyimpact = UIImpactFeedbackGenerator(style: .light)
     // 仅由主 RunLoop 触摸生命周期访问
     nonisolated(unsafe) private var deltimer: Timer?
 
@@ -348,10 +356,18 @@ final class KeyboardViewController: UIInputViewController {
         HIDBridge.shared.releaseAll()
     }
 
+    // 创建支持系统输入声的键盘根视图
+    override func loadView() {
+        view = KeyInputView(frame: .zero, inputViewStyle: .keyboard)
+    }
+
     // 构建键盘容器
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = KeyPalette.board
+        view.isMultipleTouchEnabled = true
+        view.clipsToBounds = false
+        keyimpact.prepare()
         let center = NotificationCenter.default
         center.addObserver(
             self,
@@ -375,6 +391,7 @@ final class KeyboardViewController: UIInputViewController {
         rows.alignment = .fill
         rows.distribution = .fillEqually
         rows.spacing = 7
+        rows.clipsToBounds = false
         rows.translatesAutoresizingMaskIntoConstraints = false
         blur.contentView.addSubview(rows)
 
@@ -706,6 +723,7 @@ final class KeyboardViewController: UIInputViewController {
         button.spec = spec
         button.keyRole = spec.kind == .text || spec.kind == .space ? .ordinary : .function
         button.activeTint = theme.primary.uiclr
+        button.isExclusiveTouch = false
         buttons.append(button)
         button.isEnabled = spec.enabled
         button.accessibilityLabel = aclabel(spec)
@@ -754,6 +772,11 @@ final class KeyboardViewController: UIInputViewController {
             || (spec.kind.modifierKey.map { modifiers.contains($0) } ?? false)
         button.configuration = config
         button.isSelected = selected
+        if spec.kind == .shift, selected {
+            button.accessibilityValue = state.shiftHeld ? "按住" : "单次启用"
+        } else if spec.kind == .language, selected {
+            button.accessibilityValue = "大写锁定"
+        }
         button.setNeedsUpdateConfiguration()
         button.titleLabel?.numberOfLines = 2
         button.titleLabel?.textAlignment = .center
@@ -773,12 +796,21 @@ final class KeyboardViewController: UIInputViewController {
             let drag = UIPanGestureRecognizer(target: self, action: #selector(dragkey(_:)))
             drag.maximumNumberOfTouches = 1
             button.addGestureRecognizer(drag)
+        } else if spec.kind == .text {
+            button.addTarget(self, action: #selector(prskey(_:)), for: .touchUpInside)
+            let drag = UIPanGestureRecognizer(target: self, action: #selector(dragkey(_:)))
+            drag.maximumNumberOfTouches = 1
+            drag.cancelsTouchesInView = true
+            drag.delaysTouchesBegan = false
+            drag.delaysTouchesEnded = false
+            button.addGestureRecognizer(drag)
         } else if spec.kind.hidKey != nil {
             button.addTarget(self, action: #selector(hiddown(_:)), for: .touchDown)
+            button.addTarget(self, action: #selector(hidup(_:)), for: .touchUpInside)
             button.addTarget(
                 self,
-                action: #selector(hidup(_:)),
-                for: [.touchUpInside, .touchUpOutside, .touchCancel, .touchDragExit]
+                action: #selector(hidcncl(_:)),
+                for: [.touchUpOutside, .touchCancel, .touchDragExit]
             )
         } else if spec.kind == .space {
             button.addTarget(self, action: #selector(prskey(_:)), for: .touchUpInside)
@@ -787,6 +819,7 @@ final class KeyboardViewController: UIInputViewController {
             hold.minimumPressDuration = 0.45
             hold.allowableMovement = .greatestFiniteMagnitude
             hold.cancelsTouchesInView = true
+            hold.delaysTouchesBegan = false
             hold.delaysTouchesEnded = true
             button.addGestureRecognizer(hold)
         } else if spec.kind == .next {
@@ -796,11 +829,17 @@ final class KeyboardViewController: UIInputViewController {
             button.addTarget(self, action: #selector(prskey(_:)), for: .touchUpInside)
             let hold = UILongPressGestureRecognizer(target: self, action: #selector(lngcaps(_:)))
             hold.minimumPressDuration = 0.45
+            hold.cancelsTouchesInView = true
+            hold.delaysTouchesBegan = false
             button.addGestureRecognizer(hold)
         } else if spec.kind == .shift {
             button.addTarget(self, action: #selector(shftdown(_:)), for: .touchDown)
             button.addTarget(self, action: #selector(shftup(_:)), for: .touchUpInside)
-            button.addTarget(self, action: #selector(shftcncl(_:)), for: [.touchUpOutside, .touchCancel])
+            button.addTarget(
+                self,
+                action: #selector(shftcncl(_:)),
+                for: [.touchUpOutside, .touchCancel, .touchDragExit]
+            )
         } else if spec.kind == .delete {
             button.addTarget(self, action: #selector(deldown(_:)), for: .touchDown)
             button.addTarget(
@@ -808,13 +847,17 @@ final class KeyboardViewController: UIInputViewController {
                 action: #selector(delup(_:)),
                 for: [.touchUpInside, .touchUpOutside, .touchCancel, .touchDragExit]
             )
-        } else if spec.kind == .text {
-            button.addTarget(self, action: #selector(prskey(_:)), for: .touchUpInside)
-            let drag = UIPanGestureRecognizer(target: self, action: #selector(dragkey(_:)))
-            drag.maximumNumberOfTouches = 1
-            button.addGestureRecognizer(drag)
         } else if spec.kind != .placeholder {
             button.addTarget(self, action: #selector(prskey(_:)), for: .touchUpInside)
+        }
+        if spec.kind != .placeholder, spec.enabled {
+            button.addTarget(self, action: #selector(begkey(_:)), for: .touchDown)
+            button.addTarget(self, action: #selector(endkey(_:)), for: .touchUpInside)
+            button.addTarget(
+                self,
+                action: #selector(cnclkey(_:)),
+                for: [.touchUpOutside, .touchCancel, .touchDragExit]
+            )
         }
         return button
     }
@@ -868,9 +911,113 @@ final class KeyboardViewController: UIInputViewController {
         }
     }
 
+    // 开始统一按键触摸与即时反馈
+    @objc private func begkey(_ sender: UIButton) {
+        guard
+            let button = sender as? KeyView,
+            let spec = button.spec,
+            button.isEnabled
+        else { return }
+        button.touchvalid = true
+        if spec.kind == .text { shwpop(button, spec: spec) }
+        sndfeed()
+    }
+
+    // 完成统一按键触摸并恢复弹出层
+    @objc private func endkey(_ sender: UIButton) {
+        guard let button = sender as? KeyView else { return }
+        button.touchvalid = false
+        hidepop(button)
+    }
+
+    // 取消滑出键帽的统一按键触摸
+    @objc private func cnclkey(_ sender: UIButton) {
+        guard let button = sender as? KeyView else { return }
+        button.touchvalid = false
+        hidepop(button)
+    }
+
+    // 播放系统输入声与轻触反馈
+    private func sndfeed(haptic: Bool = true) {
+        UIDevice.current.playInputClick()
+        guard haptic else { return }
+        keyimpact.impactOccurred(intensity: 0.65)
+        keyimpact.prepare()
+    }
+
+    // 显示普通字符键弹出反馈
+    private func shwpop(_ button: KeyView, spec: KeySpec) {
+        hidepop(button)
+        view.layoutIfNeeded()
+        let keyframe = button.convert(button.bounds, to: view)
+        let width = min(max(keyframe.width * 1.18, 54), 82)
+        let height = min(max(keyframe.height * 1.35, 62), 84)
+        let maxx = max(4, view.bounds.width - width - 4)
+        let origin = CGPoint(
+            x: min(max(keyframe.midX - width / 2, 4), maxx),
+            y: max(4, keyframe.minY - height + 8)
+        )
+        let popup = UIView(frame: CGRect(origin: origin, size: CGSize(width: width, height: height)))
+        popup.backgroundColor = KeyPalette.ordinary
+        popup.isUserInteractionEnabled = false
+        popup.isAccessibilityElement = false
+        popup.layer.cornerCurve = .continuous
+        popup.layer.cornerRadius = 10
+        popup.layer.borderWidth = 0.5
+        popup.layer.borderColor = KeyPalette.border.resolvedColor(with: traitCollection).cgColor
+        popup.layer.shadowColor = KeyPalette.shadow.resolvedColor(with: traitCollection).cgColor
+        popup.layer.shadowOpacity = 0.42
+        popup.layer.shadowRadius = 2
+        popup.layer.shadowOffset = CGSize(width: 0, height: 2)
+        popup.layer.shadowPath = UIBezierPath(roundedRect: popup.bounds, cornerRadius: 10).cgPath
+
+        let label = UILabel(frame: popup.bounds)
+        label.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        label.font = .systemFont(ofSize: 34, weight: .medium)
+        label.text = poptxt(spec)
+        label.textAlignment = .center
+        label.textColor = .label
+        label.isUserInteractionEnabled = false
+        label.isAccessibilityElement = false
+        popup.addSubview(label)
+
+        button.popup = popup
+        view.addSubview(popup)
+        guard !UIAccessibility.isReduceMotionEnabled else { return }
+        popup.alpha = 0
+        popup.transform = CGAffineTransform(scaleX: 0.92, y: 0.92)
+        UIView.animate(
+            withDuration: 0.06,
+            delay: 0,
+            options: [.allowUserInteraction, .beginFromCurrentState, .curveEaseOut]
+        ) {
+            popup.alpha = 1
+            popup.transform = .identity
+        }
+    }
+
+    // 移除普通字符键弹出反馈
+    private func hidepop(_ button: KeyView) {
+        button.popup?.layer.removeAllAnimations()
+        button.popup?.removeFromSuperview()
+        button.popup = nil
+    }
+
+    // 生成当前字符键弹出文本
+    private func poptxt(_ spec: KeySpec) -> String {
+        if spec.letter {
+            return state.uppercase ? spec.output.uppercased() : spec.output.lowercased()
+        }
+        return state.shifted ? (spec.alternate ?? spec.output) : spec.output
+    }
+
     // 处理全部可用按键
     @objc private func prskey(_ sender: UIButton) {
-        guard let spec = (sender as? KeyView)?.spec else { return }
+        guard
+            let button = sender as? KeyView,
+            button.touchvalid,
+            let spec = button.spec
+        else { return }
         if spec.kind != .shift { state.shftuse() }
         switch spec.kind {
         case .text:
@@ -913,39 +1060,35 @@ final class KeyboardViewController: UIInputViewController {
             if let key = spec.hidKey { sndhid(key) }
             return
         }
+        let shifted = state.shifted
         let output = drag
             ? state.dragout(spec.output, alternate: spec.alternate, letter: spec.letter)
             : state.emit(spec.output, alternate: spec.alternate, letter: spec.letter)
         textDocumentProxy.insertText(output)
-        rfrshft()
+        if shifted != state.shifted { rfrshft() }
     }
 
-    // 发送 HID 按键按下事件
+    // 记录待提交的 HID 特殊键
     @objc private func hiddown(_ sender: UIButton) {
-        guard
-            let button = sender as? KeyView,
-            let key = button.spec?.kind.hidKey
-        else { return }
-        guard HIDBridge.shared.keyDown(key) else { return }
+        guard let button = sender as? KeyView else { return }
         button.hidactive = true
-        state.shftuse()
     }
 
-    // 发送 HID 按键抬起事件
+    // 提交键帽内抬起的 HID 特殊键
     @objc private func hidup(_ sender: UIButton) {
         guard
             let button = sender as? KeyView,
-            button.hidactive
+            button.hidactive,
+            button.touchvalid,
+            let key = button.spec?.kind.hidKey
         else { return }
         button.hidactive = false
-        guard
-            let key = button.spec?.kind.hidKey,
-            HIDBridge.shared.keyUp(key)
-        else {
-            rsthid()
-            return
-        }
-        updmods()
+        sndhid(key)
+    }
+
+    // 取消滑出键帽的 HID 特殊键
+    @objc private func hidcncl(_ sender: UIButton) {
+        (sender as? KeyView)?.hidactive = false
     }
 
     // 记录功能键轻点选择层
@@ -1056,6 +1199,10 @@ final class KeyboardViewController: UIInputViewController {
     private func begcursor(_ sender: UILongPressGestureRecognizer) {
         guard let button = sender.view as? KeyView else { return }
         state.shftuse()
+        for key in buttons {
+            key.touchvalid = false
+            hidepop(key)
+        }
         cursormotion.reset()
         cursorpoint = sender.location(in: view)
         cursorbutton = button
@@ -1143,6 +1290,8 @@ final class KeyboardViewController: UIInputViewController {
         for button in buttons {
             button.hidactive = false
             button.fnupper = nil
+            button.touchvalid = false
+            hidepop(button)
         }
         HIDBridge.shared.releaseAll()
         rfrshft()
@@ -1165,29 +1314,39 @@ final class KeyboardViewController: UIInputViewController {
     @objc private func lngcaps(_ sender: UILongPressGestureRecognizer) {
         guard sender.state == .began else { return }
         state.tglcaps()
+        keyimpact.impactOccurred(intensity: 0.9)
+        keyimpact.prepare()
         bldkbd()
     }
 
     // 开始 Shift 触摸
     @objc private func shftdown(_ sender: UIButton) {
         guard
-            let spec = (sender as? KeyView)?.spec,
+            let button = sender as? KeyView,
+            let spec = button.spec,
             let shift = spec.shiftKey,
             let key = spec.hidKey
         else { return }
         state.shftdown(shift)
-        HIDBridge.shared.keyDown(key)
+        button.hidactive = HIDBridge.shared.keyDown(key)
         rfrshft()
     }
 
     // 完成 Shift 触摸
     @objc private func shftup(_ sender: UIButton) {
         guard
-            let spec = (sender as? KeyView)?.spec,
+            let button = sender as? KeyView,
+            let spec = button.spec,
             let shift = spec.shiftKey,
             let key = spec.hidKey
         else { return }
-        HIDBridge.shared.keyUp(key)
+        if button.hidactive {
+            button.hidactive = false
+            if !HIDBridge.shared.keyUp(key) {
+                rsthid()
+                return
+            }
+        }
         state.shftup(shift)
         rfrshft()
     }
@@ -1195,11 +1354,18 @@ final class KeyboardViewController: UIInputViewController {
     // 取消 Shift 触摸
     @objc private func shftcncl(_ sender: UIButton) {
         guard
-            let spec = (sender as? KeyView)?.spec,
+            let button = sender as? KeyView,
+            let spec = button.spec,
             let shift = spec.shiftKey,
             let key = spec.hidKey
         else { return }
-        HIDBridge.shared.keyUp(key)
+        if button.hidactive {
+            button.hidactive = false
+            if !HIDBridge.shared.keyUp(key) {
+                rsthid()
+                return
+            }
+        }
         state.shftcncl(shift)
         rfrshft()
     }
@@ -1219,6 +1385,9 @@ final class KeyboardViewController: UIInputViewController {
                 button.accessibilityLabel = legend.title
             } else if spec.kind == .shift {
                 button.isSelected = state.shifted
+                button.accessibilityValue = state.shifted
+                    ? state.shiftHeld ? "按住" : "单次启用"
+                    : nil
             } else if spec.kind.systemKey != nil {
                 fnstyle(button, spec: spec, config: &config)
             } else {
@@ -1269,6 +1438,7 @@ final class KeyboardViewController: UIInputViewController {
         guard deltimer != nil else { return }
         deltimer?.invalidate()
         textDocumentProxy.deleteBackward()
+        sndfeed(haptic: false)
         let timer = Timer(timeInterval: 0.08, repeats: true) { [weak self] _ in
             Task { @MainActor [weak self] in
                 self?.deltick()
@@ -1282,6 +1452,7 @@ final class KeyboardViewController: UIInputViewController {
     private func deltick() {
         guard deltimer?.isValid == true else { return }
         textDocumentProxy.deleteBackward()
+        sndfeed(haptic: false)
     }
 
     // 处理 Delete 触摸终止
@@ -1302,6 +1473,8 @@ final class KeyboardViewController: UIInputViewController {
 
         switch sender.state {
         case .began:
+            button.touchvalid = false
+            hidepop(button)
             begdrag(button, spec: spec)
             upddrag(button, spec: spec, distance: distance)
         case .changed:
