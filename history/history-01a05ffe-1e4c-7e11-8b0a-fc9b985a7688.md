@@ -30,3 +30,12 @@
 - **Where（在哪个上下文）**：工作目录 `/Users/mac/codexproj/magicboard`；核对了 `Keyboard/MagicBoardKeyboard.entitlements`、`Keyboard/HIDBridge.m` 与 `scripts/build-tipa.zsh`。
 - **Why（目的/背景）**：用户看到 App 在 iPad 模拟器中可以正常启动并显示键盘，因而询问项目是否实际上无需 TrollStore。
 - **How（如何实现/决策过程）**：从本地工程直接确认键盘扩展携带 `com.apple.private.hid.client.event-dispatch = true`，通过 `IOHIDEventCreateKeyboardEvent` 和 `IOHIDEventSystemClientDispatchEvent` 发送物理键事件；打包脚本关闭常规代码签名并用 `ldid` 注入权限。解释模拟器不使用实体设备的普通签名/权限链，能显示 UI 和运行公开能力不能证明私有 HID 派发可在普通签名设备上工作。给出完整 TrollStore 版与删减 HID 的普通分发版两条产品路径。
+
+### 第 4 轮对话（2026-09-02 11:24）
+
+- **Who（谁参与）**：用户（MagicBoard 项目负责人）+ AI（Assistant / Codex）。
+- **What（做了什么）**：根据用户在模拟器中实际验证 Cmd、方向键等功能键可用的证据，修正此前“模拟器只能验证 UI/状态流”的过度保守表述。检查本机 Debug Simulator 键盘扩展签名，确认其确实包含 `com.apple.private.hid.client.event-dispatch = true`，因此模拟器可以真实验证当前 HID 功能链路。
+- **When（何时发生）**：2026-09-02 11:24（Asia/Shanghai）。
+- **Where（在哪个上下文）**：工作目录 `/Users/mac/codexproj/magicboard`；比较了 Xcode DerivedData 中 `Debug-iphonesimulator/MagicBoard.app/PlugIns/MagicBoardKeyboard.appex` 的签名权限与 TrollStore Release 包。
+- **Why（目的/背景）**：用户指出模拟器中的功能键并非仅视觉可用，而是 Cmd、方向键等均有真实效果，要求重新判断 TrollStore 是否必要。
+- **How（如何实现/决策过程）**：使用 `codesign -d --entitlements` 直接读取模拟器扩展，确认私有 HID entitlement 被嵌入并能在 Simulator 环境运行。由此区分“功能能否运行”和“实体设备能否通过常规签名安装”两个问题：模拟器足以验证 HID 功能；实体设备的普通开发者/App Store provisioning profile 仍不会授权该私有 entitlement，因此完整功能的设备安装仍需 TrollStore 或 Apple 正式授予相应权限。
