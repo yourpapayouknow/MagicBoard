@@ -377,3 +377,13 @@
 - Wired that reset to rebuild, dismissal, system next-keyboard touch-down, view disappearance, and extension-host resign/background notifications.
 - The first two simulator compiles identified the exact Swift-imported extension notification names; the compiler-declared names resolved the issue and the complete arm64/x86_64 simulator Debug build passed.
 - Re-ran all 40 shared tests, `git diff --check`, and the prohibited local-Shell scan successfully. Phase 34 is complete and Phase 35 is in progress.
+
+## 2026-09-02 — Task 06 local validation completed
+
+- Bumped both targets to `0.7.0 (16)`, regenerated the Xcode project, and committed the version change at `0e7340d` after the implementation commit `6d9fc58`.
+- Final verification passed: 40/40 shared tests, zero `DESIGN.md` lint findings, M1 12.9-inch iPad Pro simulator Debug, generic arm64 Release, `git diff --check`, and the prohibited local-Shell scan.
+- Generated `/Users/mac/codexproj/magicboard/build/MagicBoard.tipa`, 158,950 bytes, SHA-256 `3d9244cb477865157d44eb76b9599a3b368c50298c6836b0fdcd24b59b6c87d9`.
+- Independent archive checks passed ZIP integrity, arm64 architecture, host/extension `0.7.0 (16)` parity, extension identity/open access, IOKit linkage/imports, and least-privilege entitlement placement.
+- The first entitlement pipeline could not feed the codesign representation into `plutil`; direct codesign entitlement display provided the required independent evidence without repeating the failed approach.
+- CodeGraph is healthy after implementation with 8 indexed files, 206 nodes, and 416 edges; the Git worktree was clean before this final planning/history update.
+- No target iPad is connected through `devicectl`. Phase 35 is complete; Phase 36 remains for physical multi-touch, input-mode/focus/lifecycle cleanup, and regression acceptance.

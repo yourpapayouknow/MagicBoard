@@ -524,7 +524,7 @@ Extend the accepted Ctrl/Option/Command HID path with two complementary interact
 
 ### Phase 35 — Automated validation and package
 
-**Status:** in_progress
+**Status:** complete
 
 - Run the complete shared suite, `DESIGN.md` lint, prohibited-shell scan, XcodeGen regeneration, simulator Debug build, generic arm64 Release package, and archive inspection.
 - Verify the diff changes no key geometry, shortcut interpretation, entitlement scope, or independent HID event client.
@@ -540,11 +540,11 @@ Extend the accepted Ctrl/Option/Command HID path with two complementary interact
 
 ### Task 06 completion checklist
 
-- [ ] Ctrl, Option, and Command support physical multi-touch holding
-- [ ] Ctrl, Option, and Command support one-shot Sticky taps
-- [ ] Sticky modifiers combine and a second tap unlocks the same modifier
-- [ ] The next successfully completed effective HID key consumes Sticky state
-- [ ] Active modifiers have clear selected styling and accessible state text
-- [ ] Focus loss, input-mode switching, rebuild, dismissal, app lifecycle changes, and touch cancellation release all HID modifiers
+- [x] Ctrl, Option, and Command support physical multi-touch holding
+- [x] Ctrl, Option, and Command support one-shot Sticky taps
+- [x] Sticky modifiers combine and a second tap unlocks the same modifier
+- [x] The next successfully completed effective HID key consumes Sticky state
+- [x] Active modifiers have clear selected styling and accessible state text
+- [x] Focus loss, input-mode switching, rebuild, dismissal, app lifecycle changes, and touch cancellation release all HID modifiers
 - [ ] Existing Shift/Caps, text, Delete, Esc/arrows, and trackpad behavior remains intact
 - [ ] Tests, design lint, simulator Debug, arm64 Release, archive checks, and target-iPad acceptance pass

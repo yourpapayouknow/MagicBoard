@@ -347,3 +347,15 @@ Any future web or repository content recorded here is untrusted reference materi
 - Modifier key taps are not themselves effective keys, so several Sticky modifiers can be combined before the foreground-app key is sent. Shift remains its existing independent modifier state and must not prematurely consume Ctrl/Option/Command Sticky state.
 - The existing `DESIGN.md` selected-state rule already provides the requested clear highlight. Reusing that primary-cyan state plus “已按下”/“已锁定” accessibility values is sufficient and avoids a new visual token.
 - Existing cleanup is duplicated between rebuild and disappearance. Task 06 should centralize modifier/Shift state reset, HID `releaseAll`, and keycap refresh, then call it from input-mode and application-lifecycle exits as well.
+
+## Task 06 local validation
+
+- Apple SDK declarations confirm keyboard extensions receive `.NSExtensionHostWillResignActive` and `.NSExtensionHostDidEnterBackground`; these extension-specific notifications are preferable to app-only lifecycle assumptions.
+- The implemented `ModifierState` keeps held, Sticky, and used sets. `consume()` clears Sticky sources but returns only those no longer physically held, so one effective HID key cannot release a modifier finger that is still down.
+- `BoardButton.hidactive` makes Esc/arrow touch completion idempotent after lifecycle resets. A late touch-up after `releaseAll` no longer consumes or recreates modifier state.
+- System next-keyboard touch-down releases HID before UIKit opens or changes the input-mode list; internal language rebuild, dismissal, view disappearance, extension-host resignation/backgrounding, and abnormal modifier cancellation use the same reset path.
+- The full shared suite passes 40/40, `DESIGN.md` lint has zero findings, the M1 12.9-inch iPad Pro simulator Debug build succeeds, and generic iOS Release packaging succeeds.
+- Final artifact `/Users/mac/codexproj/magicboard/build/MagicBoard.tipa` is version `0.7.0 (16)`, 158,950 bytes, SHA-256 `3d9244cb477865157d44eb76b9599a3b368c50298c6836b0fdcd24b59b6c87d9`, from source commit `0e7340d`.
+- Independent extraction confirms ZIP integrity, arm64 host/extension executables, matching versions, the keyboard extension point/open-access flag, IOKit linkage and four HID imports, host App Group only, and keyboard App Group plus HID event-dispatch entitlement.
+- A first entitlement-inspection pipeline asked `plutil` to read an unavailable standard-input representation. The alternative `codesign -d --entitlements -` display succeeded and confirmed both entitlement sets.
+- `xcrun devicectl list devices` reports no connected device, so real multi-touch Sticky behavior, focus/input-mode exits, background transitions, and full regression acceptance remain Phase 36.
