@@ -995,7 +995,10 @@ final class KeyboardViewController: UIInputViewController {
         config.image = spec.image.flatMap(UIImage.init(systemName:))
         config.imagePlacement = spec.stackIcon ? .top : .leading
         config.imagePadding = spec.stackIcon ? 8 : 3
-        config.preferredSymbolConfigurationForImage = .init(pointSize: 17, weight: .regular)
+        config.preferredSymbolConfigurationForImage = .init(
+            pointSize: spec.kind.isArrow ? 12 : 17,
+            weight: .regular
+        )
         config.contentInsets = .init(top: 4, leading: 7, bottom: 5, trailing: 7)
         config.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
             var outgoing = incoming
