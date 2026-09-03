@@ -848,6 +848,13 @@ final class KeyboardViewController: UIInputViewController {
             hold.cancelsTouchesInView = true
             hold.delaysTouchesBegan = false
             button.addGestureRecognizer(hold)
+        } else if spec.kind == .dismiss {
+            button.accessibilityHint = "长按收起键盘"
+            let hold = UILongPressGestureRecognizer(target: self, action: #selector(lngdsmss(_:)))
+            hold.minimumPressDuration = 0.45
+            hold.cancelsTouchesInView = true
+            hold.delaysTouchesBegan = false
+            button.addGestureRecognizer(hold)
         } else if spec.kind == .shift {
             button.addTarget(self, action: #selector(shftdown(_:)), for: .touchDown)
             button.addTarget(self, action: #selector(shftup(_:)), for: .touchUpInside)
@@ -1059,8 +1066,7 @@ final class KeyboardViewController: UIInputViewController {
                 textDocumentProxy.insertText(" ")
             }
         case .dismiss:
-            rsthid()
-            dismissKeyboard()
+            break
         case .tab, .escape, .f1, .f2, .f3, .f4, .f5, .f6, .f7, .f8, .f9, .f10, .f11, .f12,
              .leftArrow, .rightArrow, .upArrow, .downArrow,
              .control, .leftOption, .leftCommand, .rightCommand, .rightOption:
@@ -1377,6 +1383,13 @@ final class KeyboardViewController: UIInputViewController {
         keyimpact.impactOccurred(intensity: 0.9)
         keyimpact.prepare()
         bldkbd()
+    }
+
+    // 处理收起键盘长按
+    @objc private func lngdsmss(_ sender: UILongPressGestureRecognizer) {
+        guard sender.state == .began else { return }
+        rsthid()
+        dismissKeyboard()
     }
 
     // 开始 Shift 触摸
