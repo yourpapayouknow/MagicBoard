@@ -188,6 +188,7 @@ private struct SetupCard: View {
                 Spacer()
                 Text("点击前往设置 →")
                     .foregroundStyle(.secondary)
+                    .frame(height: 44, alignment: .center)
                 Button(action: openKeyboardSettings) {
                     Image(systemName: "arrow.up.forward.app")
                         .frame(width: 28, height: 28)
