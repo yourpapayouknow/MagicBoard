@@ -183,7 +183,7 @@ private struct SetupCard: View {
         VStack(alignment: .leading, spacing: 22) {
             HStack(alignment: .top, spacing: 16) {
                 Text("初始化")
-                    .font(.headline)
+                    .font(.system(size: 34, weight: .semibold, design: .rounded))
                     .frame(height: 44, alignment: .topLeading)
                 Spacer()
                 Button(action: refresh) {
