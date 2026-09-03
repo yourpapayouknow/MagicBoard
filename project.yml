@@ -12,12 +12,16 @@ settings:
   base:
     SWIFT_VERSION: "6.0"
     TARGETED_DEVICE_FAMILY: "2"
-    CURRENT_PROJECT_VERSION: "17"
-    MARKETING_VERSION: "0.8.0"
+    CURRENT_PROJECT_VERSION: "18"
+    MARKETING_VERSION: "0.9.0"
+    EXCLUDED_ARCHS[sdk=iphonesimulator*]: x86_64
 
 packages:
   MagicBoardShared:
     path: Packages/MagicBoardShared
+  LibrimeKit:
+    url: https://github.com/zhanggenlove/LibrimeKit.git
+    revision: efcb049af1cd854b16e5d248afbcac71ace02cc3
 
 targets:
   MagicBoard:
@@ -68,6 +72,9 @@ targets:
         excludes:
           - Info.plist
           - MagicBoardKeyboard.entitlements
+          - RimeResources
+      - path: Keyboard/RimeResources
+        type: folder
     info:
       path: Keyboard/Info.plist
       properties:
@@ -100,6 +107,7 @@ targets:
         TARGETED_DEVICE_FAMILY: "2"
     dependencies:
       - package: MagicBoardShared
+      - package: LibrimeKit
       - sdk: IOKit.framework
 
 schemes:

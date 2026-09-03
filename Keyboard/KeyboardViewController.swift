@@ -345,6 +345,12 @@ private final class KeyInputView: UIInputView, UIInputViewAudioFeedback {
 
 // 管理键盘扩展界面
 final class KeyboardViewController: UIInputViewController {
+    private let candidateBar = UIStackView()
+    private let preeditLabel = UILabel()
+    private let candidateScroll = UIScrollView()
+    private let candidateRow = UIStackView()
+    private var lexicon: [String: [String]] = [:]
+    private var systemCandidates: [String] = []
     private let rows = UIStackView()
     private let trackpad = UIView()
     private weak var blurView: UIVisualEffectView?
@@ -355,11 +361,15 @@ final class KeyboardViewController: UIInputViewController {
     private var modifierStarts: [ModifierKey: TimeInterval] = [:]
     private var modifierOwned: Set<ModifierKey> = []
     private var height: NSLayoutConstraint?
+    private var candidateTop: NSLayoutConstraint?
+    private var candidateLeading: NSLayoutConstraint?
+    private var candidateTrailing: NSLayoutConstraint?
     private var rowTop: NSLayoutConstraint?
     private var rowBottom: NSLayoutConstraint?
     private var rowLeading: NSLayoutConstraint?
     private var rowTrailing: NSLayoutConstraint?
     private var buttons: [KeyView] = []
+    private let ime = RimeEngine.shared
     private let dragdist: CGFloat = 24
     private let dragreset: TimeInterval = 0.12
     private var cursormotion = CursorMotion(step: 12)
@@ -408,6 +418,8 @@ final class KeyboardViewController: UIInputViewController {
         view.addSubview(blur)
         blurView = blur
 
+        setupCandidateBar(in: blur.contentView)
+
         rows.axis = .vertical
         rows.alignment = .fill
         rows.distribution = .fillEqually
@@ -427,7 +439,10 @@ final class KeyboardViewController: UIInputViewController {
         height?.isActive = true
 
         let inset = CGFloat(settings.layout.outerInset)
-        rowTop = rows.topAnchor.constraint(equalTo: blur.contentView.topAnchor, constant: inset)
+        candidateTop = candidateBar.topAnchor.constraint(equalTo: blur.contentView.topAnchor, constant: inset)
+        candidateLeading = candidateBar.leadingAnchor.constraint(equalTo: blur.contentView.leadingAnchor, constant: inset)
+        candidateTrailing = candidateBar.trailingAnchor.constraint(equalTo: blur.contentView.trailingAnchor, constant: -inset)
+        rowTop = rows.topAnchor.constraint(equalTo: candidateBar.bottomAnchor, constant: CGFloat(settings.layout.verticalGap))
         rowBottom = rows.bottomAnchor.constraint(equalTo: blur.contentView.bottomAnchor, constant: -inset)
         rowLeading = rows.leadingAnchor.constraint(equalTo: blur.contentView.leadingAnchor, constant: inset)
         rowTrailing = rows.trailingAnchor.constraint(equalTo: blur.contentView.trailingAnchor, constant: -inset)
@@ -437,6 +452,10 @@ final class KeyboardViewController: UIInputViewController {
             blur.bottomAnchor.constraint(equalTo: view.bottomAnchor),
             blur.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             blur.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            candidateTop!,
+            candidateLeading!,
+            candidateTrailing!,
+            candidateBar.heightAnchor.constraint(equalToConstant: 44),
             rowTop!,
             rowBottom!,
             rowLeading!,
@@ -448,6 +467,9 @@ final class KeyboardViewController: UIInputViewController {
         ])
 
         applycfg(rebuild: false)
+        ime.start(scheme: settings.scheme)
+        loadLexicon()
+        renderCandidates(nil)
         bldkbd()
         report()
     }
@@ -487,7 +509,12 @@ final class KeyboardViewController: UIInputViewController {
     private func reloadcfg() {
         let current = SharedConfig.ldcfg()
         guard current != settings else { return }
+        let schemeChanged = current.scheme != settings.scheme
         settings = current
+        if schemeChanged {
+            ime.start(scheme: current.scheme)
+            renderCandidates(nil)
+        }
         applycfg(rebuild: true)
     }
 
@@ -506,11 +533,15 @@ final class KeyboardViewController: UIInputViewController {
         blurView?.contentView.backgroundColor = board
         rows.spacing = CGFloat(settings.layout.verticalGap)
         let inset = CGFloat(settings.layout.outerInset)
-        rowTop?.constant = inset
+        candidateTop?.constant = inset
+        candidateLeading?.constant = inset
+        candidateTrailing?.constant = -inset
+        rowTop?.constant = CGFloat(settings.layout.verticalGap)
         rowBottom?.constant = -inset
         rowLeading?.constant = inset
         rowTrailing?.constant = -inset
         height?.constant = settings.layout.height
+        updateCandidateColors()
         if rebuild { bldkbd() }
     }
 
@@ -520,10 +551,148 @@ final class KeyboardViewController: UIInputViewController {
             KeyboardReport(
                 lastSeen: Date(),
                 hasFullAccess: hasFullAccess,
-                engineReady: false,
+                engineReady: ime.ready,
                 scheme: settings.scheme
             )
         )
+    }
+
+    // 构建拼音预编辑与横向候选栏
+    private func setupCandidateBar(in container: UIView) {
+        candidateBar.axis = .horizontal
+        candidateBar.alignment = .fill
+        candidateBar.spacing = 8
+        candidateBar.layer.cornerCurve = .continuous
+        candidateBar.layer.cornerRadius = 9
+        candidateBar.isLayoutMarginsRelativeArrangement = true
+        candidateBar.layoutMargins = .init(top: 3, left: 10, bottom: 3, right: 8)
+        candidateBar.translatesAutoresizingMaskIntoConstraints = false
+        container.addSubview(candidateBar)
+
+        preeditLabel.font = .systemFont(ofSize: 16, weight: .semibold)
+        preeditLabel.setContentHuggingPriority(.required, for: .horizontal)
+        preeditLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        preeditLabel.widthAnchor.constraint(lessThanOrEqualToConstant: 180).isActive = true
+        candidateBar.addArrangedSubview(preeditLabel)
+
+        candidateScroll.showsHorizontalScrollIndicator = false
+        candidateScroll.alwaysBounceHorizontal = true
+        candidateBar.addArrangedSubview(candidateScroll)
+
+        candidateRow.axis = .horizontal
+        candidateRow.alignment = .fill
+        candidateRow.spacing = 4
+        candidateRow.translatesAutoresizingMaskIntoConstraints = false
+        candidateScroll.addSubview(candidateRow)
+        NSLayoutConstraint.activate([
+            candidateRow.topAnchor.constraint(equalTo: candidateScroll.contentLayoutGuide.topAnchor),
+            candidateRow.bottomAnchor.constraint(equalTo: candidateScroll.contentLayoutGuide.bottomAnchor),
+            candidateRow.leadingAnchor.constraint(equalTo: candidateScroll.contentLayoutGuide.leadingAnchor),
+            candidateRow.trailingAnchor.constraint(equalTo: candidateScroll.contentLayoutGuide.trailingAnchor),
+            candidateRow.heightAnchor.constraint(equalTo: candidateScroll.frameLayoutGuide.heightAnchor),
+        ])
+    }
+
+    // 应用候选栏当前外观
+    private func updateCandidateColors() {
+        let custom = settings.appearance.mode == .custom
+        candidateBar.backgroundColor = custom
+            ? settings.appearance.key.uiclr.withAlphaComponent(0.82)
+            : .secondarySystemFill
+        preeditLabel.textColor = custom ? settings.appearance.text.uiclr : .secondaryLabel
+        for case let button as UIButton in candidateRow.arrangedSubviews {
+            button.configuration?.baseForegroundColor = custom ? settings.appearance.text.uiclr : .label
+        }
+    }
+
+    // 读取系统通讯录与文本替换补充词典
+    private func loadLexicon() {
+        requestSupplementaryLexicon { [weak self] value in
+            guard let self else { return }
+            var grouped: [String: [String]] = [:]
+            for entry in value.entries {
+                let key = entry.userInput.lowercased()
+                guard !key.isEmpty, !entry.documentText.isEmpty else { continue }
+                if grouped[key]?.contains(entry.documentText) != true {
+                    grouped[key, default: []].append(entry.documentText)
+                }
+            }
+            lexicon = grouped
+            if state.language == .chinese, ime.isComposing {
+                renderCandidates(ime.snapshot())
+            }
+        }
+    }
+
+    // 匹配系统词典中的当前拼音候选
+    private func syscands(_ input: String) -> [String] {
+        guard !input.isEmpty else { return [] }
+        return lexicon
+            .filter { $0.key.hasPrefix(input.lowercased()) }
+            .sorted { $0.key.count < $1.key.count }
+            .flatMap(\.value)
+    }
+
+    // 刷新拼音预编辑与候选按钮
+    private func renderCandidates(_ snapshot: IMESnapshot?) {
+        for item in candidateRow.arrangedSubviews {
+            candidateRow.removeArrangedSubview(item)
+            item.removeFromSuperview()
+        }
+        preeditLabel.text = snapshot?.preedit.nonempty
+            ?? (state.language == .chinese
+                ? ime.ready ? settings.scheme.title : "引擎不可用"
+                : "ABC")
+
+        let engineCandidates = snapshot?.candidates ?? []
+        systemCandidates = snapshot.map { syscands($0.rawInput) }?.filter {
+            !engineCandidates.contains($0)
+        } ?? []
+        let visible: [(text: String, engineIndex: Int?)] = engineCandidates.enumerated().map {
+            (text: $0.element, engineIndex: $0.offset)
+        } + systemCandidates.map { (text: $0, engineIndex: nil) }
+
+        for (position, choice) in visible.enumerated() {
+            var config = UIButton.Configuration.plain()
+            config.title = choice.text
+            config.baseForegroundColor = settings.appearance.mode == .custom
+                ? settings.appearance.text.uiclr
+                : .label
+            config.contentInsets = .init(top: 2, leading: 10, bottom: 2, trailing: 10)
+            config.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
+                var outgoing = incoming
+                outgoing.font = .systemFont(ofSize: 21, weight: position == 0 ? .semibold : .regular)
+                return outgoing
+            }
+            let button = UIButton(configuration: config)
+            button.tag = choice.engineIndex ?? -(position - engineCandidates.count + 1)
+            button.accessibilityLabel = "候选词 \(choice.text)"
+            button.addTarget(self, action: #selector(selectCandidate(_:)), for: .touchUpInside)
+            candidateRow.addArrangedSubview(button)
+        }
+        candidateScroll.setContentOffset(.zero, animated: false)
+        updateCandidateColors()
+    }
+
+    // 选择当前页候选并写入文本
+    @objc private func selectCandidate(_ sender: UIButton) {
+        if sender.tag >= 0 {
+            guard let snapshot = ime.select(sender.tag) else { return }
+            applySnapshot(snapshot)
+        } else {
+            let index = -sender.tag - 1
+            guard systemCandidates.indices.contains(index) else { return }
+            ime.reset()
+            textDocumentProxy.insertText(systemCandidates[index])
+            renderCandidates(nil)
+        }
+        sndfeed()
+    }
+
+    // 提交引擎输出并刷新候选栏
+    private func applySnapshot(_ snapshot: IMESnapshot) {
+        if !snapshot.commit.isEmpty { textDocumentProxy.insertText(snapshot.commit) }
+        renderCandidates(snapshot.composing ? snapshot : nil)
     }
 
     // 生成固定键盘布局
@@ -582,7 +751,7 @@ final class KeyboardViewController: UIInputViewController {
                 txt("\\", alternate: "|", weight: 1.5),
             ],
             [
-                ctl(state.language == .english ? "双拼" : "abc", kind: .language, weight: 1.8, align: .leading, fontSize: 18),
+                ctl(state.language == .english ? imetitle() : "abc", kind: .language, weight: 1.8, align: .leading, fontSize: 18),
                 ltr("A"), ltr("S"), ltr("D"), ltr("F"), ltr("G"), ltr("H"), ltr("J"), ltr("K"), ltr("L"),
                 txt(";", alternate: ":"), txt("'", alternate: "\""),
                 ctl("return", kind: .enter, weight: 1.9, align: .trailing),
@@ -625,6 +794,11 @@ final class KeyboardViewController: UIInputViewController {
             ctl(image: "arrow.up.arrow.down", kind: .upArrow, weight: 0.75),
             ctl(image: "arrow.right", kind: .rightArrow, weight: 0.75),
         ]
+    }
+
+    // 返回当前中文方案的紧凑键帽名称
+    private func imetitle() -> String {
+        settings.scheme == .fullPinyin ? "全拼" : "双拼"
     }
 
     // 创建字母按键描述
@@ -1051,7 +1225,8 @@ final class KeyboardViewController: UIInputViewController {
             y: max(4, keyframe.minY - height + 8)
         )
         let popup = UIView(frame: CGRect(origin: origin, size: CGSize(width: width, height: height)))
-        popup.backgroundColor = KeyPalette.ordinary
+        let custom = settings.appearance.mode == .custom
+        popup.backgroundColor = custom ? settings.appearance.key.uiclr : KeyPalette.ordinary
         popup.isUserInteractionEnabled = false
         popup.isAccessibilityElement = false
         popup.layer.cornerCurve = .continuous
@@ -1069,7 +1244,7 @@ final class KeyboardViewController: UIInputViewController {
         label.font = .systemFont(ofSize: 34, weight: .medium)
         label.text = poptxt(spec)
         label.textAlignment = .center
-        label.textColor = .label
+        label.textColor = custom ? settings.appearance.text.uiclr : .label
         label.isUserInteractionEnabled = false
         label.isAccessibilityElement = false
         popup.addSubview(label)
@@ -1119,19 +1294,32 @@ final class KeyboardViewController: UIInputViewController {
             state.tglshft()
             rfrshft()
         case .language:
+            if state.language == .chinese, let snapshot = ime.commit() {
+                applySnapshot(snapshot)
+            }
             state.tgllang()
+            if state.language == .chinese { ime.start(scheme: settings.scheme) }
+            renderCandidates(nil)
             bldkbd()
         case .delete:
             break
         case .enter:
             if modifiers.isActive {
                 sndhid(.enter)
+            } else if state.language == .chinese,
+                      ime.isComposing,
+                      let snapshot = ime.command(0xFF0D) {
+                applySnapshot(snapshot)
             } else {
                 textDocumentProxy.insertText("\n")
             }
         case .space:
             if modifiers.isActive {
                 sndhid(.space)
+            } else if state.language == .chinese,
+                      ime.isComposing,
+                      let snapshot = ime.input(" ") {
+                applySnapshot(snapshot)
             } else {
                 textDocumentProxy.insertText(" ")
             }
@@ -1156,6 +1344,14 @@ final class KeyboardViewController: UIInputViewController {
         let output = drag
             ? state.dragout(spec.output, alternate: spec.alternate, letter: spec.letter)
             : state.emit(spec.output, alternate: spec.alternate, letter: spec.letter)
+        if state.language == .chinese, !shifted, !drag {
+            if output.unicodeScalars.allSatisfy(\.isASCII), let snapshot = ime.input(output) {
+                applySnapshot(snapshot)
+                if shifted != state.shifted { rfrshft() }
+                return
+            }
+            if ime.isComposing, let snapshot = ime.commit() { applySnapshot(snapshot) }
+        }
         textDocumentProxy.insertText(output)
         if shifted != state.shifted { rfrshft() }
     }
@@ -1621,6 +1817,12 @@ final class KeyboardViewController: UIInputViewController {
             sndhid(.delete)
             return
         }
+        if state.language == .chinese,
+           ime.isComposing,
+           let snapshot = ime.command(0xFF08) {
+            applySnapshot(snapshot)
+            return
+        }
         textDocumentProxy.deleteBackward()
         let timer = Timer(timeInterval: 0.45, repeats: false) { [weak self] _ in
             Task { @MainActor [weak self] in
@@ -1817,7 +2019,7 @@ final class KeyboardViewController: UIInputViewController {
         label.font = .systemFont(ofSize: size, weight: .medium)
         label.text = text
         label.textAlignment = .center
-        label.textColor = .label
+        label.textColor = settings.appearance.mode == .custom ? settings.appearance.text.uiclr : .label
         label.isUserInteractionEnabled = false
         label.isAccessibilityElement = false
         return label
@@ -1831,7 +2033,7 @@ final class KeyboardViewController: UIInputViewController {
             UIImage.SymbolConfiguration(pointSize: 17, weight: .regular)
         )
         image.contentMode = .center
-        image.tintColor = .label
+        image.tintColor = settings.appearance.mode == .custom ? settings.appearance.text.uiclr : .label
         image.isUserInteractionEnabled = false
         image.isAccessibilityElement = false
         return image
@@ -1854,5 +2056,12 @@ final class KeyboardViewController: UIInputViewController {
 private extension ThemeColor {
     var uiclr: UIColor {
         UIColor(red: red, green: green, blue: blue, alpha: alpha)
+    }
+}
+
+// 将空字符串转换为空值
+private extension String {
+    var nonempty: String? {
+        isEmpty ? nil : self
     }
 }
