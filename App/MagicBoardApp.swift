@@ -20,6 +20,7 @@ private enum Page: String, CaseIterable, Identifiable {
     case style = "外观与布局"
     case feedback = "按键体验"
     case test = "输入测试"
+    case about = "关于"
 
     var id: String { rawValue }
 
@@ -31,6 +32,7 @@ private enum Page: String, CaseIterable, Identifiable {
         case .style: "slider.horizontal.3"
         case .feedback: "hand.tap"
         case .test: "keyboard"
+        case .about: "info.circle"
         }
     }
 }
@@ -96,6 +98,8 @@ private struct MainView: View {
                 )
             case .test:
                 TestInputView()
+            case .about:
+                AboutView()
             }
         }
         .navigationSplitViewStyle(.balanced)
@@ -494,6 +498,27 @@ private struct TestInputView: View {
                     RoundedRectangle(cornerRadius: 16, style: .continuous)
                         .stroke(Color(uiColor: .separator).opacity(0.35), lineWidth: 0.5)
                 }
+            }
+        }
+    }
+}
+
+// 展示版本与开源致谢
+private struct AboutView: View {
+    private let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "—"
+    private let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "—"
+
+    var body: some View {
+        PageShell {
+            SettingCard(title: "版本信息") {
+                LabeledContent("版本", value: version)
+                Divider()
+                LabeledContent("构建号", value: build)
+            }
+
+            SettingCard(title: "致谢") {
+                Text("感谢 Rime 输入法引擎、LibrimeKit 与开源社区。")
+                    .foregroundStyle(.secondary)
             }
         }
     }

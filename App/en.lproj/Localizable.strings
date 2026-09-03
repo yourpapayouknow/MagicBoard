@@ -3,6 +3,7 @@
 "外观与布局" = "Appearance & Layout";
 "按键体验" = "Key Experience";
 "输入测试" = "Input Test";
+"关于" = "About";
 "初始化" = "Initialization";
 "点击前往设置 →" = "Go to Settings →";
 "打开键盘设置" = "Open Keyboard Settings";
@@ -60,3 +61,8 @@
 "试一试" = "Try It";
 "长按地球键，选择 MagicBoard" = "Press and hold the Globe key, then choose MagicBoard";
 "在这里输入…" = "Type here…";
+"版本信息" = "Version Information";
+"版本" = "Version";
+"构建号" = "Build";
+"致谢" = "Acknowledgements";
+"感谢 Rime 输入法引擎、LibrimeKit 与开源社区。" = "Thanks to the Rime input method engine, LibrimeKit, and the open-source community.";
