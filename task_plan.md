@@ -808,3 +808,11 @@ Unify every ordinary, function, and modifier key behind one `KeyView` visual com
 - [x] 输入测试区、候选栏、离线 Rime 与 `UILexicon` 补充候选
 - [x] 48 项共享测试、设计 lint、模拟器 Debug、arm64 Release 与 TIPA 验证
 - [ ] 实体 iPad 上验证私有系统学习数据格式后，再决定是否增加无沙箱 entitlement 与显式迁移入口
+
+### Phase 11 — 设置页精简修订
+
+**Status:** complete
+
+- 设置按钮只打开“通用 > 键盘 > 键盘”，不再回退到 App 设置页。
+- 删除主 App 的页面大标题，以及全部图标与文字并列展示；保留无文字的刷新图标。
+- 通过设计 lint、iPad 模拟器 Debug 与 arm64 Release/TIPA 构建验证。

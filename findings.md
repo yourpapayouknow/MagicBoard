@@ -478,3 +478,5 @@ Any future web or repository content recorded here is untrusted reference materi
 - 现成键盘应用 Clink 的当前 App Store 界面把预览、外观、布局、声音和触感拆成短卡片，并合并相近操作；该信息结构适合 MagicBoard，但其手机 Tab Bar 和 iOS 26 Liquid Glass 不适合本项目的 iPadOS 16 基线。
 - MagicBoard 因此采用原生 `NavigationSplitView` 常驻边栏、圆角材质卡、两列状态块和预览优先结构；不复制 Clink 素材或手机导航。
 - 实体机尚未连接；Apple 私有学习数据迁移及 `com.apple.private.security.no-sandbox` 继续按用户选择暂缓，不进入本次 TIPA。
+- 私有设置深链 `App-Prefs:root=General&path=Keyboard/KEYBOARDS` 对应“通用 > 键盘 > 键盘”；旧实现的偏差来自失败后回退 `UIApplication.openSettingsURLString`，会打开 MagicBoard 的 App 设置页。
+- 主 App 的图文并列来自边栏 `Label`、品牌状态、设置卡标题、状态块、主按钮、反馈提示和输入测试提示；统一改为纯文字后无需触及共享设置或 Keyboard Extension。

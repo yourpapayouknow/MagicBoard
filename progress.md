@@ -522,3 +522,9 @@
 - 新版 UI 在 2018 iPad Pro 12.9 模拟器完成目视检查；边栏、状态卡与概览布局显示正确。
 - 最终 48/48 测试通过，`DESIGN.md` lint 为 0 findings，模拟器 Debug 与 arm64 Release 均成功。
 - 生成 `/Users/mac/codexproj/magicboard/build/MagicBoard.tipa`，版本 `0.9.0 (18)`，5,630,399 bytes，SHA-256 `e73cafc7df6283319e9c6403ebd9f6c2811167b3dca97b00fda215f3a7d9c58f`；ZIP、arm64 架构、扩展资源与 entitlement 检查通过。
+
+## 2026-09-03 — Task 09 设置页精简修订
+
+- 移除设置页全部大标题、边栏/卡片/状态/按钮/提示中的图标文字组合，仅保留无文字的刷新图标。
+- 设置按钮只调用 `App-Prefs:root=General&path=Keyboard/KEYBOARDS`，删除会跳往 App 设置页的公开回退。
+- `DESIGN.md` lint 0 findings，iPad 模拟器 Debug 与 arm64 Release 均成功；新 TIPA 为 5,617,945 bytes，SHA-256 `d0a2540bf99bc03719ecaf8e8f7aaf84a9a66f857ccb8338c56171345a921d09`。
