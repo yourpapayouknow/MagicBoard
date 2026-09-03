@@ -179,6 +179,7 @@ public struct AppearanceConfig: Codable, Equatable, Sendable {
 // 保存主应用与键盘共享的完整设置
 public struct BoardSettings: Codable, Equatable, Sendable {
     public var version: Int
+    public var chineseEnabled: Bool
     public var scheme: ChineseScheme
     public var layout: LayoutConfig
     public var appearance: AppearanceConfig
@@ -190,6 +191,7 @@ public struct BoardSettings: Codable, Equatable, Sendable {
     // 创建完整设置
     public init(
         version: Int = 1,
+        chineseEnabled: Bool = true,
         scheme: ChineseScheme = .fullPinyin,
         layout: LayoutConfig = .standard,
         appearance: AppearanceConfig = .standard,
@@ -199,6 +201,7 @@ public struct BoardSettings: Codable, Equatable, Sendable {
         modifierMode: ModifierMode = .mixed
     ) {
         self.version = version
+        self.chineseEnabled = chineseEnabled
         self.scheme = scheme
         self.layout = layout
         self.appearance = appearance
@@ -208,12 +211,39 @@ public struct BoardSettings: Codable, Equatable, Sendable {
         self.modifierMode = modifierMode
     }
 
+    private enum CodingKeys: String, CodingKey {
+        case version
+        case chineseEnabled
+        case scheme
+        case layout
+        case appearance
+        case keySound
+        case simulatedHaptics
+        case stickyModifiers
+        case modifierMode
+    }
+
+    // 解码旧设置并默认开启中文输入
+    public init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        version = try values.decode(Int.self, forKey: .version)
+        chineseEnabled = try values.decodeIfPresent(Bool.self, forKey: .chineseEnabled) ?? true
+        scheme = try values.decode(ChineseScheme.self, forKey: .scheme)
+        layout = try values.decode(LayoutConfig.self, forKey: .layout)
+        appearance = try values.decode(AppearanceConfig.self, forKey: .appearance)
+        keySound = try values.decode(Bool.self, forKey: .keySound)
+        simulatedHaptics = try values.decode(Bool.self, forKey: .simulatedHaptics)
+        stickyModifiers = try values.decode(Bool.self, forKey: .stickyModifiers)
+        modifierMode = try values.decode(ModifierMode.self, forKey: .modifierMode)
+    }
+
     public static let standard = BoardSettings()
 
     // 生成安全的当前版本设置
     fileprivate func norm() -> BoardSettings {
         BoardSettings(
             version: 1,
+            chineseEnabled: chineseEnabled,
             scheme: scheme,
             layout: layout.norm(),
             appearance: appearance.norm(),

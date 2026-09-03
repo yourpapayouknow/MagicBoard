@@ -467,7 +467,7 @@ final class KeyboardViewController: UIInputViewController {
         ])
 
         applycfg(rebuild: false)
-        ime.start(scheme: settings.scheme)
+        if settings.chineseEnabled { ime.start(scheme: settings.scheme) }
         loadLexicon()
         renderCandidates(nil)
         bldkbd()
@@ -510,8 +510,14 @@ final class KeyboardViewController: UIInputViewController {
         let current = SharedConfig.ldcfg()
         guard current != settings else { return }
         let schemeChanged = current.scheme != settings.scheme
+        let enabledChanged = current.chineseEnabled != settings.chineseEnabled
+        if !current.chineseEnabled, state.language == .chinese {
+            if let snapshot = ime.commit() { applySnapshot(snapshot) }
+            state.tgllang()
+            renderCandidates(nil)
+        }
         settings = current
-        if schemeChanged {
+        if current.chineseEnabled, schemeChanged || enabledChanged {
             ime.start(scheme: current.scheme)
             renderCandidates(nil)
         }
@@ -551,7 +557,7 @@ final class KeyboardViewController: UIInputViewController {
             KeyboardReport(
                 lastSeen: Date(),
                 hasFullAccess: hasFullAccess,
-                engineReady: ime.ready,
+                engineReady: settings.chineseEnabled && ime.ready,
                 scheme: settings.scheme
             )
         )
@@ -751,7 +757,13 @@ final class KeyboardViewController: UIInputViewController {
                 txt("\\", alternate: "|", weight: 1.5),
             ],
             [
-                ctl(state.language == .english ? imetitle() : "abc", kind: .language, weight: 1.8, align: .leading, fontSize: 18),
+                ctl(
+                    settings.chineseEnabled ? (state.language == .english ? imetitle() : "abc") : "abc",
+                    kind: .language,
+                    weight: 1.8,
+                    align: .leading,
+                    fontSize: 18
+                ),
                 ltr("A"), ltr("S"), ltr("D"), ltr("F"), ltr("G"), ltr("H"), ltr("J"), ltr("K"), ltr("L"),
                 txt(";", alternate: ":"), txt("'", alternate: "\""),
                 ctl("return", kind: .enter, weight: 1.9, align: .trailing),
@@ -1145,7 +1157,7 @@ final class KeyboardViewController: UIInputViewController {
     private func aclabel(_ spec: KeySpec) -> String {
         switch spec.kind {
         case .shift: "Shift"
-        case .language: "切换输入语言，长按切换 Caps Lock"
+        case .language: settings.chineseEnabled ? "切换输入语言，长按切换 Caps Lock" : "长按切换 Caps Lock"
         case .delete: "删除"
         case .tab: "Tab"
         case .enter: "换行"
@@ -1294,6 +1306,7 @@ final class KeyboardViewController: UIInputViewController {
             state.tglshft()
             rfrshft()
         case .language:
+            guard settings.chineseEnabled else { return }
             if state.language == .chinese, let snapshot = ime.commit() {
                 applySnapshot(snapshot)
             }

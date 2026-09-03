@@ -77,9 +77,9 @@ private struct MainView: View {
         } detail: {
             switch page ?? .overview {
             case .overview:
-                OverviewView(status: status, refresh: refresh)
+                OverviewView(status: status, chineseEnabled: settings.chineseEnabled, refresh: refresh)
             case .input:
-                InputView(scheme: $settings.scheme)
+                InputView(chineseEnabled: $settings.chineseEnabled, scheme: $settings.scheme)
             case .style:
                 StyleView(layout: $settings.layout, appearance: $settings.appearance)
             case .feedback:
@@ -153,11 +153,12 @@ private struct SettingCard<Content: View>: View {
 // 展示启用概览
 private struct OverviewView: View {
     let status: HostStatus
+    let chineseEnabled: Bool
     let refresh: () -> Void
 
     var body: some View {
         PageShell {
-            SetupCard(status: status, refresh: refresh)
+            SetupCard(status: status, chineseEnabled: chineseEnabled, refresh: refresh)
         }
     }
 }
@@ -165,6 +166,7 @@ private struct OverviewView: View {
 // 展示安装入口与状态
 private struct SetupCard: View {
     let status: HostStatus
+    let chineseEnabled: Bool
     let refresh: () -> Void
 
     private var added: Bool { status.keyboardAdded || status.reportFresh }
@@ -197,7 +199,7 @@ private struct SetupCard: View {
                 StatusTile("键盘", ready: added)
                 StatusTile("完全访问", ready: status.report?.hasFullAccess == true)
                 StatusTile("设置同步", ready: status.group.available)
-                StatusTile("中文输入", ready: status.report?.engineReady == true)
+                StatusTile("中文输入", ready: chineseEnabled && status.report?.engineReady == true)
             }
         }
         .padding(24)
@@ -246,29 +248,52 @@ private struct StatusTile: View {
 
 // 展示中文输入设置
 private struct InputView: View {
+    @Binding var chineseEnabled: Bool
     @Binding var scheme: ChineseScheme
+    private let columns = [GridItem(.adaptive(minimum: 138), spacing: 10)]
 
     var body: some View {
         PageShell {
             SettingCard(title: "输入方案") {
-                Picker("输入方案", selection: $scheme) {
-                    ForEach(ChineseScheme.allCases) { item in
-                        Text(item.title).tag(item)
-                    }
-                }
-                .pickerStyle(.menu)
+                Toggle("启用中文输入", isOn: $chineseEnabled)
 
                 Divider()
 
-                HStack {
-                    Text("五笔")
-                    Spacer()
-                    Text("即将推出")
-                        .foregroundStyle(.secondary)
-                }
-                .disabled(true)
-            }
+                LazyVGrid(columns: columns, spacing: 10) {
+                    ForEach(ChineseScheme.allCases) { item in
+                        Button {
+                            scheme = item
+                        } label: {
+                            Text(item.title)
+                                .font(.subheadline.weight(scheme == item ? .semibold : .regular))
+                                .foregroundStyle(scheme == item ? Color.white : Color.primary)
+                                .frame(maxWidth: .infinity, minHeight: 44)
+                                .background(
+                                    scheme == item ? Color.accentColor : Color(uiColor: .secondarySystemGroupedBackground),
+                                    in: RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                )
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityValue(scheme == item ? "已选择" : "")
+                    }
 
+                    Button(action: {}) {
+                        Text("五笔 · 未来")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .frame(maxWidth: .infinity, minHeight: 44)
+                            .background(
+                                Color(uiColor: .secondarySystemGroupedBackground),
+                                in: RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            )
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(true)
+                    .accessibilityHint("未来提供")
+                }
+                .disabled(!chineseEnabled)
+                .opacity(chineseEnabled ? 1 : 0.45)
+            }
         }
     }
 }

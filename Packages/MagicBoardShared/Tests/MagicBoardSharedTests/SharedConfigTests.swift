@@ -24,6 +24,7 @@ final class SharedConfigTests: XCTestCase {
         let (defaults, name) = mkdefs()
         defer { defaults.removePersistentDomain(forName: name) }
         var settings = BoardSettings.standard
+        settings.chineseEnabled = false
         settings.scheme = .microsoft
         settings.layout = LayoutConfig(height: 372, horizontalGap: 5, verticalGap: 8, outerInset: 11)
         settings.appearance = AppearanceConfig(
@@ -42,6 +43,23 @@ final class SharedConfigTests: XCTestCase {
 
         XCTAssertEqual(SharedConfig.ldcfg(defaults: defaults), settings)
         XCTAssertEqual(SharedConfig.ldthm(defaults: defaults).primary, settings.appearance.accent)
+    }
+
+    // 验证旧设置缺少中文开关时保留原配置并默认开启
+    func testcfgzhlegacy() throws {
+        let (defaults, name) = mkdefs()
+        defer { defaults.removePersistentDomain(forName: name) }
+        var settings = BoardSettings.standard
+        settings.scheme = .microsoft
+        let encoded = try JSONEncoder().encode(settings)
+        var object = try XCTUnwrap(JSONSerialization.jsonObject(with: encoded) as? [String: Any])
+        object.removeValue(forKey: "chineseEnabled")
+        defaults.set(try JSONSerialization.data(withJSONObject: object), forKey: "magicboard.settings.v1")
+
+        let loaded = SharedConfig.ldcfg(defaults: defaults)
+
+        XCTAssertTrue(loaded.chineseEnabled)
+        XCTAssertEqual(loaded.scheme, .microsoft)
     }
 
     // 验证损坏设置回退
