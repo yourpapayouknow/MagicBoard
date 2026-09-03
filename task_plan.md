@@ -816,3 +816,12 @@ Unify every ordinary, function, and modifier key behind one `KeyView` visual com
 - 设置按钮只打开“通用 > 键盘 > 键盘”，不再回退到 App 设置页。
 - 删除主 App 的页面大标题，以及全部图标与文字并列展示；保留无文字的刷新图标。
 - 通过设计 lint、iPad 模拟器 Debug 与 arm64 Release/TIPA 构建验证。
+
+### Phase 12 — 中文输入总开关与方案选择器
+
+**Status:** complete
+
+- 新增默认开启、向后兼容的中文输入总开关并同步至 Keyboard Extension。
+- 关闭后禁用方案选择、阻止进入中文模式并回到英文。
+- 用自适应文字选项网格替代下拉菜单，将不可选五笔放入同一网格。
+- 49 项共享测试、设计 lint、模拟器 Debug 与 arm64 Release/TIPA 构建通过。

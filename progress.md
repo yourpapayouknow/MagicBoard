@@ -529,3 +529,4 @@
 - 设置按钮只调用 `App-Prefs:root=General&path=Keyboard/KEYBOARDS`，删除会跳往 App 设置页的公开回退。
 - `DESIGN.md` lint 0 findings，iPad 模拟器 Debug 与 arm64 Release 均成功；新 TIPA 为 5,617,945 bytes，SHA-256 `d0a2540bf99bc03719ecaf8e8f7aaf84a9a66f857ccb8338c56171345a921d09`。
 - 概览卡片最终采用 34pt 顶部对齐“初始化”，设置提示/跳转/刷新同处顶部；边栏删除品牌启用状态块并为五项配置五个视觉不同的 SF Symbol。最终 TIPA 为 5,614,971 bytes，SHA-256 `9d4820315a17405938e5005e6efd84e21f597226a67d6513994512d6c7c09519`。
+- 中文输入页新增默认开启的总开关，输入方案改为自适应文字选项网格，五笔以不可选项留在同一网格；关闭后扩展提交当前组合、回到英文并阻止再次进入中文。共享测试 49/49、设计 lint、模拟器 Debug 与 arm64 Release 通过；TIPA 为 5,624,275 bytes，SHA-256 `8bc51ee4fe8b2eb25abe523ab66f49ec206f7ce450f2f6b209808e2b099dbf50`。

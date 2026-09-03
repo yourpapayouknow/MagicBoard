@@ -480,3 +480,5 @@ Any future web or repository content recorded here is untrusted reference materi
 - 实体机尚未连接；Apple 私有学习数据迁移及 `com.apple.private.security.no-sandbox` 继续按用户选择暂缓，不进入本次 TIPA。
 - 私有设置深链 `App-Prefs:root=General&path=Keyboard/KEYBOARDS` 对应“通用 > 键盘 > 键盘”；旧实现的偏差来自失败后回退 `UIApplication.openSettingsURLString`，会打开 MagicBoard 的 App 设置页。
 - 主 App 的图文并列来自边栏 `Label`、品牌状态、设置卡标题、状态块、主按钮、反馈提示和输入测试提示；统一改为纯文字后无需触及共享设置或 Keyboard Extension。
+- 新增非可选 Codable 字段若继续使用合成解码，会使旧 `magicboard.settings.v1` 数据整体解码失败；`chineseEnabled` 因此使用兼容解码，旧配置缺失该字段时默认 `true` 并保留原方案、外观和布局。
+- 截图中的菜单式 Picker 只露出当前值与双向箭头，不适合同时比较七种拼音方案；自适应文字选项网格可在 iPad 双栏宽度下直接展示全部方案，并把不可选五笔保留在同一视觉集合。
