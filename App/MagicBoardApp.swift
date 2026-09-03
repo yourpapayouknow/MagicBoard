@@ -68,7 +68,11 @@ private struct MainView: View {
             List(selection: $page) {
                 Section {
                     ForEach(Page.allCases) { item in
-                        Label(item.rawValue, systemImage: item.icon)
+                        Label {
+                            Text(LocalizedStringKey(item.rawValue))
+                        } icon: {
+                            Image(systemName: item.icon)
+                        }
                             .tag(item)
                     }
                 }
@@ -136,7 +140,7 @@ private struct SettingCard<Content: View>: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text(title)
+            Text(LocalizedStringKey(title))
                 .font(.headline)
             content
         }
@@ -231,13 +235,13 @@ private struct StatusTile: View {
 
     var body: some View {
         HStack(spacing: 10) {
-            Text(title)
+            Text(LocalizedStringKey(title))
                 .font(.subheadline.weight(.medium))
             Spacer(minLength: 0)
             Image(systemName: ready ? "checkmark.circle.fill" : "xmark.circle.fill")
                 .font(.system(size: 18, weight: .semibold))
                 .foregroundStyle(ready ? .green : .red)
-                .accessibilityLabel(ready ? "已就绪" : "未就绪")
+                .accessibilityLabel(Text(LocalizedStringKey(ready ? "已就绪" : "未就绪")))
         }
         .padding(.horizontal, 14)
         .frame(minHeight: 48)
@@ -264,7 +268,7 @@ private struct InputView: View {
                         Button {
                             scheme = item
                         } label: {
-                            Text(item.title)
+                            Text(LocalizedStringKey(item.title))
                                 .font(.subheadline.weight(scheme == item ? .semibold : .regular))
                                 .foregroundStyle(scheme == item ? Color.white : Color.primary)
                                 .frame(maxWidth: .infinity, minHeight: 44)
@@ -274,7 +278,7 @@ private struct InputView: View {
                                 )
                         }
                         .buttonStyle(.plain)
-                        .accessibilityValue(scheme == item ? "已选择" : "")
+                        .accessibilityValue(Text(LocalizedStringKey(scheme == item ? "已选择" : "")))
                     }
 
                     Button(action: {}) {
@@ -310,7 +314,7 @@ private struct StyleView: View {
             SettingCard(title: "外观") {
                 Picker("模式", selection: $appearance.mode) {
                     ForEach(AppearanceMode.allCases) { item in
-                        Text(item.title).tag(item)
+                        Text(LocalizedStringKey(item.title)).tag(item)
                     }
                 }
                 .pickerStyle(.segmented)
@@ -360,7 +364,7 @@ private struct ValueSlider: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 7) {
             HStack {
-                Text(title)
+                Text(LocalizedStringKey(title))
                 Spacer()
                 Text("\(value, specifier: "%.0f")\(suffix)")
                     .font(.subheadline.monospacedDigit())
@@ -379,7 +383,7 @@ private struct KeyboardPreview: View {
         VStack(spacing: 8) {
             HStack(spacing: 8) {
                 ForEach(["你好", "你", "拟好", "泥豪"], id: \.self) { text in
-                    Text(text)
+                    Text(LocalizedStringKey(text))
                         .font(.subheadline.weight(text == "你好" ? .semibold : .regular))
                         .foregroundStyle(appearance.text.swclr)
                         .padding(.horizontal, 10)
@@ -411,7 +415,7 @@ private struct PreviewRow: View {
     var body: some View {
         HStack(spacing: 7) {
             ForEach(Array(keys.enumerated()), id: \.offset) { _, key in
-                Text(key)
+                Text(LocalizedStringKey(key))
                     .font(.subheadline.weight(.medium))
                     .foregroundStyle(appearance.text.swclr)
                     .frame(maxWidth: key == "空格" ? .infinity : 54, minHeight: 38)
@@ -437,7 +441,7 @@ private struct FeedbackView: View {
                 Divider()
                 Toggle("模拟触觉", isOn: $simulatedHaptics)
                 if simulatedHaptics {
-                    Text(fullAccess ? "仅内置扬声器；外接音频时自动停用" : "需要允许完全访问")
+                    Text(LocalizedStringKey(fullAccess ? "仅内置扬声器；外接音频时自动停用" : "需要允许完全访问"))
                     .font(.footnote)
                     .foregroundStyle(.secondary)
                 }
@@ -448,7 +452,7 @@ private struct FeedbackView: View {
                 Divider()
                 Picker("操作模式", selection: $mode) {
                     ForEach(ModifierMode.allCases) { item in
-                        Text(item.title).tag(item)
+                        Text(LocalizedStringKey(item.title)).tag(item)
                     }
                 }
                 .pickerStyle(.segmented)
