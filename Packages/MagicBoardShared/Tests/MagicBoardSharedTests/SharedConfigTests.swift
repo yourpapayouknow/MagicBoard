@@ -501,6 +501,44 @@ final class SharedConfigTests: XCTestCase {
         }
     }
 
+    // 验证混合模式单击保持到下一键
+    func testlatchonce() {
+        var state = ModifierLatchState()
+
+        XCTAssertEqual(state.tap(.leftCommand, sticky: true, mode: .mixed, heldFor: 0.1, at: 1), .keepOnce)
+        XCTAssertEqual(state.stage(.leftCommand), .once)
+        XCTAssertEqual(state.consumeOnce(), [.leftCommand])
+        XCTAssertEqual(state.stage(.leftCommand), .inactive)
+    }
+
+    // 验证混合模式双击持续锁定并再次轻点释放
+    func testlatchlock() {
+        var state = ModifierLatchState()
+
+        XCTAssertEqual(state.tap(.control, sticky: true, mode: .mixed, heldFor: 0.1, at: 1), .keepOnce)
+        XCTAssertEqual(state.tap(.control, sticky: true, mode: .mixed, heldFor: 0.1, at: 1.2), .keepLocked)
+        XCTAssertEqual(state.stage(.control), .locked)
+        XCTAssertEqual(state.tap(.control, sticky: true, mode: .mixed, heldFor: 0.1, at: 2), .release)
+        XCTAssertEqual(state.stage(.control), .inactive)
+    }
+
+    // 验证关闭 Sticky 或长按时按抬起释放
+    func testlatchhold() {
+        var state = ModifierLatchState()
+
+        XCTAssertEqual(state.tap(.leftOption, sticky: false, mode: .mixed, heldFor: 0.1, at: 1), .release)
+        XCTAssertEqual(state.tap(.leftOption, sticky: true, mode: .hold, heldFor: 0.1, at: 2), .release)
+        XCTAssertEqual(state.tap(.leftOption, sticky: true, mode: .mixed, heldFor: 0.4, at: 3), .release)
+    }
+
+    // 验证切换模式单击锁定并再次单击释放
+    func testlatchtoggle() {
+        var state = ModifierLatchState()
+
+        XCTAssertEqual(state.tap(.rightOption, sticky: true, mode: .toggle, heldFor: 0.5, at: 1), .keepLocked)
+        XCTAssertEqual(state.tap(.rightOption, sticky: true, mode: .toggle, heldFor: 0.1, at: 2), .release)
+    }
+
     // 验证未越过阈值时保留位移
     func testcursres() {
         var motion = CursorMotion(step: 12)

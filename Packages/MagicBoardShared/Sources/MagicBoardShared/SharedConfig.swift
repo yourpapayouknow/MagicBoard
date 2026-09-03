@@ -305,6 +305,92 @@ public struct ModifierState: Equatable, Sendable {
     }
 }
 
+// 表示 Sticky Modifier 的保持阶段
+public enum ModifierStage: Equatable, Sendable {
+    case inactive
+    case once
+    case locked
+}
+
+// 指示修饰键抬起后的 HID 处理
+public enum ModifierTapAction: Equatable, Sendable {
+    case release
+    case keepOnce
+    case keepLocked
+}
+
+// 管理修饰键单次保持与双击锁定
+public struct ModifierLatchState: Equatable, Sendable {
+    private var once: Set<ModifierKey> = []
+    private var locked: Set<ModifierKey> = []
+    private var lastTap: [ModifierKey: Double] = [:]
+
+    // 创建空保持状态
+    public init() {}
+
+    // 返回指定修饰键的保持阶段
+    public func stage(_ key: ModifierKey) -> ModifierStage {
+        if locked.contains(key) { return .locked }
+        if once.contains(key) { return .once }
+        return .inactive
+    }
+
+    // 处理一次修饰键抬起
+    public mutating func tap(
+        _ key: ModifierKey,
+        sticky: Bool,
+        mode: ModifierMode,
+        heldFor: Double,
+        at time: Double
+    ) -> ModifierTapAction {
+        guard sticky, mode != .hold, mode == .toggle || heldFor < 0.32 else {
+            clear(key)
+            return .release
+        }
+        if locked.remove(key) != nil {
+            lastTap[key] = nil
+            return .release
+        }
+        if mode == .toggle {
+            once.remove(key)
+            locked.insert(key)
+            lastTap[key] = nil
+            return .keepLocked
+        }
+        if once.contains(key), time - (lastTap[key] ?? -.infinity) <= 0.32 {
+            once.remove(key)
+            locked.insert(key)
+            lastTap[key] = nil
+            return .keepLocked
+        }
+        once.insert(key)
+        lastTap[key] = time
+        return .keepOnce
+    }
+
+    // 消费并返回全部单次保持键
+    public mutating func consumeOnce() -> Set<ModifierKey> {
+        let consumed = once
+        once.removeAll()
+        for key in consumed { lastTap[key] = nil }
+        return consumed
+    }
+
+    // 清空全部保持状态
+    public mutating func reset() {
+        once.removeAll()
+        locked.removeAll()
+        lastTap.removeAll()
+    }
+
+    // 清除指定修饰键状态
+    private mutating func clear(_ key: ModifierKey) {
+        once.remove(key)
+        locked.remove(key)
+        lastTap[key] = nil
+    }
+}
+
 // 管理语言与大小写状态
 public struct InputState: Equatable, Sendable {
     public private(set) var language: BoardLang

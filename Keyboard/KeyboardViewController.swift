@@ -223,6 +223,9 @@ private final class KeyView: UIButton {
     var activeTint = UIColor.systemCyan {
         didSet { setNeedsUpdateConfiguration() }
     }
+    var appearance = AppearanceConfig.standard {
+        didSet { setNeedsUpdateConfiguration() }
+    }
 
     // 创建键帽并接入统一状态刷新
     override init(frame: CGRect) {
@@ -281,21 +284,22 @@ private final class KeyView: UIButton {
     private func updvsl() {
         guard var config = configuration else { return }
         let fill: UIColor
+        let custom = appearance.mode == .custom
         if !isEnabled {
             fill = .secondarySystemFill
         } else if isSelected {
             fill = isHighlighted ? activeTint.withAlphaComponent(0.78) : activeTint
         } else {
             fill = switch (keyRole, isHighlighted) {
-            case (.ordinary, false): KeyPalette.ordinary
-            case (.ordinary, true): KeyPalette.ordinaryPressed
-            case (.function, false): KeyPalette.function
-            case (.function, true): KeyPalette.functionPressed
+            case (.ordinary, false): custom ? appearance.key.uiclr : KeyPalette.ordinary
+            case (.ordinary, true): custom ? appearance.key.uiclr.withAlphaComponent(0.72) : KeyPalette.ordinaryPressed
+            case (.function, false): custom ? appearance.board.uiclr : KeyPalette.function
+            case (.function, true): custom ? appearance.board.uiclr.withAlphaComponent(0.72) : KeyPalette.functionPressed
             }
         }
         config.baseForegroundColor = !isEnabled
             ? .tertiaryLabel
-            : isSelected ? .white : .label
+            : isSelected ? .white : custom ? appearance.text.uiclr : .label
         config.baseBackgroundColor = fill
         config.cornerStyle = .fixed
         config.background.cornerRadius = 7
@@ -343,17 +347,25 @@ private final class KeyInputView: UIInputView, UIInputViewAudioFeedback {
 final class KeyboardViewController: UIInputViewController {
     private let rows = UIStackView()
     private let trackpad = UIView()
-    private var theme = SharedConfig.ldthm()
+    private weak var blurView: UIVisualEffectView?
+    private var settings = SharedConfig.ldcfg()
     private var state = InputState()
     private var modifiers = ModifierState()
+    private var modifierLatches = ModifierLatchState()
+    private var modifierStarts: [ModifierKey: TimeInterval] = [:]
+    private var modifierOwned: Set<ModifierKey> = []
     private var height: NSLayoutConstraint?
+    private var rowTop: NSLayoutConstraint?
+    private var rowBottom: NSLayoutConstraint?
+    private var rowLeading: NSLayoutConstraint?
+    private var rowTrailing: NSLayoutConstraint?
     private var buttons: [KeyView] = []
     private let dragdist: CGFloat = 24
     private let dragreset: TimeInterval = 0.12
     private var cursormotion = CursorMotion(step: 12)
     private var cursorpoint: CGPoint?
     private weak var cursorbutton: KeyView?
-    private let keyimpact = UIImpactFeedbackGenerator(style: .light)
+    private let speakerPulse = SpeakerPulse()
     private var arrshft: Set<ObjectIdentifier> = []
     // 仅由主 RunLoop 触摸生命周期访问
     nonisolated(unsafe) private var deltimer: Timer?
@@ -376,7 +388,6 @@ final class KeyboardViewController: UIInputViewController {
         view.backgroundColor = KeyPalette.board
         view.isMultipleTouchEnabled = true
         view.clipsToBounds = false
-        keyimpact.prepare()
         let center = NotificationCenter.default
         center.addObserver(
             self,
@@ -395,11 +406,12 @@ final class KeyboardViewController: UIInputViewController {
         blur.contentView.backgroundColor = KeyPalette.board
         blur.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(blur)
+        blurView = blur
 
         rows.axis = .vertical
         rows.alignment = .fill
         rows.distribution = .fillEqually
-        rows.spacing = 7
+        rows.spacing = CGFloat(settings.layout.verticalGap)
         rows.clipsToBounds = false
         rows.translatesAutoresizingMaskIntoConstraints = false
         blur.contentView.addSubview(rows)
@@ -410,42 +422,57 @@ final class KeyboardViewController: UIInputViewController {
         trackpad.translatesAutoresizingMaskIntoConstraints = false
         blur.contentView.addSubview(trackpad)
 
-        height = view.heightAnchor.constraint(equalToConstant: 390)
+        height = view.heightAnchor.constraint(equalToConstant: settings.layout.height)
         height?.priority = .init(999)
         height?.isActive = true
+
+        let inset = CGFloat(settings.layout.outerInset)
+        rowTop = rows.topAnchor.constraint(equalTo: blur.contentView.topAnchor, constant: inset)
+        rowBottom = rows.bottomAnchor.constraint(equalTo: blur.contentView.bottomAnchor, constant: -inset)
+        rowLeading = rows.leadingAnchor.constraint(equalTo: blur.contentView.leadingAnchor, constant: inset)
+        rowTrailing = rows.trailingAnchor.constraint(equalTo: blur.contentView.trailingAnchor, constant: -inset)
 
         NSLayoutConstraint.activate([
             blur.topAnchor.constraint(equalTo: view.topAnchor),
             blur.bottomAnchor.constraint(equalTo: view.bottomAnchor),
             blur.leadingAnchor.constraint(equalTo: view.leadingAnchor),
             blur.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            rows.topAnchor.constraint(equalTo: blur.contentView.topAnchor, constant: 8),
-            rows.bottomAnchor.constraint(equalTo: blur.contentView.bottomAnchor, constant: -9),
-            rows.leadingAnchor.constraint(equalTo: blur.contentView.leadingAnchor, constant: 7),
-            rows.trailingAnchor.constraint(equalTo: blur.contentView.trailingAnchor, constant: -7),
+            rowTop!,
+            rowBottom!,
+            rowLeading!,
+            rowTrailing!,
             trackpad.topAnchor.constraint(equalTo: blur.contentView.topAnchor),
             trackpad.bottomAnchor.constraint(equalTo: blur.contentView.bottomAnchor),
             trackpad.leadingAnchor.constraint(equalTo: blur.contentView.leadingAnchor),
             trackpad.trailingAnchor.constraint(equalTo: blur.contentView.trailingAnchor),
         ])
 
+        applycfg(rebuild: false)
         bldkbd()
+        report()
     }
 
-    // 适配可用键盘宽度
+    // 保持用户指定的键盘高度
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
-        let target = min(max(view.bounds.width * 0.5, 340), 430)
+        let target = settings.layout.height
         if abs((height?.constant ?? 0) - target) > 1 {
             height?.constant = target
         }
     }
 
-    // 刷新共享主题
+    // 刷新共享设置
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        theme = SharedConfig.ldthm()
-        bldkbd()
+        reloadcfg()
+        report()
+    }
+
+    // 在输入上下文变化时读取最新共享设置
+    override func textDidChange(_ textInput: UITextInput?) {
+        super.textDidChange(textInput)
+        reloadcfg()
+        report()
     }
 
     // 停止离场触摸任务
@@ -454,6 +481,49 @@ final class KeyboardViewController: UIInputViewController {
         stopcursor()
         stopdel()
         rsthid()
+    }
+
+    // 读取变更后的共享配置并按需重建键盘
+    private func reloadcfg() {
+        let current = SharedConfig.ldcfg()
+        guard current != settings else { return }
+        settings = current
+        applycfg(rebuild: true)
+    }
+
+    // 应用布局、外观与强调色
+    private func applycfg(rebuild: Bool) {
+        let appearance = settings.appearance
+        view.overrideUserInterfaceStyle = switch appearance.mode {
+        case .system, .custom: .unspecified
+        case .light: .light
+        case .dark: .dark
+        }
+        let custom = appearance.mode == .custom
+        let board = custom ? appearance.board.uiclr : KeyPalette.board
+        view.backgroundColor = board
+        blurView?.effect = custom ? nil : UIBlurEffect(style: .systemChromeMaterial)
+        blurView?.contentView.backgroundColor = board
+        rows.spacing = CGFloat(settings.layout.verticalGap)
+        let inset = CGFloat(settings.layout.outerInset)
+        rowTop?.constant = inset
+        rowBottom?.constant = -inset
+        rowLeading?.constant = inset
+        rowTrailing?.constant = -inset
+        height?.constant = settings.layout.height
+        if rebuild { bldkbd() }
+    }
+
+    // 回报键盘最近运行与授权状态
+    private func report() {
+        SharedConfig.svrpt(
+            KeyboardReport(
+                lastSeen: Date(),
+                hasFullAccess: hasFullAccess,
+                engineReady: false,
+                scheme: settings.scheme
+            )
+        )
     }
 
     // 生成固定键盘布局
@@ -694,7 +764,7 @@ final class KeyboardViewController: UIInputViewController {
         row.axis = .horizontal
         row.alignment = .fill
         row.distribution = .fill
-        row.spacing = 6
+        row.spacing = CGFloat(settings.layout.horizontalGap)
 
         var base: (item: UIView, weight: CGFloat)?
         for spec in specs {
@@ -731,7 +801,8 @@ final class KeyboardViewController: UIInputViewController {
         let button = KeyView(type: .system)
         button.spec = spec
         button.keyRole = spec.kind == .text || spec.kind == .space ? .ordinary : .function
-        button.activeTint = theme.primary.uiclr
+        button.activeTint = settings.appearance.accent.uiclr
+        button.appearance = settings.appearance
         button.isExclusiveTouch = false
         buttons.append(button)
         button.isEnabled = spec.enabled
@@ -962,10 +1033,9 @@ final class KeyboardViewController: UIInputViewController {
 
     // 播放系统输入声与轻触反馈
     private func sndfeed(haptic: Bool = true) {
-        UIDevice.current.playInputClick()
+        if settings.keySound { UIDevice.current.playInputClick() }
         guard haptic else { return }
-        keyimpact.impactOccurred(intensity: 0.65)
-        keyimpact.prepare()
+        speakerPulse.play(enabled: settings.simulatedHaptics, fullAccess: hasFullAccess)
     }
 
     // 显示普通字符键弹出反馈
@@ -1143,6 +1213,7 @@ final class KeyboardViewController: UIInputViewController {
             rsthid()
             return
         }
+        consumeOnce()
         updmods()
     }
 
@@ -1190,9 +1261,16 @@ final class KeyboardViewController: UIInputViewController {
             let modifier = spec.kind.modifierKey,
             let key = spec.kind.hidKey
         else { return }
+        modifierStarts[modifier] = CACurrentMediaTime()
+        guard !modifiers.contains(modifier) else {
+            updmods()
+            return
+        }
         guard modifiers.press(modifier) else { return }
+        modifierOwned.insert(modifier)
         state.shftuse()
         guard HIDBridge.shared.keyDown(key) else {
+            modifierOwned.remove(modifier)
             modifiers.release(modifier)
             updmods()
             return
@@ -1207,10 +1285,21 @@ final class KeyboardViewController: UIInputViewController {
             let modifier = spec.kind.modifierKey,
             let key = spec.kind.hidKey
         else { return }
-        guard modifiers.tap(modifier) else { return }
-        if !HIDBridge.shared.keyUp(key) {
-            rsthid()
-            return
+        let now = CACurrentMediaTime()
+        let held = now - (modifierStarts.removeValue(forKey: modifier) ?? now)
+        let action = modifierLatches.tap(
+            modifier,
+            sticky: settings.stickyModifiers,
+            mode: settings.modifierMode,
+            heldFor: held,
+            at: now
+        )
+        switch action {
+        case .release:
+            modifierOwned.remove(modifier)
+            if !relmod(modifier, key: key) { return }
+        case .keepOnce, .keepLocked:
+            modifierOwned.remove(modifier)
         }
         updmods()
     }
@@ -1222,12 +1311,40 @@ final class KeyboardViewController: UIInputViewController {
             let modifier = spec.kind.modifierKey,
             let key = spec.kind.hidKey
         else { return }
-        guard modifiers.release(modifier) else { return }
-        if !HIDBridge.shared.keyUp(key) {
+        modifierStarts[modifier] = nil
+        guard modifierOwned.remove(modifier) != nil else { return }
+        guard relmod(modifier, key: key) else { return }
+        updmods()
+    }
+
+    // 释放指定修饰键并收敛 HID 失败
+    private func relmod(_ modifier: ModifierKey, key: MBHIDKey) -> Bool {
+        guard modifiers.release(modifier) else { return true }
+        guard HIDBridge.shared.keyUp(key) else {
             rsthid()
-            return
+            return false
+        }
+        return true
+    }
+
+    // 释放已被普通按键消费的单次修饰键
+    private func consumeOnce() {
+        for modifier in modifierLatches.consumeOnce() {
+            guard let key = modhid(modifier) else { continue }
+            if !relmod(modifier, key: key) { return }
         }
         updmods()
+    }
+
+    // 返回共享修饰键对应的 HID usage
+    private func modhid(_ modifier: ModifierKey) -> MBHIDKey? {
+        switch modifier {
+        case .control: .control
+        case .leftOption: .leftOption
+        case .leftCommand: .leftCommand
+        case .rightCommand: .rightCommand
+        case .rightOption: .rightOption
+        }
     }
 
     // 刷新全部修饰键活动外观
@@ -1239,7 +1356,11 @@ final class KeyboardViewController: UIInputViewController {
             else { continue }
             let active = modifiers.contains(modifier)
             button.isSelected = active
-            button.accessibilityValue = active ? "已按下" : nil
+            button.accessibilityValue = switch modifierLatches.stage(modifier) {
+            case .inactive: active ? "按住" : nil
+            case .once: "下一键"
+            case .locked: "持续锁定"
+            }
         }
     }
 
@@ -1319,6 +1440,7 @@ final class KeyboardViewController: UIInputViewController {
             rsthid()
             return false
         }
+        consumeOnce()
         updmods()
         return true
     }
@@ -1341,6 +1463,7 @@ final class KeyboardViewController: UIInputViewController {
             return false
         }
         state.usefn()
+        consumeOnce()
         rfrshft()
         updmods()
         return true
@@ -1352,6 +1475,9 @@ final class KeyboardViewController: UIInputViewController {
         stopdel()
         state.shftcncl()
         modifiers.reset()
+        modifierLatches.reset()
+        modifierStarts.removeAll()
+        modifierOwned.removeAll()
         for button in buttons {
             button.hidactive = false
             button.fnupper = nil
@@ -1380,8 +1506,7 @@ final class KeyboardViewController: UIInputViewController {
     @objc private func lngcaps(_ sender: UILongPressGestureRecognizer) {
         guard sender.state == .began else { return }
         state.tglcaps()
-        keyimpact.impactOccurred(intensity: 0.9)
-        keyimpact.prepare()
+        sndfeed()
         bldkbd()
     }
 
