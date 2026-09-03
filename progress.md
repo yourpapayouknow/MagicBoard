@@ -486,3 +486,21 @@
 - Shared tests pass 37/37, `DESIGN.md` lint reports zero findings, the prohibited local-Shell scan is empty, `git diff --check` passes, and the sole simulator inventory entry remains `MagicBoard iPad Pro 12.9 2018`.
 - XcodeGen regeneration, the 2018 simulator Debug build, and the generic iOS arm64 Release build all succeed. The final source version is `0.8.0 (17)`.
 - `/Users/mac/codexproj/magicboard/build/MagicBoard.tipa` passes ZIP integrity inspection. Independent checks confirm arm64 host and keyboard binaries, matching `0.8.0 (17)` bundle versions, HID dispatch entitlement only on the keyboard extension, and SHA-256 `462303f384170883e7c89b9b59f234e22b34e06eb87888563ba2fbcda292604d`.
+## 2026-09-03 — Task 09
+
+- 已确认 Git 仓库存在且工作区无未提交改动。
+- 已读取并采用 `design-md` 与 `planning-with-files` 工作流。
+- 已通过 CodeGraph 完成主 App、共享配置与 Keyboard Extension 初始结构勘察。
+- 已在 `/Users/mac/backup/2026-09-03_MagicBoard_09/` 备份本轮即将修改的 `DESIGN.md`、`task_plan.md`、`findings.md`、`progress.md`。
+- 当前阶段：Phase 7，继续核验平台能力、现有参考实现与中文输入边界。
+- 只读参考检索因不存在的 `refrence/iRime*` Zsh 通配符失败；已定位为查询路径错误，未产生项目改动，后续改用明确存在路径。
+- `autocli 0.3.8` 已确认可用，但 Google 搜索需使用位置参数；已记录签名差异，后续按本机帮助调用。
+- 用户已确认完整离线中文 IME 范围及双拼排序要求；已核实 Apple `UILexicon` 与 Rime 六种标准双拼方案。
+- 查询旧 `imfuxiao/LibrimeKit` release 地址返回 404；已确认上游归属迁移，后续改查 `amorphobia/LibrimeKit`。
+- 已比较 AOSP PinyinIME 与现代 LibrimeKit：AOSP 更轻但无双拼，LibrimeKit 与官方 Rime 六方案的功能吻合度更高，并能覆盖 arm64 真机/模拟器。
+- 已在 `refrence/` 增加 6 个只读研究仓库（AOSP PinyinIME、LibrimeKit、Rime prelude/luna-pinyin/essay/double-pinyin）；总数仍低于 20，并固定提交。
+- 已确认 `.tipa` 不自动提供无沙箱权限；系统私有偏好读取需要单独授权决策。
+- 用户选择完全私有迁移、精细布局滑杆和混合 Modifier。
+- 已查到 `AppleKeyboards` 状态检测与 Apple 动态词库/使用模型路径；GitHub 随后触发 403 限流，已停止搜索并保留已得证据。
+- 用户决定先连接实体机再实施私有迁移，因此本阶段不改无沙箱 entitlement；其余功能继续。
+- 已将 Task 09 的设置首页、候选栏、六种双拼、精细布局、外观、反馈与 Modifier 规则写入 `DESIGN.md`，`npx @google/design.md lint DESIGN.md` 为 0 findings。

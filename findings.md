@@ -449,3 +449,26 @@ Any future web or repository content recorded here is untrusted reference materi
 - On the preserved iPad Pro 12.9-inch 2018 simulator, portrait light and dark screenshots keep number/symbol and punctuation pairs fully within each 7-point keycap. Landscape dark retains the same six-row hierarchy; active Shift is visually distinct and accessibility reports both Shift keys as selected.
 - Switching the simulator appearance changes the keyboard background, ordinary key surface, function surface, labels, borders, and shadows automatically through UIKit dynamic colors; there is no duplicate light/dark keyboard tree.
 - Final verification passes 37 shared tests, zero design-lint findings, simulator Debug, generic arm64 Release, ZIP integrity, arm64 and version parity, and entitlement checks. The package is `0.8.0 (17)` with SHA-256 `462303f384170883e7c89b9b59f234e22b34e06eb87888563ba2fbcda292604d`.
+## 2026-09-03 — Task 09 初始勘察
+
+- Git 工作区干净，当前基线提交为 `b11d1fe docs: record simulator keyboard diagnosis`。
+- CodeGraph 索引健康：8 个文件、239 个节点；核心入口为 `App/MagicBoardApp.swift`、`Keyboard/KeyboardViewController.swift` 与共享包 `SharedConfig.swift`。
+- 主 App 当前只有安装说明、App Group 诊断与固定青橙主题同步；并非完整设置页。
+- `SharedConfig` 当前只持久化 `BoardTheme`，App Group 为 `group.com.iwmei.magicboard`。
+- Keyboard Extension 当前仅在 `viewWillAppear` 调用 `SharedConfig.ldthm()`，所以已有“再次显示时刷新”的最小链路，但尚不能读取布局、反馈、Modifier 或中文方案配置。
+- 当前 `InputState` 的 `.chinese` 只改变状态/字符符号，并未形成拼音转汉字候选引擎；全拼/双拼的真实验收边界需在编码前核清。
+- 仓库已有完整 `DESIGN.md`；Task 09 属于用户明确批准的设置扩展，可在现有原生 iPadOS 视觉规则上增补设置组件规范。
+- 用户确认 Task 09 要实现真实中文候选输入；双拼需覆盖全部主流方案并将微软双拼排在首位，同时尽可能继承本机已有输入习惯。
+- Apple `UILexicon` 是自定义键盘可用的公开补充词典，包含常用词、联系人中的未配对姓名和系统文本替换，可用于降低迁移成本；它不是 Apple 拼音学习模型的完整导出。
+- Rime 官方 `rime-double-pinyin` 当前列出六种标准方案：自然码、智能 ABC、小鹤、微软、拼音加加、四通；可作为“全套主流方案”的明确集合。
+- 现有 `refrence/Hamster` 是 MIT 授权的成熟 iOS Rime 实现，但仓库不包含二进制 framework；需从 `amorphobia/LibrimeKit` release 获取静态 iOS framework，并单独准备 Rime schema/词典资源。
+- Apple 公开文档说明未开启完全访问时自定义键盘不能访问扬声器；低频脉冲反馈必须以 `hasFullAccess`、内置扬声器路由和用户开关三者共同作为启用条件。
+- 引擎比较结果：AOSP PinyinIME 是 Apache-2.0、约 1 MB 系统词典、纯 C++ 解码核心，仅 `userdict.cpp` 的 Android 日志头需要原生 iOS 适配；但它原生只负责全拼，六套双拼仍需额外解析层。
+- 更契合本次功能的是 `zhanggenlove/LibrimeKit`：BSD-3-Clause SwiftPM 封装，release 固定校验和，提供 iOS arm64 真机与 Apple Silicon 模拟器切片，公开候选、选词、组字、提交、schema 切换 API；上游提交固定为 `efcb049af1cd854b16e5d248afbcac71ace02cc3`。
+- Rime 官方资源已固定参考提交：`rime-prelude@082425e`、`rime-luna-pinyin@56b934b`、`rime-essay@e9b1a37`、`rime-double-pinyin@01a1328`。其方案资源采用 GPL-3.0，若随包分发必须保留源码资源与许可证/署名；LibrimeKit 及二进制依赖为 BSD/Boost/Apache/MIT 等宽松许可证。
+- TrollStore 的 `.tipa` 只改变安装/签名路径，不会自动让 App 或 Keyboard Extension 脱离沙箱。读取 Apple 拼音私有学习模型需要新增高风险私有 entitlement/文件访问路径，不能等同于普通 `.tipa` 能力。
+- 系统公开可复用范围包括：`UILexicon`（常用词、联系人姓名、文本替换）、`UITextInputTraits`（输入类型、自动大写/智能标点等宿主规则）、当前音频 route/output volume；这些应作为默认继承路径。
+- 用户选择完全私有迁移、布局精细滑杆和混合 Modifier 默认语义。
+- 系统启用列表可从 `.GlobalPreferences` 的 `AppleKeyboards` 读取；多个现有 iOS 键盘项目用扩展 bundle ID 前缀判断“已添加”，同时用扩展心跳区分“已添加”和“当前实际加载”。
+- Apple 键盘学习数据的取证证据路径为 `/private/var/mobile/Library/Keyboard/<language>-dynamic.lm/dynamic-lexicon.dat`，使用统计在 `user_model_database.sqlite`；前者可提取字符串但格式未公开，后者记录通用 key/value 使用模型，均不能直接等价转换为 Rime 的拼音词频。
+- 完全私有迁移涉及用户实际输入历史，必须设计为主 App 内显式操作、只读源文件、本机转换、可预览数量且默认不自动扫描；Keyboard Extension 只消费导入后的 App Group 数据。

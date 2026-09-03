@@ -74,6 +74,10 @@ Build a traceable iPadOS project containing the MagicBoard host app, keyboard ex
 
 | Error | Attempt | Resolution |
 |---|---:|---|
+| Task 09 参考检索中 Zsh 报告 `no matches found: refrence/iRime*` | 1 | 该目录不存在；后续只使用已确认存在的 `refrence/Hamster` 等明确路径，不重复该通配符 |
+| `autocli 0.3.8 google search` 拒绝技能示例中的 `--query` | 1 | CLI 帮助确认当前版本使用位置参数 `<keyword>`；后续按本机真实签名调用 |
+| GitHub API 查询旧归属 `imfuxiao/LibrimeKit` 最新 release 返回 404 | 1 | Hamster 源码与 GitHub 页面确认当前上游为 `amorphobia/LibrimeKit`；后续查询正确仓库 |
+| 连续 GitHub 代码搜索触发 API 403 限流 | 1 | 已取得所需路径与状态检测证据；停止代码搜索，不重试限流接口，后续使用本地参考和设备验证 |
 | Initial `git status` failed because the empty directory was not a repository | 1 | Initialized Git and created an empty baseline commit before project changes |
 | Technical-stack prompt returned an empty answer | 1–2 | Retried with shorter options; the third prompt confirmed SwiftUI + UIKit |
 | Device-environment prompt returned an empty answer | 1 | Retried once and confirmed iPadOS 16.x + TrollStore 2 |
@@ -362,7 +366,7 @@ Preserve ordinary Space input while adding a native-keyboard-style long-press dr
 
 ### Phase 24 — Build, package, and device acceptance
 
-**Status:** in_progress
+**Status:** complete
 
 - Run focused/shared tests, design lint, simulator Debug, and generic arm64 Release packaging.
 - Verify the final archive, entitlements, versions, and artifact hash.
@@ -755,3 +759,35 @@ Unify every ordinary, function, and modifier key behind one `KeyView` visual com
 - [x] The preserved full-size 12.9-inch 2018 proxy preserves consistent portrait/landscape proportions and visual hierarchy
 - [x] Existing Mac layout, legends, gestures, HID behavior, and accessibility remain unchanged
 - [x] Tests, design lint, simulator builds, release package, and archive inspection pass
+## Task 09 — 主 App 与输入法设置
+
+### Phase 7 — 设置需求与平台能力核验
+
+**Status:** in_progress
+
+- 核验现有 App Group、Keyboard Extension 刷新时机、entitlement 与系统设置跳转能力。
+- 区分“输入方案选择”与真实拼音转汉字引擎，确认全拼/双拼的验收边界。
+- 盘点可复用的系统规则与已有参考实现，避免重复实现。
+- 用户选择私有迁移，但在连接实体 iPad 并验证真实路径/格式前不修改无沙箱 entitlement；其余设置与输入引擎继续实施。
+
+### Phase 8 — 共享设置模型与测试
+
+**Status:** pending
+
+- 建立版本化、可向后兼容的统一设置快照与 App Group 读写接口。
+- 覆盖默认值、往返、损坏数据、迁移与各设置枚举的测试。
+
+### Phase 9 — 主 App 设置首页与扩展接入
+
+**Status:** pending
+
+- 实现启用引导/跳转、状态信息、布局、外观、强调色、反馈、Modifier 与中文方案设置。
+- 实现测试输入区域或键盘预览。
+- Keyboard Extension 在重新出现时读取新配置并应用，无需重新安装。
+
+### Phase 10 — 构建、行为验证与交付
+
+**Status:** pending
+
+- 运行 Swift Package 测试、XcodeGen、模拟器构建与定向检查。
+- 验证改动范围、生成可回滚 Git 提交并记录未能在模拟器自动验证的设备项。
