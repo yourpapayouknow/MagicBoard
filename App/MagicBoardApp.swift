@@ -15,7 +15,10 @@ struct MagicBoardApp: App {
 
 // 定义主应用页面
 private enum Page: String, CaseIterable, Identifiable {
-    case settings = "输入法设置"
+    case overview = "概览"
+    case input = "中文输入"
+    case style = "外观与布局"
+    case feedback = "按键体验"
     case test = "输入测试"
 
     var id: String { rawValue }
@@ -23,7 +26,10 @@ private enum Page: String, CaseIterable, Identifiable {
     // 返回页面图标
     var icon: String {
         switch self {
-        case .settings: "keyboard"
+        case .overview: "square.grid.2x2"
+        case .input: "character.cursor.ibeam"
+        case .style: "paintbrush"
+        case .feedback: "hand.tap"
         case .test: "text.cursor"
         }
     }
@@ -52,25 +58,50 @@ private struct HostStatus {
 // 展示自适应设置分栏
 private struct MainView: View {
     @Environment(\.scenePhase) private var scenePhase
-    @State private var page: Page? = .settings
+    @State private var columns: NavigationSplitViewVisibility = .all
+    @State private var page: Page? = .overview
     @State private var settings = SharedConfig.ldcfg()
     @State private var status = HostStatus.load()
 
     var body: some View {
-        NavigationSplitView {
-            List(Page.allCases, selection: $page) { item in
-                Label(item.rawValue, systemImage: item.icon)
-                    .tag(item)
+        NavigationSplitView(columnVisibility: $columns) {
+            List(selection: $page) {
+                Section {
+                    BrandMark(ready: status.keyboardAdded || status.reportFresh)
+                        .listRowBackground(Color.clear)
+                        .listRowInsets(.init(top: 10, leading: 12, bottom: 18, trailing: 12))
+                }
+                Section("MagicBoard") {
+                    ForEach(Page.allCases) { item in
+                        Label(item.rawValue, systemImage: item.icon)
+                            .tag(item)
+                    }
+                }
             }
-            .navigationTitle("MagicBoard")
+            .listStyle(.sidebar)
+            .navigationTitle("设置")
         } detail: {
-            switch page ?? .settings {
-            case .settings:
-                SettingsView(settings: $settings, status: status, refresh: refresh)
+            switch page ?? .overview {
+            case .overview:
+                OverviewView(status: status, refresh: refresh)
+            case .input:
+                InputView(scheme: $settings.scheme)
+            case .style:
+                StyleView(layout: $settings.layout, appearance: $settings.appearance)
+            case .feedback:
+                FeedbackView(
+                    keySound: $settings.keySound,
+                    simulatedHaptics: $settings.simulatedHaptics,
+                    sticky: $settings.stickyModifiers,
+                    mode: $settings.modifierMode,
+                    fullAccess: status.report?.hasFullAccess == true
+                )
             case .test:
                 TestInputView()
             }
         }
+        .navigationSplitViewStyle(.balanced)
+        .tint(settings.appearance.accent.swclr)
         .preferredColorScheme(settings.appearance.mode.scheme)
         .onChange(of: settings) { value in
             SharedConfig.svcfg(value)
@@ -87,64 +118,140 @@ private struct MainView: View {
     }
 }
 
-// 展示完整输入法设置
-private struct SettingsView: View {
-    @Binding var settings: BoardSettings
+// 展示边栏品牌状态
+private struct BrandMark: View {
+    let ready: Bool
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "keyboard.fill")
+                .font(.title2.weight(.semibold))
+                .foregroundStyle(.white)
+                .frame(width: 48, height: 48)
+                .background(.cyan, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .shadow(color: .cyan.opacity(0.24), radius: 10, y: 5)
+            VStack(alignment: .leading, spacing: 3) {
+                Text("MagicBoard")
+                    .font(.headline)
+                Label(ready ? "已启用" : "待启用", systemImage: ready ? "checkmark.circle.fill" : "circle.dashed")
+                    .font(.caption)
+                    .foregroundStyle(ready ? .green : .secondary)
+            }
+        }
+        .accessibilityElement(children: .combine)
+    }
+}
+
+// 展示页面通用滚动容器
+private struct PageShell<Content: View>: View {
+    let title: String
+    @ViewBuilder let content: Content
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 20) {
+                Text(title)
+                    .font(.system(.largeTitle, design: .rounded, weight: .bold))
+                    .padding(.bottom, 2)
+                content
+            }
+            .frame(maxWidth: 920, alignment: .leading)
+            .padding(28)
+            .frame(maxWidth: .infinity, alignment: .top)
+        }
+        .background(Color(uiColor: .systemGroupedBackground))
+    }
+}
+
+// 展示现代设置卡片
+private struct SettingCard<Content: View>: View {
+    let title: String
+    let icon: String
+    @ViewBuilder let content: Content
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Label(title, systemImage: icon)
+                .font(.headline)
+                .symbolRenderingMode(.hierarchical)
+            content
+        }
+        .padding(20)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .stroke(Color(uiColor: .separator).opacity(0.2), lineWidth: 0.5)
+        }
+        .shadow(color: .black.opacity(0.04), radius: 14, y: 6)
+    }
+}
+
+// 展示启用概览
+private struct OverviewView: View {
     let status: HostStatus
     let refresh: () -> Void
 
     var body: some View {
-        Form {
-            SetupSection(status: status, refresh: refresh)
-            ChineseSection(scheme: $settings.scheme)
-            LayoutSection(layout: $settings.layout)
-            AppearanceSection(appearance: $settings.appearance)
-            FeedbackSection(
-                keySound: $settings.keySound,
-                simulatedHaptics: $settings.simulatedHaptics,
-                fullAccess: status.report?.hasFullAccess
-            )
-            ModifierSection(
-                sticky: $settings.stickyModifiers,
-                mode: $settings.modifierMode
-            )
-            Section {
-                NavigationLink("打开输入测试", value: Page.test)
-            }
+        PageShell(title: "概览") {
+            SetupCard(status: status, refresh: refresh)
         }
-        .formStyle(.grouped)
-        .navigationTitle("输入法设置")
     }
 }
 
 // 展示安装入口与状态
-private struct SetupSection: View {
+private struct SetupCard: View {
     let status: HostStatus
     let refresh: () -> Void
 
-    var body: some View {
-        Section("启用 MagicBoard") {
-            StatusRow("已添加到键盘", ready: status.keyboardAdded || status.reportFresh)
-            StatusRow("App Group 设置同步", ready: status.group.available)
-            StatusRow("允许完全访问", ready: status.report?.hasFullAccess == true)
-            StatusRow("中文输入引擎", ready: status.report?.engineReady == true)
+    private var added: Bool { status.keyboardAdded || status.reportFresh }
 
-            Button {
-                openKeyboardSettings()
-            } label: {
-                Label("前往“添加新键盘”", systemImage: "gear")
+    var body: some View {
+        VStack(alignment: .leading, spacing: 22) {
+            HStack(alignment: .top, spacing: 16) {
+                Image(systemName: added ? "keyboard.badge.ellipsis.fill" : "keyboard.badge.ellipsis")
+                    .font(.system(size: 30, weight: .semibold))
+                    .foregroundStyle(.cyan)
+                    .frame(width: 58, height: 58)
+                    .background(.cyan.opacity(0.12), in: RoundedRectangle(cornerRadius: 17, style: .continuous))
+                VStack(alignment: .leading, spacing: 5) {
+                    Text(added ? "MagicBoard 已添加" : "添加 MagicBoard")
+                        .font(.title2.bold())
+                    Text(added ? "长按地球键即可选择" : "设置 > 通用 > 键盘 > 键盘")
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                Button(action: refresh) {
+                    Image(systemName: "arrow.clockwise")
+                        .frame(width: 28, height: 28)
+                }
+                .buttonStyle(.bordered)
+                .accessibilityLabel("刷新状态")
+            }
+
+            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
+                StatusTile("键盘", ready: added, icon: "keyboard")
+                StatusTile("完全访问", ready: status.report?.hasFullAccess == true, icon: "lock.open")
+                StatusTile("设置同步", ready: status.group.available, icon: "arrow.triangle.2.circlepath")
+                StatusTile("中文输入", ready: status.report?.engineReady == true, icon: "character.bubble")
+            }
+
+            Button(action: openKeyboardSettings) {
+                Label("打开键盘设置", systemImage: "arrow.up.forward.app")
+                    .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
-
-            Button("刷新状态", action: refresh)
-
-            Text("在系统设置中添加 MagicBoard 并允许完全访问。返回此页后会自动刷新；状态以键盘最近一次启动报告为准。")
-                .font(.footnote)
-                .foregroundStyle(.secondary)
+            .controlSize(.large)
         }
+        .padding(24)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .stroke(.cyan.opacity(0.2), lineWidth: 1)
+        }
+        .shadow(color: .cyan.opacity(0.08), radius: 22, y: 10)
     }
 
-    // 打开 TrollStore 环境中的键盘设置并提供公开回退
+    // 打开键盘设置并提供公开回退
     private func openKeyboardSettings() {
         let fallback = URL(string: UIApplication.openSettingsURLString)!
         guard let keyboard = URL(string: "App-Prefs:root=General&path=Keyboard/KEYBOARDS") else {
@@ -157,103 +264,106 @@ private struct SetupSection: View {
     }
 }
 
-// 展示单项状态
-private struct StatusRow: View {
+// 展示紧凑状态卡
+private struct StatusTile: View {
     let title: String
     let ready: Bool
+    let icon: String
 
-    // 创建状态行
-    init(_ title: String, ready: Bool) {
+    // 创建状态卡
+    init(_ title: String, ready: Bool, icon: String) {
         self.title = title
         self.ready = ready
+        self.icon = icon
     }
 
     var body: some View {
-        Label(title, systemImage: ready ? "checkmark.circle.fill" : "circle")
-            .foregroundStyle(ready ? .green : .secondary)
+        HStack(spacing: 10) {
+            Image(systemName: ready ? "checkmark.circle.fill" : icon)
+                .foregroundStyle(ready ? .green : .secondary)
+            Text(title)
+                .font(.subheadline.weight(.medium))
+            Spacer(minLength: 0)
+            Text(ready ? "已就绪" : "未就绪")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .padding(.horizontal, 14)
+        .frame(minHeight: 48)
+        .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 13))
+        .accessibilityElement(children: .combine)
     }
 }
 
-// 展示中文输入方案
-private struct ChineseSection: View {
+// 展示中文输入设置
+private struct InputView: View {
     @Binding var scheme: ChineseScheme
 
     var body: some View {
-        Section {
-            Picker("输入方案", selection: $scheme) {
-                ForEach(ChineseScheme.allCases) { item in
-                    Text(item.title).tag(item)
+        PageShell(title: "中文输入") {
+            SettingCard(title: "输入方案", icon: "character.cursor.ibeam") {
+                Picker("输入方案", selection: $scheme) {
+                    ForEach(ChineseScheme.allCases) { item in
+                        Text(item.title).tag(item)
+                    }
                 }
+                .pickerStyle(.menu)
+
+                Divider()
+
+                HStack {
+                    Label("五笔", systemImage: "square.grid.3x3")
+                    Spacer()
+                    Text("即将推出")
+                        .foregroundStyle(.secondary)
+                }
+                .disabled(true)
             }
-            LabeledContent("五笔", value: "未来提供")
-                .foregroundStyle(.secondary)
-            LabeledContent("系统词典", value: "自动补充联系人与文本替换")
-            LabeledContent("系统习惯迁移", value: "等待实体机格式验证")
-                .foregroundStyle(.secondary)
-        } header: {
-            Text("中文输入")
-        } footer: {
-            Text("双拼包含微软、自然码、智能 ABC、小鹤、拼音加加和四通；微软双拼排在首位。")
+
         }
     }
 }
 
-// 展示精确布局控制
-private struct LayoutSection: View {
+// 展示外观与布局设置
+private struct StyleView: View {
     @Binding var layout: LayoutConfig
-
-    var body: some View {
-        Section("键盘布局") {
-            ValueSlider(title: "键盘高度", value: $layout.height, range: 340 ... 430, suffix: " pt")
-            ValueSlider(title: "水平键距", value: $layout.horizontalGap, range: 3 ... 9, suffix: " pt")
-            ValueSlider(title: "垂直键距", value: $layout.verticalGap, range: 4 ... 12, suffix: " pt")
-            ValueSlider(title: "外边距", value: $layout.outerInset, range: 4 ... 16, suffix: " pt")
-            Button("恢复标准布局") { layout = .standard }
-        }
-    }
-}
-
-// 展示带数值的滑块
-private struct ValueSlider: View {
-    let title: String
-    @Binding var value: Double
-    let range: ClosedRange<Double>
-    let suffix: String
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack {
-                Text(title)
-                Spacer()
-                Text("\(value, specifier: "%.0f")\(suffix)")
-                    .foregroundStyle(.secondary)
-            }
-            Slider(value: $value, in: range, step: 1)
-        }
-    }
-}
-
-// 展示外观与预览
-private struct AppearanceSection: View {
     @Binding var appearance: AppearanceConfig
 
     var body: some View {
-        Section("外观") {
-            Picker("模式", selection: $appearance.mode) {
-                ForEach(AppearanceMode.allCases) { item in
-                    Text(item.title).tag(item)
+        PageShell(title: "外观与布局") {
+            KeyboardPreview(appearance: appearance)
+
+            SettingCard(title: "外观", icon: "paintpalette") {
+                Picker("模式", selection: $appearance.mode) {
+                    ForEach(AppearanceMode.allCases) { item in
+                        Text(item.title).tag(item)
+                    }
+                }
+                .pickerStyle(.segmented)
+
+                ColorPicker("强调色", selection: color($appearance.accent), supportsOpacity: false)
+                if appearance.mode == .custom {
+                    Divider()
+                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 14) {
+                        ColorPicker("键盘", selection: color($appearance.board), supportsOpacity: false)
+                        ColorPicker("按键", selection: color($appearance.key), supportsOpacity: false)
+                        ColorPicker("文字", selection: color($appearance.text), supportsOpacity: false)
+                    }
                 }
             }
-            .pickerStyle(.segmented)
 
-            ColorPicker("强调色", selection: color($appearance.accent), supportsOpacity: false)
-            if appearance.mode == .custom {
-                ColorPicker("键盘底色", selection: color($appearance.board), supportsOpacity: false)
-                ColorPicker("按键颜色", selection: color($appearance.key), supportsOpacity: false)
-                ColorPicker("文字颜色", selection: color($appearance.text), supportsOpacity: false)
+            SettingCard(title: "布局", icon: "slider.horizontal.3") {
+                ValueSlider(title: "高度", value: $layout.height, range: 340 ... 430, suffix: " pt")
+                ValueSlider(title: "水平键距", value: $layout.horizontalGap, range: 3 ... 9, suffix: " pt")
+                ValueSlider(title: "垂直键距", value: $layout.verticalGap, range: 4 ... 12, suffix: " pt")
+                ValueSlider(title: "外边距", value: $layout.outerInset, range: 4 ... 16, suffix: " pt")
             }
-            KeyboardPreview(appearance: appearance)
-            Button("恢复默认外观") { appearance = .standard }
+
+            Button("恢复默认") {
+                layout = .standard
+                appearance = .standard
+            }
+            .buttonStyle(.bordered)
         }
     }
 
@@ -266,68 +376,119 @@ private struct AppearanceSection: View {
     }
 }
 
+// 展示带数值的滑块
+private struct ValueSlider: View {
+    let title: String
+    @Binding var value: Double
+    let range: ClosedRange<Double>
+    let suffix: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 7) {
+            HStack {
+                Text(title)
+                Spacer()
+                Text("\(value, specifier: "%.0f")\(suffix)")
+                    .font(.subheadline.monospacedDigit())
+                    .foregroundStyle(.secondary)
+            }
+            Slider(value: $value, in: range, step: 1)
+        }
+    }
+}
+
 // 展示按键外观预览
 private struct KeyboardPreview: View {
     let appearance: AppearanceConfig
 
     var body: some View {
-        HStack(spacing: 7) {
-            ForEach(["中", "A", "⌘", "空格"], id: \.self) { key in
-                Text(key)
-                    .font(.headline)
-                    .foregroundStyle(appearance.text.swclr)
-                    .frame(maxWidth: .infinity, minHeight: 42)
-                    .background(appearance.key.swclr, in: RoundedRectangle(cornerRadius: 9))
+        VStack(spacing: 8) {
+            HStack(spacing: 8) {
+                ForEach(["你好", "你", "拟好", "泥豪"], id: \.self) { text in
+                    Text(text)
+                        .font(.subheadline.weight(text == "你好" ? .semibold : .regular))
+                        .foregroundStyle(appearance.text.swclr)
+                        .padding(.horizontal, 10)
+                        .frame(height: 30)
+                        .background(appearance.key.swclr.opacity(0.8), in: Capsule())
+                }
+                Spacer()
             }
+            PreviewRow(keys: ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"], appearance: appearance)
+            PreviewRow(keys: ["A", "S", "D", "F", "G", "H", "J", "K", "L"], appearance: appearance)
+            PreviewRow(keys: ["⇧", "Z", "X", "C", "V", "B", "N", "M", "⌫"], appearance: appearance)
+            PreviewRow(keys: ["中", "⌘", "空格", "↩︎"], appearance: appearance)
         }
-        .padding(8)
-        .background(appearance.board.swclr, in: RoundedRectangle(cornerRadius: 12))
+        .padding(16)
+        .background(appearance.board.swclr, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(Color(uiColor: .separator).opacity(0.5), lineWidth: 1)
+            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                .stroke(Color(uiColor: .separator).opacity(0.24), lineWidth: 0.5)
+        }
+        .shadow(color: .black.opacity(0.08), radius: 16, y: 8)
+    }
+}
+
+// 展示预览键帽行
+private struct PreviewRow: View {
+    let keys: [String]
+    let appearance: AppearanceConfig
+
+    var body: some View {
+        HStack(spacing: 7) {
+            ForEach(Array(keys.enumerated()), id: \.offset) { _, key in
+                Text(key)
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(appearance.text.swclr)
+                    .frame(maxWidth: key == "空格" ? .infinity : 54, minHeight: 38)
+                    .background(appearance.key.swclr, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    .shadow(color: .black.opacity(0.08), radius: 1, y: 1)
+            }
         }
     }
 }
 
-// 展示声音与模拟触觉开关
-private struct FeedbackSection: View {
+// 展示反馈与修饰键设置
+private struct FeedbackView: View {
     @Binding var keySound: Bool
     @Binding var simulatedHaptics: Bool
-    let fullAccess: Bool?
+    @Binding var sticky: Bool
+    @Binding var mode: ModifierMode
+    let fullAccess: Bool
 
     var body: some View {
-        Section("按键反馈") {
-            Toggle("按键音", isOn: $keySound)
-            Toggle("扬声器模拟触觉", isOn: $simulatedHaptics)
-            if simulatedHaptics {
-                Text(fullAccess == true
-                     ? "仅使用内置扬声器播放极短低频脉冲；耳机、蓝牙或外部音频输出接入时自动停用。"
-                     : "该功能需要允许完全访问；外部音频输出接入时会自动停用。")
+        PageShell(title: "按键体验") {
+            SettingCard(title: "声音与触感", icon: "waveform") {
+                Toggle(isOn: $keySound) {
+                    Label("按键音", systemImage: "speaker.wave.2")
+                }
+                Divider()
+                Toggle(isOn: $simulatedHaptics) {
+                    Label("模拟触觉", systemImage: "waveform.path")
+                }
+                if simulatedHaptics {
+                    Label(
+                        fullAccess ? "仅内置扬声器；外接音频时自动停用" : "需要允许完全访问",
+                        systemImage: fullAccess ? "speaker.wave.1" : "lock.open"
+                    )
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                }
+            }
+
+            SettingCard(title: "修饰键", icon: "command") {
+                Toggle("Sticky Modifier", isOn: $sticky)
+                Divider()
+                Picker("操作模式", selection: $mode) {
+                    ForEach(ModifierMode.allCases) { item in
+                        Text(item.title).tag(item)
+                    }
+                }
+                .pickerStyle(.segmented)
+                Text("混合：长按临时 · 单击一次 · 双击锁定")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }
-        }
-    }
-}
-
-// 展示修饰键行为设置
-private struct ModifierSection: View {
-    @Binding var sticky: Bool
-    @Binding var mode: ModifierMode
-
-    var body: some View {
-        Section {
-            Toggle("Sticky Modifier", isOn: $sticky)
-            Picker("操作模式", selection: $mode) {
-                ForEach(ModifierMode.allCases) { item in
-                    Text(item.title).tag(item)
-                }
-            }
-            .pickerStyle(.segmented)
-        } header: {
-            Text("Modifier 修饰键")
-        } footer: {
-            Text("混合模式：按住为临时生效；开启 Sticky 后，单击作用于下一键，双击持续锁定。")
         }
     }
 }
@@ -337,22 +498,33 @@ private struct TestInputView: View {
     @State private var text = ""
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("切换到 MagicBoard，测试中文候选、双拼、修饰键和布局变化。")
-                .foregroundStyle(.secondary)
-            TextEditor(text: $text)
-                .font(.title3)
-                .padding(10)
-                .scrollContentBackground(.hidden)
-                .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
-                .overlay {
-                    RoundedRectangle(cornerRadius: 14)
-                        .stroke(Color(uiColor: .separator), lineWidth: 1)
+        PageShell(title: "输入测试") {
+            SettingCard(title: "试一试", icon: "text.cursor") {
+                Label("长按地球键，选择 MagicBoard", systemImage: "globe")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                ZStack(alignment: .topLeading) {
+                    if text.isEmpty {
+                        Text("在这里输入…")
+                            .foregroundStyle(.tertiary)
+                            .padding(.horizontal, 15)
+                            .padding(.vertical, 17)
+                    }
+                    TextEditor(text: $text)
+                        .font(.title3)
+                        .padding(10)
+                        .scrollContentBackground(.hidden)
+                        .frame(minHeight: 320)
+                        .background(Color(uiColor: .secondarySystemGroupedBackground))
+                        .opacity(text.isEmpty ? 0.98 : 1)
                 }
+                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .stroke(Color(uiColor: .separator).opacity(0.35), lineWidth: 0.5)
+                }
+            }
         }
-        .padding(24)
-        .background(Color(uiColor: .systemGroupedBackground))
-        .navigationTitle("输入测试")
     }
 }
 
