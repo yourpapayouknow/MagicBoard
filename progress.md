@@ -528,3 +528,4 @@
 - 移除设置页全部大标题、边栏/卡片/状态/按钮/提示中的图标文字组合，仅保留无文字的刷新图标。
 - 设置按钮只调用 `App-Prefs:root=General&path=Keyboard/KEYBOARDS`，删除会跳往 App 设置页的公开回退。
 - `DESIGN.md` lint 0 findings，iPad 模拟器 Debug 与 arm64 Release 均成功；新 TIPA 为 5,617,945 bytes，SHA-256 `d0a2540bf99bc03719ecaf8e8f7aaf84a9a66f857ccb8338c56171345a921d09`。
+- 概览卡片最终采用 34pt 顶部对齐“初始化”，设置提示/跳转/刷新同处顶部；边栏删除品牌启用状态块并为五项配置五个视觉不同的 SF Symbol。最终 TIPA 为 5,614,971 bytes，SHA-256 `9d4820315a17405938e5005e6efd84e21f597226a67d6513994512d6c7c09519`。
