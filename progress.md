@@ -507,3 +507,7 @@
 - Phase 8 红灯验证按预期失败：新增设置测试在 `SharedConfig` 尚无 `ldcfg/svcfg` 等 API 时产生编译错误。
 - 已实现版本化 `BoardSettings`、七种可选中文方案（全拼 + 六双拼）、布局/外观/反馈/Modifier 配置、旧主题迁移与 `KeyboardReport` 心跳。
 - `swift test` 现通过 44/44，覆盖默认值、完整往返、损坏回退、越界归一化、旧主题迁移与扩展状态。
+- 主 App 首次重写补丁因同一路径同时 Delete/Add 被工具校验拒绝，文件未变化；后续改用单次更新补丁。
+- 共享包 44/44 测试通过；随后一次把 `xcodegen` 留在 Swift Package 子目录执行，因找不到 `project.yml` 安全停止，改回项目根目录后生成成功。
+- 已实现标准设置首页：输入法添加跳转、最近运行/完全访问/App Group/引擎状态、全拼与六种双拼、四项精确布局滑块、四种外观与自定义颜色、按键音、扬声器模拟触觉、Sticky Modifier/三种模式、键盘外观预览和真实文本测试区。
+- 首次主 App 编译发现 iOS 16 的带 footer `Section` 需使用 header/content/footer 形式；修正两处后通用 iOS 模拟器 Debug 构建成功。

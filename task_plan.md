@@ -78,6 +78,7 @@ Build a traceable iPadOS project containing the MagicBoard host app, keyboard ex
 | `autocli 0.3.8 google search` 拒绝技能示例中的 `--query` | 1 | CLI 帮助确认当前版本使用位置参数 `<keyword>`；后续按本机真实签名调用 |
 | GitHub API 查询旧归属 `imfuxiao/LibrimeKit` 最新 release 返回 404 | 1 | Hamster 源码与 GitHub 页面确认当前上游为 `amorphobia/LibrimeKit`；后续查询正确仓库 |
 | 连续 GitHub 代码搜索触发 API 403 限流 | 1 | 已取得所需路径与状态检测证据；停止代码搜索，不重试限流接口，后续使用本地参考和设备验证 |
+| `apply_patch` 拒绝同一补丁内对 `MagicBoardApp.swift` 同时 Delete/Add | 1 | 原文件未变化；改用单次 Update File 补丁，不重复 Delete/Add 组合 |
 | Initial `git status` failed because the empty directory was not a repository | 1 | Initialized Git and created an empty baseline commit before project changes |
 | Technical-stack prompt returned an empty answer | 1–2 | Retried with shorter options; the third prompt confirmed SwiftUI + UIKit |
 | Device-environment prompt returned an empty answer | 1 | Retried once and confirmed iPadOS 16.x + TrollStore 2 |
@@ -731,7 +732,7 @@ Unify every ordinary, function, and modifier key behind one `KeyView` visual com
 
 ### Phase 49 — Unified KeyView implementation
 
-**Status:** in_progress
+**Status:** complete
 
 - Add one reusable `KeyView` subclass and semantic key role/state model.
 - Move normal, pressed, selected, disabled, light, and dark visual styling into that component.
@@ -784,6 +785,8 @@ Unify every ordinary, function, and modifier key behind one `KeyView` visual com
 - 实现启用引导/跳转、状态信息、布局、外观、强调色、反馈、Modifier 与中文方案设置。
 - 实现测试输入区域或键盘预览。
 - Keyboard Extension 在重新出现时读取新配置并应用，无需重新安装。
+
+**阶段进展：** 主 App 设置首页与真实 `TextEditor` 测试区已完成，并通过通用 iOS 模拟器 Debug 构建；正在接入 Keyboard Extension。
 
 ### Phase 10 — 构建、行为验证与交付
 

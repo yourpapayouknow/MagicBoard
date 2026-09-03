@@ -1,6 +1,7 @@
-// 显示输入法安装引导与共享主题状态
+// 展示并同步 MagicBoard 输入法设置
 import MagicBoardShared
 import SwiftUI
+import UIKit
 
 // 启动主应用
 @main
@@ -14,24 +15,46 @@ struct MagicBoardApp: App {
 
 // 定义主应用页面
 private enum Page: String, CaseIterable, Identifiable {
-    case setup = "安装引导"
-    case theme = "主题预览"
+    case settings = "输入法设置"
+    case test = "输入测试"
 
     var id: String { rawValue }
 
+    // 返回页面图标
     var icon: String {
         switch self {
-        case .setup: "keyboard"
-        case .theme: "paintpalette"
+        case .settings: "keyboard"
+        case .test: "text.cursor"
         }
     }
 }
 
-// 展示自适应分栏
+// 保存主应用展示的键盘状态
+private struct HostStatus {
+    let group: GroupState
+    let report: KeyboardReport?
+    let keyboardAdded: Bool
+
+    // 判断键盘扩展是否刚刚运行过
+    var reportFresh: Bool {
+        guard let report else { return false }
+        return Date().timeIntervalSince(report.lastSeen) < 120
+    }
+
+    // 读取系统与共享容器状态
+    static func load() -> HostStatus {
+        let keyboards = UserDefaults.standard.stringArray(forKey: "AppleKeyboards") ?? []
+        let added = keyboards.contains { $0.contains("com.iwmei.magicboard.keyboard") }
+        return HostStatus(group: SharedConfig.dgst(), report: SharedConfig.ldrpt(), keyboardAdded: added)
+    }
+}
+
+// 展示自适应设置分栏
 private struct MainView: View {
-    @State private var page: Page? = .setup
-    @State private var theme = SharedConfig.ldthm()
-    @State private var groupState = SharedConfig.dgst()
+    @Environment(\.scenePhase) private var scenePhase
+    @State private var page: Page? = .settings
+    @State private var settings = SharedConfig.ldcfg()
+    @State private var status = HostStatus.load()
 
     var body: some View {
         NavigationSplitView {
@@ -41,48 +64,245 @@ private struct MainView: View {
             }
             .navigationTitle("MagicBoard")
         } detail: {
-            ScrollView {
-                VStack(spacing: 20) {
-                    switch page ?? .setup {
-                    case .setup:
-                        StatusCard(state: groupState)
-                        StepsCard()
-                        ThemeCard(theme: theme, action: syncthm)
-                    case .theme:
-                        ThemeCard(theme: theme, action: syncthm)
-                        StatusCard(state: groupState)
-                    }
-                }
-                .padding(24)
-                .frame(maxWidth: 760)
-                .frame(maxWidth: .infinity)
+            switch page ?? .settings {
+            case .settings:
+                SettingsView(settings: $settings, status: status, refresh: refresh)
+            case .test:
+                TestInputView()
             }
-            .background(Color(uiColor: .systemGroupedBackground))
-            .navigationTitle((page ?? .setup).rawValue)
+        }
+        .preferredColorScheme(settings.appearance.mode.scheme)
+        .onChange(of: settings) { value in
+            SharedConfig.svcfg(value)
+        }
+        .onChange(of: scenePhase) { value in
+            if value == .active { refresh() }
         }
     }
 
-    // 同步默认主题
-    private func syncthm() {
-        theme = .cyanOrange
-        SharedConfig.svthm(theme)
-        groupState = SharedConfig.dgst()
+    // 刷新共享设置与键盘状态
+    private func refresh() {
+        settings = SharedConfig.ldcfg()
+        status = HostStatus.load()
     }
 }
 
-// 显示共享容器状态
-private struct StatusCard: View {
-    let state: GroupState
+// 展示完整输入法设置
+private struct SettingsView: View {
+    @Binding var settings: BoardSettings
+    let status: HostStatus
+    let refresh: () -> Void
 
     var body: some View {
-        GlassCard {
-            VStack(alignment: .leading, spacing: 12) {
-                Label("安装链路状态", systemImage: state.available ? "checkmark.seal.fill" : "exclamationmark.triangle.fill")
-                    .font(.title2.bold())
-                    .foregroundStyle(state.available ? .cyan : .orange)
-                Text(state.message)
-                    .font(.body)
-                Text("iPadOS 不提供查询第三方键盘是否已启用的公开 API，请按下方路径在设置中确认。")
+        Form {
+            SetupSection(status: status, refresh: refresh)
+            ChineseSection(scheme: $settings.scheme)
+            LayoutSection(layout: $settings.layout)
+            AppearanceSection(appearance: $settings.appearance)
+            FeedbackSection(
+                keySound: $settings.keySound,
+                simulatedHaptics: $settings.simulatedHaptics,
+                fullAccess: status.report?.hasFullAccess
+            )
+            ModifierSection(
+                sticky: $settings.stickyModifiers,
+                mode: $settings.modifierMode
+            )
+            Section {
+                NavigationLink("打开输入测试", value: Page.test)
+            }
+        }
+        .formStyle(.grouped)
+        .navigationTitle("输入法设置")
+    }
+}
+
+// 展示安装入口与状态
+private struct SetupSection: View {
+    let status: HostStatus
+    let refresh: () -> Void
+
+    var body: some View {
+        Section("启用 MagicBoard") {
+            StatusRow("已添加到键盘", ready: status.keyboardAdded || status.reportFresh)
+            StatusRow("App Group 设置同步", ready: status.group.available)
+            StatusRow("允许完全访问", ready: status.report?.hasFullAccess == true)
+            StatusRow("中文输入引擎", ready: status.report?.engineReady == true)
+
+            Button {
+                openKeyboardSettings()
+            } label: {
+                Label("前往“添加新键盘”", systemImage: "gear")
+            }
+            .buttonStyle(.borderedProminent)
+
+            Button("刷新状态", action: refresh)
+
+            Text("在系统设置中添加 MagicBoard 并允许完全访问。返回此页后会自动刷新；状态以键盘最近一次启动报告为准。")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    // 打开 TrollStore 环境中的键盘设置并提供公开回退
+    private func openKeyboardSettings() {
+        let fallback = URL(string: UIApplication.openSettingsURLString)!
+        guard let keyboard = URL(string: "App-Prefs:root=General&path=Keyboard/KEYBOARDS") else {
+            UIApplication.shared.open(fallback)
+            return
+        }
+        UIApplication.shared.open(keyboard, options: [:]) { opened in
+            if !opened { UIApplication.shared.open(fallback) }
+        }
+    }
+}
+
+// 展示单项状态
+private struct StatusRow: View {
+    let title: String
+    let ready: Bool
+
+    // 创建状态行
+    init(_ title: String, ready: Bool) {
+        self.title = title
+        self.ready = ready
+    }
+
+    var body: some View {
+        Label(title, systemImage: ready ? "checkmark.circle.fill" : "circle")
+            .foregroundStyle(ready ? .green : .secondary)
+    }
+}
+
+// 展示中文输入方案
+private struct ChineseSection: View {
+    @Binding var scheme: ChineseScheme
+
+    var body: some View {
+        Section {
+            Picker("输入方案", selection: $scheme) {
+                ForEach(ChineseScheme.allCases) { item in
+                    Text(item.title).tag(item)
+                }
+            }
+            LabeledContent("五笔", value: "未来提供")
+                .foregroundStyle(.secondary)
+            LabeledContent("系统词典", value: "自动补充联系人与文本替换")
+            LabeledContent("系统习惯迁移", value: "等待实体机格式验证")
+                .foregroundStyle(.secondary)
+        } header: {
+            Text("中文输入")
+        } footer: {
+            Text("双拼包含微软、自然码、智能 ABC、小鹤、拼音加加和四通；微软双拼排在首位。")
+        }
+    }
+}
+
+// 展示精确布局控制
+private struct LayoutSection: View {
+    @Binding var layout: LayoutConfig
+
+    var body: some View {
+        Section("键盘布局") {
+            ValueSlider(title: "键盘高度", value: $layout.height, range: 340 ... 430, suffix: " pt")
+            ValueSlider(title: "水平键距", value: $layout.horizontalGap, range: 3 ... 9, suffix: " pt")
+            ValueSlider(title: "垂直键距", value: $layout.verticalGap, range: 4 ... 12, suffix: " pt")
+            ValueSlider(title: "外边距", value: $layout.outerInset, range: 4 ... 16, suffix: " pt")
+            Button("恢复标准布局") { layout = .standard }
+        }
+    }
+}
+
+// 展示带数值的滑块
+private struct ValueSlider: View {
+    let title: String
+    @Binding var value: Double
+    let range: ClosedRange<Double>
+    let suffix: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Text(title)
+                Spacer()
+                Text("\(value, specifier: "%.0f")\(suffix)")
+                    .foregroundStyle(.secondary)
+            }
+            Slider(value: $value, in: range, step: 1)
+        }
+    }
+}
+
+// 展示外观与预览
+private struct AppearanceSection: View {
+    @Binding var appearance: AppearanceConfig
+
+    var body: some View {
+        Section("外观") {
+            Picker("模式", selection: $appearance.mode) {
+                ForEach(AppearanceMode.allCases) { item in
+                    Text(item.title).tag(item)
+                }
+            }
+            .pickerStyle(.segmented)
+
+            ColorPicker("强调色", selection: color($appearance.accent), supportsOpacity: false)
+            if appearance.mode == .custom {
+                ColorPicker("键盘底色", selection: color($appearance.board), supportsOpacity: false)
+                ColorPicker("按键颜色", selection: color($appearance.key), supportsOpacity: false)
+                ColorPicker("文字颜色", selection: color($appearance.text), supportsOpacity: false)
+            }
+            KeyboardPreview(appearance: appearance)
+            Button("恢复默认外观") { appearance = .standard }
+        }
+    }
+
+    // 转换共享颜色绑定
+    private func color(_ source: Binding<ThemeColor>) -> Binding<Color> {
+        Binding(
+            get: { source.wrappedValue.swclr },
+            set: { source.wrappedValue = ThemeColor($0) }
+        )
+    }
+}
+
+// 展示按键外观预览
+private struct KeyboardPreview: View {
+    let appearance: AppearanceConfig
+
+    var body: some View {
+        HStack(spacing: 7) {
+            ForEach(["中", "A", "⌘", "空格"], id: \.self) { key in
+                Text(key)
+                    .font(.headline)
+                    .foregroundStyle(appearance.text.swclr)
+                    .frame(maxWidth: .infinity, minHeight: 42)
+                    .background(appearance.key.swclr, in: RoundedRectangle(cornerRadius: 9))
+            }
+        }
+        .padding(8)
+        .background(appearance.board.swclr, in: RoundedRectangle(cornerRadius: 12))
+        .overlay {
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color(uiColor: .separator).opacity(0.5), lineWidth: 1)
+        }
+    }
+}
+
+// 展示声音与模拟触觉开关
+private struct FeedbackSection: View {
+    @Binding var keySound: Bool
+    @Binding var simulatedHaptics: Bool
+    let fullAccess: Bool?
+
+    var body: some View {
+        Section("按键反馈") {
+            Toggle("按键音", isOn: $keySound)
+            Toggle("扬声器模拟触觉", isOn: $simulatedHaptics)
+            if simulatedHaptics {
+                Text(fullAccess == true
+                     ? "仅使用内置扬声器播放极短低频脉冲；耳机、蓝牙或外部音频输出接入时自动停用。"
+                     : "该功能需要允许完全访问；外部音频输出接入时会自动停用。")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }
@@ -90,98 +310,49 @@ private struct StatusCard: View {
     }
 }
 
-// 显示系统设置步骤
-private struct StepsCard: View {
-    private let steps = [
-        "使用 TrollStore 安装 MagicBoard.tipa 并打开主 App。",
-        "前往 设置 > 通用 > 键盘 > 键盘 > 添加新键盘。",
-        "选择 MagicBoard，然后打开“允许完全访问”。",
-        "在任意文本框长按地球键并切换到 MagicBoard。",
-    ]
+// 展示修饰键行为设置
+private struct ModifierSection: View {
+    @Binding var sticky: Bool
+    @Binding var mode: ModifierMode
 
     var body: some View {
-        GlassCard {
-            VStack(alignment: .leading, spacing: 16) {
-                Label("添加 MagicBoard", systemImage: "list.number")
-                    .font(.title2.bold())
-                ForEach(Array(steps.enumerated()), id: \.offset) { index, step in
-                    HStack(alignment: .top, spacing: 12) {
-                        Text("\(index + 1)")
-                            .font(.headline)
-                            .frame(width: 30, height: 30)
-                            .background(.cyan.opacity(0.18), in: Circle())
-                        Text(step)
-                            .font(.body)
-                            .padding(.top, 4)
-                    }
+        Section {
+            Toggle("Sticky Modifier", isOn: $sticky)
+            Picker("操作模式", selection: $mode) {
+                ForEach(ModifierMode.allCases) { item in
+                    Text(item.title).tag(item)
                 }
             }
+            .pickerStyle(.segmented)
+        } header: {
+            Text("Modifier 修饰键")
+        } footer: {
+            Text("混合模式：按住为临时生效；开启 Sticky 后，单击作用于下一键，双击持续锁定。")
         }
     }
 }
 
-// 显示青橙主题预览
-private struct ThemeCard: View {
-    let theme: BoardTheme
-    let action: () -> Void
+// 提供系统文本框用于验证输入法
+private struct TestInputView: View {
+    @State private var text = ""
 
     var body: some View {
-        GlassCard {
-            VStack(alignment: .leading, spacing: 16) {
-                Label("共享主题", systemImage: "paintpalette.fill")
-                    .font(.title2.bold())
-                HStack(spacing: 12) {
-                    ThemeSwatch(name: "主色", color: theme.primary.swclr)
-                    ThemeSwatch(name: "强调", color: theme.accent.swclr)
+        VStack(alignment: .leading, spacing: 16) {
+            Text("切换到 MagicBoard，测试中文候选、双拼、修饰键和布局变化。")
+                .foregroundStyle(.secondary)
+            TextEditor(text: $text)
+                .font(.title3)
+                .padding(10)
+                .scrollContentBackground(.hidden)
+                .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
+                .overlay {
+                    RoundedRectangle(cornerRadius: 14)
+                        .stroke(Color(uiColor: .separator), lineWidth: 1)
                 }
-                Button("同步默认青橙主题", action: action)
-                    .buttonStyle(.borderedProminent)
-                    .tint(theme.primary.swclr)
-                Text("主题使用语义颜色存入 App Group；任务 01 提供预览与共享模型，不扩展为完整编辑器。")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-            }
         }
-    }
-}
-
-// 显示主题色块
-private struct ThemeSwatch: View {
-    let name: String
-    let color: Color
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(color.gradient)
-                .frame(height: 82)
-                .overlay(alignment: .bottomTrailing) {
-                    Image(systemName: "keyboard.fill")
-                        .font(.title2)
-                        .foregroundStyle(.white.opacity(0.9))
-                        .padding(12)
-                }
-            Text(name)
-                .font(.headline)
-        }
-        .frame(maxWidth: .infinity)
-    }
-}
-
-// 复用玻璃卡片样式
-private struct GlassCard<Content: View>: View {
-    @ViewBuilder let content: Content
-
-    var body: some View {
-        content
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(20)
-            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-            .overlay {
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .stroke(.white.opacity(0.28), lineWidth: 1)
-            }
-            .shadow(color: .black.opacity(0.08), radius: 14, y: 7)
+        .padding(24)
+        .background(Color(uiColor: .systemGroupedBackground))
+        .navigationTitle("输入测试")
     }
 }
 
@@ -189,5 +360,27 @@ private struct GlassCard<Content: View>: View {
 private extension ThemeColor {
     var swclr: Color {
         Color(red: red, green: green, blue: blue, opacity: alpha)
+    }
+
+    // 从 SwiftUI 颜色创建共享颜色
+    init(_ color: Color) {
+        let resolved = UIColor(color)
+        var red: CGFloat = 0
+        var green: CGFloat = 0
+        var blue: CGFloat = 0
+        var alpha: CGFloat = 0
+        resolved.getRed(&red, green: &green, blue: &blue, alpha: &alpha)
+        self.init(red: red, green: green, blue: blue, alpha: alpha)
+    }
+}
+
+// 转换外观模式到系统色彩方案
+private extension AppearanceMode {
+    var scheme: ColorScheme? {
+        switch self {
+        case .system, .custom: nil
+        case .light: .light
+        case .dark: .dark
+        }
     }
 }
