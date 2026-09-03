@@ -182,12 +182,8 @@ private struct SetupCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 22) {
             HStack(alignment: .top, spacing: 16) {
-                VStack(alignment: .leading, spacing: 5) {
-                    Text(added ? "MagicBoard 已添加" : "添加 MagicBoard")
-                        .font(.headline)
-                    Text(added ? "长按地球键即可选择" : "设置 > 通用 > 键盘 > 键盘")
-                        .foregroundStyle(.secondary)
-                }
+                Text("初始化")
+                    .font(.headline)
                 Spacer()
                 Button(action: refresh) {
                     Image(systemName: "arrow.clockwise")
@@ -204,12 +200,17 @@ private struct SetupCard: View {
                 StatusTile("中文输入", ready: status.report?.engineReady == true)
             }
 
-            Button(action: openKeyboardSettings) {
-                Text("打开键盘设置")
-                    .frame(maxWidth: .infinity)
+            HStack {
+                Text("点击前往设置 →")
+                    .foregroundStyle(.secondary)
+                Spacer()
+                Button(action: openKeyboardSettings) {
+                    Image(systemName: "arrow.up.forward.app")
+                        .frame(width: 28, height: 28)
+                }
+                .buttonStyle(.borderedProminent)
+                .accessibilityLabel("打开键盘设置")
             }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.large)
         }
         .padding(24)
         .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
@@ -243,9 +244,10 @@ private struct StatusTile: View {
             Text(title)
                 .font(.subheadline.weight(.medium))
             Spacer(minLength: 0)
-            Text(ready ? "已就绪" : "未就绪")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+            Image(systemName: ready ? "checkmark.circle.fill" : "xmark.circle.fill")
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundStyle(ready ? .green : .red)
+                .accessibilityLabel(ready ? "已就绪" : "未就绪")
         }
         .padding(.horizontal, 14)
         .frame(minHeight: 48)
