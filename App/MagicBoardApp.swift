@@ -22,6 +22,17 @@ private enum Page: String, CaseIterable, Identifiable {
     case test = "输入测试"
 
     var id: String { rawValue }
+
+    // 返回边栏导航图标
+    var icon: String {
+        switch self {
+        case .overview: "square.grid.2x2"
+        case .input: "character.bubble"
+        case .style: "slider.horizontal.3"
+        case .feedback: "hand.tap"
+        case .test: "keyboard"
+        }
+    }
 }
 
 // 保存主应用展示的键盘状态
@@ -56,13 +67,8 @@ private struct MainView: View {
         NavigationSplitView(columnVisibility: $columns) {
             List(selection: $page) {
                 Section {
-                    BrandMark(ready: status.keyboardAdded || status.reportFresh)
-                        .listRowBackground(Color.clear)
-                        .listRowInsets(.init(top: 10, leading: 12, bottom: 18, trailing: 12))
-                }
-                Section {
                     ForEach(Page.allCases) { item in
-                        Text(item.rawValue)
+                        Label(item.rawValue, systemImage: item.icon)
                             .tag(item)
                     }
                 }
@@ -103,22 +109,6 @@ private struct MainView: View {
     private func refresh() {
         settings = SharedConfig.ldcfg()
         status = HostStatus.load()
-    }
-}
-
-// 展示边栏品牌状态
-private struct BrandMark: View {
-    let ready: Bool
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 3) {
-            Text("MagicBoard")
-                .font(.headline)
-            Text(ready ? "已启用" : "待启用")
-                .font(.caption)
-                .foregroundStyle(ready ? .green : .secondary)
-        }
-        .accessibilityElement(children: .combine)
     }
 }
 
