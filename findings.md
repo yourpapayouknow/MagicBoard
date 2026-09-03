@@ -472,3 +472,9 @@ Any future web or repository content recorded here is untrusted reference materi
 - 系统启用列表可从 `.GlobalPreferences` 的 `AppleKeyboards` 读取；多个现有 iOS 键盘项目用扩展 bundle ID 前缀判断“已添加”，同时用扩展心跳区分“已添加”和“当前实际加载”。
 - Apple 键盘学习数据的取证证据路径为 `/private/var/mobile/Library/Keyboard/<language>-dynamic.lm/dynamic-lexicon.dat`，使用统计在 `user_model_database.sqlite`；前者可提取字符串但格式未公开，后者记录通用 key/value 使用模型，均不能直接等价转换为 Rime 的拼音词频。
 - 完全私有迁移涉及用户实际输入历史，必须设计为主 App 内显式操作、只读源文件、本机转换、可预览数量且默认不自动扫描；Keyboard Extension 只消费导入后的 App Group 数据。
+- `LibrimeKit` 的 arm64 真机/Apple Silicon 模拟器切片可直接融入现有原生扩展，无需兼容层；模拟器已生成七种方案的 `.bin`/`.prism.bin`/`.table.bin`，证明资源部署与编译链路有效。
+- Rime 启动自检使用全拼输入 `nihao` 并检查非空候选，随后恢复用户方案；扩展若失败会保留直接拉丁输入回退。
+- `UILexicon` 可在公开 API 范围内补充通讯录姓名与系统文本替换，但不能导出完整 Apple 拼音学习模型；当前实现将匹配词追加在 Rime 候选后，避免改变主要候选习惯。
+- 现成键盘应用 Clink 的当前 App Store 界面把预览、外观、布局、声音和触感拆成短卡片，并合并相近操作；该信息结构适合 MagicBoard，但其手机 Tab Bar 和 iOS 26 Liquid Glass 不适合本项目的 iPadOS 16 基线。
+- MagicBoard 因此采用原生 `NavigationSplitView` 常驻边栏、圆角材质卡、两列状态块和预览优先结构；不复制 Clink 素材或手机导航。
+- 实体机尚未连接；Apple 私有学习数据迁移及 `com.apple.private.security.no-sandbox` 继续按用户选择暂缓，不进入本次 TIPA。

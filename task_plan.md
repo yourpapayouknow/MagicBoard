@@ -75,6 +75,8 @@ Build a traceable iPadOS project containing the MagicBoard host app, keyboard ex
 | Error | Attempt | Resolution |
 |---|---:|---|
 | Task 09 参考检索中 Zsh 报告 `no matches found: refrence/iRime*` | 1 | 该目录不存在；后续只使用已确认存在的 `refrence/Hamster` 等明确路径，不重复该通配符 |
+| 模拟器中连续短按地球键切换输入源效率低且未稳定到达 MagicBoard | 1 | 用户指出应长按地球键直接选择；停止重复尝试，并将同样的简洁指引写入输入测试页 |
+| 新版概览首次编译使用了 iOS 17 才提供的 `.buttonBorderShape(.circle)` | 1 | 保持 iPadOS 16 部署目标，移除该单行装饰后 Debug 与 Release 均通过 |
 | `autocli 0.3.8 google search` 拒绝技能示例中的 `--query` | 1 | CLI 帮助确认当前版本使用位置参数 `<keyword>`；后续按本机真实签名调用 |
 | GitHub API 查询旧归属 `imfuxiao/LibrimeKit` 最新 release 返回 404 | 1 | Hamster 源码与 GitHub 页面确认当前上游为 `amorphobia/LibrimeKit`；后续查询正确仓库 |
 | 连续 GitHub 代码搜索触发 API 403 限流 | 1 | 已取得所需路径与状态检测证据；停止代码搜索，不重试限流接口，后续使用本地参考和设备验证 |
@@ -764,7 +766,7 @@ Unify every ordinary, function, and modifier key behind one `KeyView` visual com
 
 ### Phase 7 — 设置需求与平台能力核验
 
-**Status:** in_progress
+**Status:** complete
 
 - 核验现有 App Group、Keyboard Extension 刷新时机、entitlement 与系统设置跳转能力。
 - 区分“输入方案选择”与真实拼音转汉字引擎，确认全拼/双拼的验收边界。
@@ -780,17 +782,29 @@ Unify every ordinary, function, and modifier key behind one `KeyView` visual com
 
 ### Phase 9 — 主 App 设置首页与扩展接入
 
-**Status:** in_progress
+**Status:** complete
 
 - 实现启用引导/跳转、状态信息、布局、外观、强调色、反馈、Modifier 与中文方案设置。
 - 实现测试输入区域或键盘预览。
 - Keyboard Extension 在重新出现时读取新配置并应用，无需重新安装。
 
-**阶段进展：** 主 App 设置首页与真实 `TextEditor` 测试区已完成，并通过通用 iOS 模拟器 Debug 构建；正在接入 Keyboard Extension。
+**阶段结果：** 主 App、共享配置、Keyboard Extension、离线中文引擎与系统补充词典均已接入；设置修改在扩展再次出现或输入上下文变化时生效。
 
 ### Phase 10 — 构建、行为验证与交付
 
-**Status:** pending
+**Status:** complete
 
 - 运行 Swift Package 测试、XcodeGen、模拟器构建与定向检查。
 - 验证改动范围、生成可回滚 Git 提交并记录未能在模拟器自动验证的设备项。
+
+### Task 09 completion checklist
+
+- [x] 现代 iPad 双栏设置首页与键盘启用跳转
+- [x] 键盘、完全访问、设置同步与中文引擎状态
+- [x] 全拼、六种双拼与不可选五笔
+- [x] 键盘布局、四种外观、自定义颜色与强调色
+- [x] 按键音、内置扬声器模拟触觉、Sticky Modifier 与操作模式
+- [x] App Group 即时设置同步与扩展生命周期刷新
+- [x] 输入测试区、候选栏、离线 Rime 与 `UILexicon` 补充候选
+- [x] 48 项共享测试、设计 lint、模拟器 Debug、arm64 Release 与 TIPA 验证
+- [ ] 实体 iPad 上验证私有系统学习数据格式后，再决定是否增加无沙箱 entitlement 与显式迁移入口
