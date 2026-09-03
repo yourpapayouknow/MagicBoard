@@ -11,6 +11,95 @@ final class SharedConfigTests: XCTestCase {
         return (UserDefaults(suiteName: name)!, name)
     }
 
+    // 验证完整设置默认值
+    func testcfgdflt() {
+        let (defaults, name) = mkdefs()
+        defer { defaults.removePersistentDomain(forName: name) }
+
+        XCTAssertEqual(SharedConfig.ldcfg(defaults: defaults), .standard)
+    }
+
+    // 验证完整设置往返
+    func testcfgrndtrp() {
+        let (defaults, name) = mkdefs()
+        defer { defaults.removePersistentDomain(forName: name) }
+        var settings = BoardSettings.standard
+        settings.scheme = .microsoft
+        settings.layout = LayoutConfig(height: 372, horizontalGap: 5, verticalGap: 8, outerInset: 11)
+        settings.appearance = AppearanceConfig(
+            mode: .custom,
+            accent: ThemeColor(red: 0.4, green: 0.2, blue: 0.8),
+            board: ThemeColor(red: 0.1, green: 0.12, blue: 0.16),
+            key: ThemeColor(red: 0.22, green: 0.24, blue: 0.3),
+            text: ThemeColor(red: 0.95, green: 0.96, blue: 1)
+        )
+        settings.keySound = false
+        settings.simulatedHaptics = true
+        settings.stickyModifiers = false
+        settings.modifierMode = .toggle
+
+        SharedConfig.svcfg(settings, defaults: defaults)
+
+        XCTAssertEqual(SharedConfig.ldcfg(defaults: defaults), settings)
+        XCTAssertEqual(SharedConfig.ldthm(defaults: defaults).primary, settings.appearance.accent)
+    }
+
+    // 验证损坏设置回退
+    func testcfgbad() {
+        let (defaults, name) = mkdefs()
+        defer { defaults.removePersistentDomain(forName: name) }
+        defaults.set(Data("bad".utf8), forKey: "magicboard.settings.v1")
+
+        XCTAssertEqual(SharedConfig.ldcfg(defaults: defaults), .standard)
+    }
+
+    // 验证布局与颜色安全归一化
+    func testcfgnorm() {
+        let (defaults, name) = mkdefs()
+        defer { defaults.removePersistentDomain(forName: name) }
+        var settings = BoardSettings.standard
+        settings.layout = LayoutConfig(height: 900, horizontalGap: -2, verticalGap: 40, outerInset: 0)
+        settings.appearance.accent = ThemeColor(red: -1, green: 0.5, blue: 3, alpha: 2)
+
+        SharedConfig.svcfg(settings, defaults: defaults)
+        let loaded = SharedConfig.ldcfg(defaults: defaults)
+
+        XCTAssertEqual(loaded.layout, LayoutConfig(height: 430, horizontalGap: 3, verticalGap: 12, outerInset: 4))
+        XCTAssertEqual(loaded.appearance.accent, ThemeColor(red: 0, green: 0.5, blue: 1, alpha: 1))
+    }
+
+    // 验证旧主题迁移为新强调色
+    func testcfglegacy() {
+        let (defaults, name) = mkdefs()
+        defer { defaults.removePersistentDomain(forName: name) }
+        let theme = BoardTheme(
+            primary: ThemeColor(red: 0.3, green: 0.4, blue: 0.5),
+            accent: ThemeColor(red: 0.8, green: 0.7, blue: 0.2)
+        )
+        SharedConfig.svthm(theme, defaults: defaults)
+
+        let loaded = SharedConfig.ldcfg(defaults: defaults)
+
+        XCTAssertEqual(loaded.appearance.accent, theme.primary)
+        XCTAssertEqual(loaded.appearance.mode, .system)
+    }
+
+    // 验证扩展状态心跳往返
+    func testrpt() {
+        let (defaults, name) = mkdefs()
+        defer { defaults.removePersistentDomain(forName: name) }
+        let report = KeyboardReport(
+            lastSeen: Date(timeIntervalSince1970: 1234),
+            hasFullAccess: true,
+            engineReady: true,
+            scheme: .microsoft
+        )
+
+        SharedConfig.svrpt(report, defaults: defaults)
+
+        XCTAssertEqual(SharedConfig.ldrpt(defaults: defaults), report)
+    }
+
     // 验证空配置回退
     func testdflt() {
         let (defaults, name) = mkdefs()

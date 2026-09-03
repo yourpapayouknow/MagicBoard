@@ -504,3 +504,6 @@
 - 已查到 `AppleKeyboards` 状态检测与 Apple 动态词库/使用模型路径；GitHub 随后触发 403 限流，已停止搜索并保留已得证据。
 - 用户决定先连接实体机再实施私有迁移，因此本阶段不改无沙箱 entitlement；其余功能继续。
 - 已将 Task 09 的设置首页、候选栏、六种双拼、精细布局、外观、反馈与 Modifier 规则写入 `DESIGN.md`，`npx @google/design.md lint DESIGN.md` 为 0 findings。
+- Phase 8 红灯验证按预期失败：新增设置测试在 `SharedConfig` 尚无 `ldcfg/svcfg` 等 API 时产生编译错误。
+- 已实现版本化 `BoardSettings`、七种可选中文方案（全拼 + 六双拼）、布局/外观/反馈/Modifier 配置、旧主题迁移与 `KeyboardReport` 心跳。
+- `swift test` 现通过 44/44，覆盖默认值、完整往返、损坏回退、越界归一化、旧主题迁移与扩展状态。

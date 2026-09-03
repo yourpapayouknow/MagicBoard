@@ -34,6 +34,213 @@ public struct BoardTheme: Codable, Equatable, Sendable {
     )
 }
 
+// 定义主应用与键盘共享的外观模式
+public enum AppearanceMode: String, CaseIterable, Codable, Identifiable, Sendable {
+    case system
+    case light
+    case dark
+    case custom
+
+    public var id: String { rawValue }
+
+    // 返回外观模式名称
+    public var title: String {
+        switch self {
+        case .system: "跟随系统"
+        case .light: "浅色"
+        case .dark: "深色"
+        case .custom: "自定义"
+        }
+    }
+}
+
+// 定义中文输入方案
+public enum ChineseScheme: String, CaseIterable, Codable, Identifiable, Sendable {
+    case fullPinyin
+    case microsoft
+    case naturalCode
+    case intelligentABC
+    case xiaohe
+    case pinyinJiajia
+    case sitong
+
+    public var id: String { rawValue }
+
+    // 返回输入方案名称
+    public var title: String {
+        switch self {
+        case .fullPinyin: "全拼"
+        case .microsoft: "微软双拼"
+        case .naturalCode: "自然码双拼"
+        case .intelligentABC: "智能 ABC 双拼"
+        case .xiaohe: "小鹤双拼"
+        case .pinyinJiajia: "拼音加加双拼"
+        case .sitong: "四通双拼"
+        }
+    }
+
+    // 返回 Rime 方案标识
+    public var schemaID: String {
+        switch self {
+        case .fullPinyin: "luna_pinyin_simp"
+        case .microsoft: "double_pinyin_mspy"
+        case .naturalCode: "double_pinyin"
+        case .intelligentABC: "double_pinyin_abc"
+        case .xiaohe: "double_pinyin_flypy"
+        case .pinyinJiajia: "double_pinyin_pyjj"
+        case .sitong: "double_pinyin_st"
+        }
+    }
+}
+
+// 定义修饰键操作模式
+public enum ModifierMode: String, CaseIterable, Codable, Identifiable, Sendable {
+    case hold
+    case toggle
+    case mixed
+
+    public var id: String { rawValue }
+
+    // 返回修饰键模式名称
+    public var title: String {
+        switch self {
+        case .hold: "按住"
+        case .toggle: "切换"
+        case .mixed: "混合"
+        }
+    }
+}
+
+// 保存键盘布局参数
+public struct LayoutConfig: Codable, Equatable, Sendable {
+    public var height: Double
+    public var horizontalGap: Double
+    public var verticalGap: Double
+    public var outerInset: Double
+
+    // 创建布局参数
+    public init(height: Double, horizontalGap: Double, verticalGap: Double, outerInset: Double) {
+        self.height = height
+        self.horizontalGap = horizontalGap
+        self.verticalGap = verticalGap
+        self.outerInset = outerInset
+    }
+
+    public static let standard = LayoutConfig(height: 430, horizontalGap: 6, verticalGap: 7, outerInset: 7)
+
+    // 限制布局参数到安全范围
+    fileprivate func norm() -> LayoutConfig {
+        LayoutConfig(
+            height: height.clmp(340 ... 430),
+            horizontalGap: horizontalGap.clmp(3 ... 9),
+            verticalGap: verticalGap.clmp(4 ... 12),
+            outerInset: outerInset.clmp(4 ... 16)
+        )
+    }
+}
+
+// 保存键盘外观参数
+public struct AppearanceConfig: Codable, Equatable, Sendable {
+    public var mode: AppearanceMode
+    public var accent: ThemeColor
+    public var board: ThemeColor
+    public var key: ThemeColor
+    public var text: ThemeColor
+
+    // 创建外观参数
+    public init(mode: AppearanceMode, accent: ThemeColor, board: ThemeColor, key: ThemeColor, text: ThemeColor) {
+        self.mode = mode
+        self.accent = accent
+        self.board = board
+        self.key = key
+        self.text = text
+    }
+
+    public static let standard = AppearanceConfig(
+        mode: .system,
+        accent: BoardTheme.cyanOrange.primary,
+        board: ThemeColor(red: 0.78, green: 0.8, blue: 0.84),
+        key: ThemeColor(red: 0.98, green: 0.98, blue: 1),
+        text: ThemeColor(red: 0.08, green: 0.08, blue: 0.1)
+    )
+
+    // 限制自定义颜色到有效范围
+    fileprivate func norm() -> AppearanceConfig {
+        AppearanceConfig(
+            mode: mode,
+            accent: accent.norm(),
+            board: board.norm(),
+            key: key.norm(),
+            text: text.norm()
+        )
+    }
+}
+
+// 保存主应用与键盘共享的完整设置
+public struct BoardSettings: Codable, Equatable, Sendable {
+    public var version: Int
+    public var scheme: ChineseScheme
+    public var layout: LayoutConfig
+    public var appearance: AppearanceConfig
+    public var keySound: Bool
+    public var simulatedHaptics: Bool
+    public var stickyModifiers: Bool
+    public var modifierMode: ModifierMode
+
+    // 创建完整设置
+    public init(
+        version: Int = 1,
+        scheme: ChineseScheme = .fullPinyin,
+        layout: LayoutConfig = .standard,
+        appearance: AppearanceConfig = .standard,
+        keySound: Bool = true,
+        simulatedHaptics: Bool = false,
+        stickyModifiers: Bool = true,
+        modifierMode: ModifierMode = .mixed
+    ) {
+        self.version = version
+        self.scheme = scheme
+        self.layout = layout
+        self.appearance = appearance
+        self.keySound = keySound
+        self.simulatedHaptics = simulatedHaptics
+        self.stickyModifiers = stickyModifiers
+        self.modifierMode = modifierMode
+    }
+
+    public static let standard = BoardSettings()
+
+    // 生成安全的当前版本设置
+    fileprivate func norm() -> BoardSettings {
+        BoardSettings(
+            version: 1,
+            scheme: scheme,
+            layout: layout.norm(),
+            appearance: appearance.norm(),
+            keySound: keySound,
+            simulatedHaptics: simulatedHaptics,
+            stickyModifiers: stickyModifiers,
+            modifierMode: modifierMode
+        )
+    }
+}
+
+// 表示键盘扩展最近状态
+public struct KeyboardReport: Codable, Equatable, Sendable {
+    public let lastSeen: Date
+    public let hasFullAccess: Bool
+    public let engineReady: Bool
+    public let scheme: ChineseScheme
+
+    // 创建键盘扩展状态
+    public init(lastSeen: Date, hasFullAccess: Bool, engineReady: Bool, scheme: ChineseScheme) {
+        self.lastSeen = lastSeen
+        self.hasFullAccess = hasFullAccess
+        self.engineReady = engineReady
+        self.scheme = scheme
+    }
+}
+
 // 表示当前输入语言
 public enum BoardLang: Equatable, Sendable {
     case english
@@ -325,23 +532,72 @@ public struct GroupState: Equatable, Sendable {
 public enum SharedConfig {
     public static let groupID = "group.com.iwmei.magicboard"
     private static let themeKey = "magicboard.theme"
+    private static let settingsKey = "magicboard.settings.v1"
+    private static let reportKey = "magicboard.keyboard.report"
     private static let checkKey = "magicboard.check"
+
+    // 读取完整共享设置
+    public static func ldcfg(defaults: UserDefaults? = UserDefaults(suiteName: groupID)) -> BoardSettings {
+        guard let defaults else { return .standard }
+        if
+            let data = defaults.data(forKey: settingsKey),
+            let settings = try? JSONDecoder().decode(BoardSettings.self, from: data)
+        {
+            return settings.norm()
+        }
+
+        var settings = BoardSettings.standard
+        if let theme = rawthm(defaults: defaults) {
+            settings.appearance.accent = theme.primary
+        }
+        return settings
+    }
+
+    // 保存完整共享设置
+    public static func svcfg(_ settings: BoardSettings, defaults: UserDefaults? = UserDefaults(suiteName: groupID)) {
+        guard let defaults else { return }
+        let normalized = settings.norm()
+        guard let data = try? JSONEncoder().encode(normalized) else { return }
+        defaults.set(data, forKey: settingsKey)
+        svthm(
+            BoardTheme(primary: normalized.appearance.accent, accent: BoardTheme.cyanOrange.accent),
+            defaults: defaults
+        )
+    }
 
     // 读取共享主题
     public static func ldthm(defaults: UserDefaults? = UserDefaults(suiteName: groupID)) -> BoardTheme {
-        guard
-            let data = defaults?.data(forKey: themeKey),
-            let theme = try? JSONDecoder().decode(BoardTheme.self, from: data)
-        else {
-            return .cyanOrange
+        if
+            let data = defaults?.data(forKey: settingsKey),
+            let settings = try? JSONDecoder().decode(BoardSettings.self, from: data)
+        {
+            return BoardTheme(
+                primary: settings.norm().appearance.accent,
+                accent: BoardTheme.cyanOrange.accent
+            )
         }
-        return theme
+        return defaults.flatMap(rawthm) ?? .cyanOrange
     }
 
     // 保存共享主题
     public static func svthm(_ theme: BoardTheme, defaults: UserDefaults? = UserDefaults(suiteName: groupID)) {
         guard let data = try? JSONEncoder().encode(theme) else { return }
         defaults?.set(data, forKey: themeKey)
+    }
+
+    // 读取键盘扩展最近状态
+    public static func ldrpt(defaults: UserDefaults? = UserDefaults(suiteName: groupID)) -> KeyboardReport? {
+        guard
+            let data = defaults?.data(forKey: reportKey),
+            let report = try? JSONDecoder().decode(KeyboardReport.self, from: data)
+        else { return nil }
+        return report
+    }
+
+    // 保存键盘扩展最近状态
+    public static func svrpt(_ report: KeyboardReport, defaults: UserDefaults? = UserDefaults(suiteName: groupID)) {
+        guard let data = try? JSONEncoder().encode(report) else { return }
+        defaults?.set(data, forKey: reportKey)
     }
 
     // 检查共享容器
@@ -356,7 +612,34 @@ public enum SharedConfig {
         defaults.removeObject(forKey: checkKey)
 
         return available
-            ? GroupState(available: true, message: "App Group 已连接，主 App 与键盘可共享主题。")
+            ? GroupState(available: true, message: "App Group 已连接，主 App 与键盘可共享设置。")
             : GroupState(available: false, message: "App Group 无法写入，请重新安装并检查完全访问。")
+    }
+
+    // 解码旧版共享主题
+    private static func rawthm(defaults: UserDefaults) -> BoardTheme? {
+        guard let data = defaults.data(forKey: themeKey) else { return nil }
+        return try? JSONDecoder().decode(BoardTheme.self, from: data)
+    }
+}
+
+// 提供数值安全限制
+private extension Double {
+    // 限制数值到闭区间
+    func clmp(_ range: ClosedRange<Double>) -> Double {
+        min(max(self, range.lowerBound), range.upperBound)
+    }
+}
+
+// 提供颜色安全限制
+private extension ThemeColor {
+    // 限制颜色通道到有效范围
+    func norm() -> ThemeColor {
+        ThemeColor(
+            red: red.clmp(0 ... 1),
+            green: green.clmp(0 ... 1),
+            blue: blue.clmp(0 ... 1),
+            alpha: alpha.clmp(0 ... 1)
+        )
     }
 }

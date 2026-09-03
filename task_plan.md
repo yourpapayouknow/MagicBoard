@@ -772,14 +772,14 @@ Unify every ordinary, function, and modifier key behind one `KeyView` visual com
 
 ### Phase 8 — 共享设置模型与测试
 
-**Status:** pending
+**Status:** complete
 
 - 建立版本化、可向后兼容的统一设置快照与 App Group 读写接口。
 - 覆盖默认值、往返、损坏数据、迁移与各设置枚举的测试。
 
 ### Phase 9 — 主 App 设置首页与扩展接入
 
-**Status:** pending
+**Status:** in_progress
 
 - 实现启用引导/跳转、状态信息、布局、外观、强调色、反馈、Modifier 与中文方案设置。
 - 实现测试输入区域或键盘预览。
