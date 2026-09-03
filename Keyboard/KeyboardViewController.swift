@@ -794,9 +794,9 @@ final class KeyboardViewController: UIInputViewController {
             ctl("space", kind: .space, weight: 5),
             ctl(image: "command", kind: .rightCommand, weight: 1.25, align: .trailing),
             ctl(image: "option", kind: .rightOption, weight: 1.15, align: .trailing),
-            ctl(image: "arrow.left", kind: .leftArrow, weight: 0.75),
+            ctl(image: "arrowtriangle.left.fill", kind: .leftArrow, weight: 0.75),
             ctl(image: "arrow.up.arrow.down", kind: .upArrow, weight: 0.75),
-            ctl(image: "arrow.right", kind: .rightArrow, weight: 0.75),
+            ctl(image: "arrowtriangle.right.fill", kind: .rightArrow, weight: 0.75),
         ]
     }
 
@@ -969,8 +969,8 @@ final class KeyboardViewController: UIInputViewController {
         pair.alignment = .fill
         pair.distribution = .fillEqually
         pair.spacing = 4
-        pair.addArrangedSubview(mkkey(ctl(image: "arrow.up", kind: .upArrow)))
-        pair.addArrangedSubview(mkkey(ctl(image: "arrow.down", kind: .downArrow)))
+        pair.addArrangedSubview(mkkey(ctl(image: "arrowtriangle.up.fill", kind: .upArrow)))
+        pair.addArrangedSubview(mkkey(ctl(image: "arrowtriangle.down.fill", kind: .downArrow)))
         return pair
     }
 
