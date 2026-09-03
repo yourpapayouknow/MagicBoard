@@ -64,5 +64,6 @@
 "版本信息" = "Version Information";
 "版本" = "Version";
 "构建号" = "Build";
+"作者" = "Author";
 "致谢" = "Acknowledgements";
 "感谢 Rime 输入法引擎、LibrimeKit 与开源社区。" = "Thanks to the Rime input method engine, LibrimeKit, and the open-source community.";

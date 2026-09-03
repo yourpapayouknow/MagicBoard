@@ -514,6 +514,8 @@ private struct AboutView: View {
                 LabeledContent("版本", value: version)
                 Divider()
                 LabeledContent("构建号", value: build)
+                Divider()
+                LabeledContent("作者", value: "iwmei")
             }
 
             SettingCard(title: "致谢") {
