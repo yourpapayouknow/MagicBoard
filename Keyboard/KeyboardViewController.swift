@@ -613,16 +613,8 @@ final class KeyboardViewController: UIInputViewController {
 
     // 读取系统通讯录与文本替换补充词典
     private func loadLexicon() {
-        requestSupplementaryLexicon { [weak self] value in
+        MBLexiconBridge.load(self) { [weak self] grouped in
             guard let self else { return }
-            var grouped: [String: [String]] = [:]
-            for entry in value.entries {
-                let key = entry.userInput.lowercased()
-                guard !key.isEmpty, !entry.documentText.isEmpty else { continue }
-                if grouped[key]?.contains(entry.documentText) != true {
-                    grouped[key, default: []].append(entry.documentText)
-                }
-            }
             lexicon = grouped
             if state.language == .chinese, ime.isComposing {
                 renderCandidates(ime.snapshot())
@@ -650,10 +642,10 @@ final class KeyboardViewController: UIInputViewController {
                 ? ime.ready ? settings.scheme.title : "引擎不可用"
                 : "ABC")
 
-        let engineCandidates = snapshot?.candidates ?? []
-        systemCandidates = snapshot.map { syscands($0.rawInput) }?.filter {
+        let engineCandidates = Array((snapshot?.candidates ?? []).prefix(20))
+        systemCandidates = Array((snapshot.map { syscands($0.rawInput) }?.filter {
             !engineCandidates.contains($0)
-        } ?? []
+        } ?? []).prefix(max(0, 20 - engineCandidates.count)))
         let visible: [(text: String, engineIndex: Int?)] = engineCandidates.enumerated().map {
             (text: $0.element, engineIndex: $0.offset)
         } + systemCandidates.map { (text: $0, engineIndex: nil) }
@@ -1227,7 +1219,6 @@ final class KeyboardViewController: UIInputViewController {
     // 显示普通字符键弹出反馈
     private func shwpop(_ button: KeyView, spec: KeySpec) {
         hidepop(button)
-        view.layoutIfNeeded()
         let keyframe = button.convert(button.bounds, to: view)
         let width = min(max(keyframe.width * 1.18, 54), 82)
         let height = min(max(keyframe.height * 1.35, 62), 84)
