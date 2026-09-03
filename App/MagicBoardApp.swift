@@ -201,9 +201,9 @@ private struct SetupCard: View {
             }
 
             HStack {
+                Spacer()
                 Text("点击前往设置 →")
                     .foregroundStyle(.secondary)
-                Spacer()
                 Button(action: openKeyboardSettings) {
                     Image(systemName: "arrow.up.forward.app")
                         .frame(width: 28, height: 28)
