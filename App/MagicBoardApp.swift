@@ -186,6 +186,14 @@ private struct SetupCard: View {
                     .font(.system(size: 34, weight: .semibold, design: .rounded))
                     .frame(height: 44, alignment: .topLeading)
                 Spacer()
+                Text("点击前往设置 →")
+                    .foregroundStyle(.secondary)
+                Button(action: openKeyboardSettings) {
+                    Image(systemName: "arrow.up.forward.app")
+                        .frame(width: 28, height: 28)
+                }
+                .buttonStyle(.borderedProminent)
+                .accessibilityLabel("打开键盘设置")
                 Button(action: refresh) {
                     Image(systemName: "arrow.clockwise")
                         .frame(width: 28, height: 28)
@@ -199,18 +207,6 @@ private struct SetupCard: View {
                 StatusTile("完全访问", ready: status.report?.hasFullAccess == true)
                 StatusTile("设置同步", ready: status.group.available)
                 StatusTile("中文输入", ready: status.report?.engineReady == true)
-            }
-
-            HStack {
-                Spacer()
-                Text("点击前往设置 →")
-                    .foregroundStyle(.secondary)
-                Button(action: openKeyboardSettings) {
-                    Image(systemName: "arrow.up.forward.app")
-                        .frame(width: 28, height: 28)
-                }
-                .buttonStyle(.borderedProminent)
-                .accessibilityLabel("打开键盘设置")
             }
         }
         .padding(24)
