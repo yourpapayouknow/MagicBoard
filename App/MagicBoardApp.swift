@@ -184,6 +184,7 @@ private struct SetupCard: View {
             HStack(alignment: .top, spacing: 16) {
                 Text("初始化")
                     .font(.headline)
+                    .frame(height: 44, alignment: .topLeading)
                 Spacer()
                 Button(action: refresh) {
                     Image(systemName: "arrow.clockwise")
