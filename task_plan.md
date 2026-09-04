@@ -897,3 +897,88 @@ Unify every ordinary, function, and modifier key behind one `KeyView` visual com
 - Rebuild `MagicBoard.tipa` and physically verify on iOS 16.6.1 device with TrollStore (confirmed 100% stable, instant open).
 - Commit changes to Git, create tag `v1.0.1`, push to remote, and publish GitHub Release.
 
+## Task 11 — 定义伴侣通信协议与共享配置
+
+**Status:** pending
+
+- 制定无状态超低延迟二进制 UDP 通信协议规范。
+- 规范动作类型（KeyDown、KeyUp、Pulse 单包脉冲、Heartbeat 状态同步、ResetAll 紧急重置）。
+- 规范 8 位修饰键掩码（同步 Ctrl, Shift, Option/Alt, Command/Win 状态）。
+- 采用国际标准 USB HID Usage 16 位编码作为统一按键标识。
+- 在 `MagicBoardShared` 中新增 `CompanionProtocol` 报文编解码模块。
+- 在 `SharedConfig` 中扩展伴侣总开关、主机地址、端口与工作模式配置。
+- 编写共享模块单元测试验证配置存取与报文序列化反序列化。
+
+## Task 12 — 实现 macOS 优先被控端伴侣服务
+
+**Status:** pending
+
+- 编写单文件 Swift 原生命令行服务 `magicboard-companion-mac`。
+- 提供零外部依赖的 Python 3 备用脚本。
+- 实现标准 USB HID Usage 到 macOS 原生 `CGKeyCode` 的精确映射。
+- 采用 CoreGraphics 官方 API（`CGEventCreateKeyboardEvent` 与 `CGEventPost`）注入系统事件队列。
+- 实现 `pulse` 脉冲动作自动执行按下并抬起。
+- 实现 1.5 秒断网看门狗防止按键意外悬空。
+- 实现 `resetAll` 立即安全释放所有按键。
+- 集成 macOS 辅助功能（Accessibility）权限检测与开启提示。
+- 本地发送 UDP 报文实测 Command、Option、Control、Esc、Tab、F1~F12 等按键生效。
+
+## Task 13 — 实现 Windows 被控端伴侣服务
+
+**Status:** pending
+
+- 编写单文件绿色版免安装 Windows 伴侣服务。
+- 提供零依赖 Python 3 备用脚本（基于 `ctypes` 调用 `user32.dll`）。
+- 实现标准 USB HID Usage 到 Windows Virtual-Key 与硬件扫描码的映射。
+- 采用 Windows 官方 `SendInput` API 注入按键。
+- 支持管理员权限提权运行以突破 UIPI 隔离。
+- 实现 `pulse` 单包脉冲与防卡键超时看门狗。
+- 支持 Windows 防火墙 UDP 端口一键放行指引。
+- 本地发送 UDP 报文实测 Win、Alt、Ctrl、Esc、Tab、F1~F12 等按键生效。
+
+## Task 14 — 实现 iPad 键盘端网络桥接与事件分流
+
+**Status:** pending
+
+- 新建基于 `Network.framework` 的异步非阻塞 `CompanionBridge` 客户端。
+- 确保 UDP 发包运行在独立后台队列，耗时小于 1ms，不阻塞主 UI 触摸与渲染。
+- 严格遵循 Jetsam 内存约束，常驻内存增量控制在 100KB 以内。
+- 改造 `KeyboardViewController` 中的 `sndhid` 按键出口支持伴侣分流。
+- 改造 `sndfn` 功能键出口支持伴侣分流。
+- 改造 `moddown` 与 `modtap` 修饰键出口支持伴侣状态同步。
+- 改造 `arrdown` 方向键出口支持伴侣分流。
+- 改造 `inptxt` 在全接管模式下支持字符透传。
+- 确保关闭伴侣模式时 100% 回退现有单机本地 HID 链路。
+- 在 `App` 与 `Keyboard` 的 `Info.plist` 中补齐 `NSLocalNetworkUsageDescription` 局域网描述。
+
+## Task 15 — 实现主 App 伴侣设置与权限引导交互
+
+**Status:** pending
+
+- 在 `MagicBoardApp` 中新增远程伴侣配置卡片。
+- 提供伴侣模式启用总开关。
+- 提供被控端 IP / 域名输入框（支持 IPv4 / IPv6 / Tailscale IP）。
+- 提供被控端端口输入框（默认 52088）。
+- 提供仅功能键分流与全键盘接管的工作模式切换器。
+- 提供被控端系统预设切换（macOS 优先 / Windows）。
+- 提供一键测试连接按钮并发送测试 Ping 报文。
+- 在主 App 前台触发并引导用户授权 iOS 本地网络权限。
+- 同步更新 App Group 配置并支持键盘扩展即时读取生效。
+- 补充中英文界面本地化字符串。
+
+## Task 16 — 伴侣模式综合测试构建与实机远控验证
+
+**Status:** pending
+
+- 运行所有共享模块单元测试确保测试全部通过。
+- 运行 `npx @google/design.md lint` 检查设计系统合规性。
+- 重新生成 Xcode 工程并执行模拟器 Debug 编译与验证。
+- 执行 `build-tipa.zsh` 打包最终 Release 版 `MagicBoard.tipa`。
+- 检验安装包签名、权限配置、版本号与符号完整性。
+- 实机测试网易UU远程连接 macOS 场景下 Command+A、Command+Space、Esc、Tab、F1~F12 穿透效果。
+- 实机测试网易UU远程连接 Windows 场景下 Win、Ctrl、Alt 快捷键穿透效果。
+- 验证长按修饰键、Toggle 锁定与异常断网恢复能力。
+- 输出配套的被控端部署指南与 Tailscale 异地组网操作手册。
+
+
+
