@@ -307,37 +307,64 @@ final class CompanionServer {
                 }
             }
 
-            guard bytesRead >= MBCP.packetLength else { continue }
+            guard bytesRead > 0 else { continue }
+            let sender = clntstr(from: clientAddr)
+
+            guard bytesRead >= MBCP.packetLength else {
+                print("[\(tmstr())] ⚠️ 收到未知报文 (\(bytesRead) 字节, 来自 \(sender))")
+                fflush(stdout)
+                continue
+            }
 
             buffer.withUnsafeBytes { rawBuffer in
-                guard let packet = MBCP.Packet.dec(from: rawBuffer) else { return }
-                hndlpkt(packet)
+                guard let packet = MBCP.Packet.dec(from: rawBuffer) else {
+                    print("[\(tmstr())] ⚠️ 解析报文失败 (\(bytesRead) 字节, 来自 \(sender))")
+                    fflush(stdout)
+                    return
+                }
+                hndlpkt(packet, sender: sender)
             }
         }
     }
 
+    // 获取客户端地址
+    private func clntstr(from addr: sockaddr_in) -> String {
+        var ipBuf = [CChar](repeating: 0, count: Int(INET_ADDRSTRLEN))
+        var mutableAddr = addr.sin_addr
+        inet_ntop(AF_INET, &mutableAddr, &ipBuf, socklen_t(INET_ADDRSTRLEN))
+        let port = UInt16(bigEndian: addr.sin_port)
+        return "\(String(cString: ipBuf)):\(port)"
+    }
+
     // 处理报文
-    private func hndlpkt(_ packet: MBCP.Packet) {
+    private func hndlpkt(_ packet: MBCP.Packet, sender: String) {
         switch packet.action {
         case .keyDown:
             if let keyCode = KeyCodeMapper.tocgkey(packet.hidUsage) {
-                print("[\(tmstr())] ⬇️ KeyDown: 0x\(String(format: "%04X", packet.hidUsage)) (seq: \(packet.sequence))")
+                print("[\(tmstr())] ⬇️ KeyDown: 0x\(String(format: "%04X", packet.hidUsage)) (\(sender), seq: \(packet.sequence))")
+                fflush(stdout)
                 injector.injkey(code: keyCode, isDown: true, modifiers: packet.modifiers)
             }
         case .keyUp:
             if let keyCode = KeyCodeMapper.tocgkey(packet.hidUsage) {
-                print("[\(tmstr())] ⬆️ KeyUp: 0x\(String(format: "%04X", packet.hidUsage)) (seq: \(packet.sequence))")
+                print("[\(tmstr())] ⬆️ KeyUp: 0x\(String(format: "%04X", packet.hidUsage)) (\(sender), seq: \(packet.sequence))")
+                fflush(stdout)
                 injector.injkey(code: keyCode, isDown: false, modifiers: packet.modifiers)
             }
         case .pulse:
             if let keyCode = KeyCodeMapper.tocgkey(packet.hidUsage) {
                 let dur = packet.param > 0 ? packet.param : 20
-                print("[\(tmstr())] ⚡ Pulse: 0x\(String(format: "%04X", packet.hidUsage)) (\(dur)ms, seq: \(packet.sequence))")
+                print("[\(tmstr())] ⚡ Pulse: 0x\(String(format: "%04X", packet.hidUsage)) (\(dur)ms, \(sender), seq: \(packet.sequence))")
+                fflush(stdout)
                 injector.injpls(code: keyCode, durationMs: dur, modifiers: packet.modifiers)
             }
         case .heartbeat:
+            print("[\(tmstr())] 💓 Heartbeat (\(sender), seq: \(packet.sequence))")
+            fflush(stdout)
             injector.synchrt(modifiers: packet.modifiers)
         case .resetAll:
+            print("[\(tmstr())] 🔄 ResetAll (\(sender), seq: \(packet.sequence))")
+            fflush(stdout)
             injector.rstall(reason: "收到 resetAll")
         }
     }
