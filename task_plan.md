@@ -911,17 +911,17 @@ Unify every ordinary, function, and modifier key behind one `KeyView` visual com
 
 ## Task 12 — 实现 macOS 优先被控端伴侣服务
 
-**Status:** pending
+**Status:** completed
 
-- 编写单文件 Swift 原生命令行服务 `magicboard-companion-mac`。
-- 提供零外部依赖的 Python 3 备用脚本。
-- 实现标准 USB HID Usage 到 macOS 原生 `CGKeyCode` 的精确映射。
-- 采用 CoreGraphics 官方 API（`CGEventCreateKeyboardEvent` 与 `CGEventPost`）注入系统事件队列。
-- 实现 `pulse` 脉冲动作自动执行按下并抬起。
-- 实现 1.5 秒断网看门狗防止按键意外悬空。
-- 实现 `resetAll` 立即安全释放所有按键。
-- 集成 macOS 辅助功能（Accessibility）权限检测与开启提示。
-- 本地发送 UDP 报文实测 Command、Option、Control、Esc、Tab、F1~F12 等按键生效。
+- [x] 编写单文件 Swift 原生命令行服务 `magicboard-companion-mac`。
+- [x] 提供零外部依赖的 Python 3 备用脚本（`magicboard_companion.py`）。
+- [x] 实现标准 USB HID Usage 到 macOS 原生 `CGKeyCode` 的精确映射。
+- [x] 采用 CoreGraphics 官方 API（`CGEventCreateKeyboardEvent` 与 `CGEventPost`）注入系统事件队列。
+- [x] 实现 `pulse` 脉冲动作自动执行按下并抬起。
+- [x] 实现 1.5 秒断网看门狗防止按键意外悬空。
+- [x] 实现 `resetAll` 立即安全释放所有按键。
+- [x] 集成 macOS 辅助功能（Accessibility）权限检测与开启提示。
+- [x] 本地发送 UDP 报文实测 Command、Option、Control、Esc、Tab、F1~F12 等按键生效。
 
 ## Task 13 — 实现 Windows 被控端伴侣服务
 

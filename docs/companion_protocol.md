@@ -113,7 +113,7 @@ MagicBoard Companion Protocol（MBCP）是专为 MagicBoard 打造的**无状态
 import struct
 
 MAGIC = 0x4D424350 # "MBCP"
-FORMAT = ">IBBBHH I" # 16 bytes: uint32, uint8, uint8, uint8, uint8, uint16, uint16, uint32
+FORMAT = ">IBBBBHHI" # 16 bytes: uint32, uint8, uint8, uint8, uint8, uint16, uint16, uint32
 
 def parse_packet(data: bytes):
     if len(data) != 16:
