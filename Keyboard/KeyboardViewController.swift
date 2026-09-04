@@ -395,6 +395,7 @@ final class KeyboardViewController: UIInputViewController {
     // 构建键盘容器
     override func viewDidLoad() {
         super.viewDidLoad()
+        CompanionBridge.shared.configure(with: settings.companion)
         view.backgroundColor = KeyPalette.board
         view.isMultipleTouchEnabled = true
         view.clipsToBounds = false
@@ -517,6 +518,7 @@ final class KeyboardViewController: UIInputViewController {
             renderCandidates(nil)
         }
         settings = current
+        CompanionBridge.shared.configure(with: current.companion)
         if current.chineseEnabled, schemeChanged || enabledChanged {
             ime.start(scheme: current.scheme)
             renderCandidates(nil)
@@ -1351,6 +1353,21 @@ final class KeyboardViewController: UIInputViewController {
             if let key = spec.hidKey { sndhid(key) }
             return
         }
+        // 全键盘接管模式下字符透传至伴侣电脑
+        if CompanionBridge.shared.isEnabled && CompanionBridge.shared.workMode == .fullKeyboard {
+            let shifted = state.shifted
+            let output = drag
+                ? state.dragout(spec.output, alternate: spec.alternate, letter: spec.letter)
+                : state.emit(spec.output, alternate: spec.alternate, letter: spec.letter)
+            if let usage = companionHIDUsage(for: output, spec: spec) {
+                CompanionBridge.shared.sendPulse(usage: usage, modifiers: currentCompanionModifiers())
+                state.shftuse()
+                consumeOnce()
+                if shifted != state.shifted { rfrshft() }
+                updmods()
+                return
+            }
+        }
         let shifted = state.shifted
         let output = drag
             ? state.dragout(spec.output, alternate: spec.alternate, letter: spec.letter)
@@ -1397,6 +1414,13 @@ final class KeyboardViewController: UIInputViewController {
             !button.hidactive,
             let key = button.spec?.kind.hidKey
         else { return }
+        if CompanionBridge.shared.isEnabled {
+            let usage = CompanionHIDUsage(UInt16(key.rawValue))
+            CompanionBridge.shared.sendKeyDown(usage: usage, modifiers: currentCompanionModifiers())
+            button.hidactive = true
+            state.shftuse()
+            return
+        }
         if state.shifted, !state.shiftHeld {
             if arrshft.isEmpty, !HIDBridge.shared.keyDown(.leftShift) { return }
             arrshft.insert(ObjectIdentifier(button))
@@ -1413,6 +1437,16 @@ final class KeyboardViewController: UIInputViewController {
     @objc private func arrup(_ sender: UIButton) {
         guard let button = sender as? KeyView else { return }
         let key = button.spec?.kind.hidKey
+        if CompanionBridge.shared.isEnabled {
+            if button.hidactive, let key {
+                let usage = CompanionHIDUsage(UInt16(key.rawValue))
+                CompanionBridge.shared.sendKeyUp(usage: usage, modifiers: currentCompanionModifiers())
+            }
+            button.hidactive = false
+            consumeOnce()
+            updmods()
+            return
+        }
         let keysent = !button.hidactive || key.map(HIDBridge.shared.keyUp) == true
         button.hidactive = false
         let shiftsent = relarrshft(button)
@@ -1476,11 +1510,15 @@ final class KeyboardViewController: UIInputViewController {
         guard modifiers.press(modifier) else { return }
         modifierOwned.insert(modifier)
         state.shftuse()
-        guard HIDBridge.shared.keyDown(key) else {
-            modifierOwned.remove(modifier)
-            modifiers.release(modifier)
-            updmods()
-            return
+        if CompanionBridge.shared.isEnabled {
+            CompanionBridge.shared.syncHeartbeat(modifiers: currentCompanionModifiers())
+        } else {
+            guard HIDBridge.shared.keyDown(key) else {
+                modifierOwned.remove(modifier)
+                modifiers.release(modifier)
+                updmods()
+                return
+            }
         }
         updmods()
     }
@@ -1508,6 +1546,9 @@ final class KeyboardViewController: UIInputViewController {
         case .keepOnce, .keepLocked:
             modifierOwned.remove(modifier)
         }
+        if CompanionBridge.shared.isEnabled {
+            CompanionBridge.shared.syncHeartbeat(modifiers: currentCompanionModifiers())
+        }
         updmods()
     }
 
@@ -1521,12 +1562,19 @@ final class KeyboardViewController: UIInputViewController {
         modifierStarts[modifier] = nil
         guard modifierOwned.remove(modifier) != nil else { return }
         guard relmod(modifier, key: key) else { return }
+        if CompanionBridge.shared.isEnabled {
+            CompanionBridge.shared.syncHeartbeat(modifiers: currentCompanionModifiers())
+        }
         updmods()
     }
 
     // 释放指定修饰键并收敛 HID 失败
     private func relmod(_ modifier: ModifierKey, key: MBHIDKey) -> Bool {
         guard modifiers.release(modifier) else { return true }
+        if CompanionBridge.shared.isEnabled {
+            CompanionBridge.shared.syncHeartbeat(modifiers: currentCompanionModifiers())
+            return true
+        }
         guard HIDBridge.shared.keyUp(key) else {
             rsthid()
             return false
@@ -1536,9 +1584,15 @@ final class KeyboardViewController: UIInputViewController {
 
     // 释放已被普通按键消费的单次修饰键
     private func consumeOnce() {
+        var consumedAny = false
         for modifier in modifierLatches.consumeOnce() {
             guard let key = modhid(modifier) else { continue }
-            if !relmod(modifier, key: key) { return }
+            if relmod(modifier, key: key) {
+                consumedAny = true
+            }
+        }
+        if consumedAny && CompanionBridge.shared.isEnabled {
+            CompanionBridge.shared.syncHeartbeat(modifiers: currentCompanionModifiers())
         }
         updmods()
     }
@@ -1638,9 +1692,58 @@ final class KeyboardViewController: UIInputViewController {
         sndhid(key)
     }
 
+    // 获取当前伴侣协议 8 位修饰键掩码
+    private func currentCompanionModifiers() -> CompanionModifiers {
+        CompanionModifiers(modifierState: modifiers, inputState: state)
+    }
+
+    // 将普通按键转换为 CompanionHIDUsage
+    private func companionHIDUsage(for text: String, spec: KeySpec) -> CompanionHIDUsage? {
+        if let hidKey = spec.hidKey {
+            return CompanionHIDUsage(UInt16(hidKey.rawValue))
+        }
+        guard text.count == 1, let char = text.first else { return nil }
+        if char.isASCII {
+            let lower = char.lowercased().first!
+            if lower >= "a" && lower <= "z" {
+                return CompanionHIDUsage(UInt16(0x0004 + (lower.asciiValue! - Character("a").asciiValue!)))
+            }
+            if char >= "1" && char <= "9" {
+                return CompanionHIDUsage(UInt16(0x001E + (char.asciiValue! - Character("1").asciiValue!)))
+            }
+            if char == "0" { return .digit0 }
+            switch char {
+            case "\n", "\r": return .enter
+            case "\t": return .tab
+            case " ": return .spacebar
+            case "-", "_": return .minus
+            case "=", "+": return .equal
+            case "[", "{": return .leftBracket
+            case "]", "}": return .rightBracket
+            case "\\", "|": return .backslash
+            case ";", ":": return .semicolon
+            case "'", "\"": return .quote
+            case "`", "~": return .grave
+            case ",", "<": return .comma
+            case ".", ">": return .period
+            case "/", "?": return .slash
+            default: break
+            }
+        }
+        return nil
+    }
+
     // 发送一次完整 HID 按键
     @discardableResult
     private func sndhid(_ key: MBHIDKey) -> Bool {
+        if CompanionBridge.shared.isEnabled {
+            let usage = CompanionHIDUsage(UInt16(key.rawValue))
+            CompanionBridge.shared.sendPulse(usage: usage, modifiers: currentCompanionModifiers())
+            state.shftuse()
+            consumeOnce()
+            updmods()
+            return true
+        }
         guard HIDBridge.shared.keyDown(key) else { return false }
         state.shftuse()
         guard HIDBridge.shared.keyUp(key) else {
@@ -1655,6 +1758,17 @@ final class KeyboardViewController: UIInputViewController {
     // 发送一次完整功能键动作
     @discardableResult
     private func sndfn(_ spec: KeySpec, upper: Bool) -> Bool {
+        if CompanionBridge.shared.isEnabled {
+            if let key = spec.kind.hidKey {
+                let usage = CompanionHIDUsage(UInt16(key.rawValue))
+                CompanionBridge.shared.sendPulse(usage: usage, modifiers: currentCompanionModifiers())
+                state.usefn()
+                consumeOnce()
+                rfrshft()
+                updmods()
+                return true
+            }
+        }
         let sent: Bool
         if upper, let system = spec.kind.systemKey {
             guard HIDBridge.shared.systemKeyDown(system) else { return false }
@@ -1692,6 +1806,9 @@ final class KeyboardViewController: UIInputViewController {
             hidepop(button)
         }
         arrshft.removeAll()
+        if CompanionBridge.shared.isEnabled {
+            CompanionBridge.shared.resetAll()
+        }
         HIDBridge.shared.releaseAll()
         rfrshft()
         updmods()

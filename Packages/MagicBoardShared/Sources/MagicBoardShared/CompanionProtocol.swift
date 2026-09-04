@@ -151,18 +151,25 @@ public struct CompanionHIDUsage: RawRepresentable, Hashable, Codable, Sendable, 
 
     // 常用控制与编辑键
     public static let returnOrEnter: CompanionHIDUsage = 0x0028
+    public static let enter: CompanionHIDUsage = .returnOrEnter
     public static let escape: CompanionHIDUsage = 0x0029
     public static let deleteOrBackspace: CompanionHIDUsage = 0x002A
+    public static let delete: CompanionHIDUsage = .deleteOrBackspace
     public static let tab: CompanionHIDUsage = 0x002B
     public static let spacebar: CompanionHIDUsage = 0x002C
     public static let hyphen: CompanionHIDUsage = 0x002D
+    public static let minus: CompanionHIDUsage = .hyphen
     public static let equalSign: CompanionHIDUsage = 0x002E
+    public static let equal: CompanionHIDUsage = .equalSign
     public static let openBracket: CompanionHIDUsage = 0x002F
+    public static let leftBracket: CompanionHIDUsage = .openBracket
     public static let closeBracket: CompanionHIDUsage = 0x0030
+    public static let rightBracket: CompanionHIDUsage = .closeBracket
     public static let backslash: CompanionHIDUsage = 0x0031
     public static let semicolon: CompanionHIDUsage = 0x0033
     public static let quote: CompanionHIDUsage = 0x0034
     public static let graveAccent: CompanionHIDUsage = 0x0035
+    public static let grave: CompanionHIDUsage = .graveAccent
     public static let comma: CompanionHIDUsage = 0x0036
     public static let period: CompanionHIDUsage = 0x0037
     public static let slash: CompanionHIDUsage = 0x0038

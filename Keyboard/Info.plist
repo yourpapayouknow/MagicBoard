@@ -38,5 +38,7 @@
 		<key>NSExtensionPrincipalClass</key>
 		<string>$(PRODUCT_MODULE_NAME).KeyboardViewController</string>
 	</dict>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>MagicBoard 需要访问局域网以连接被控端电脑伴侣服务并分流键鼠输入。</string>
 </dict>
 </plist>
