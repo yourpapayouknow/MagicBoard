@@ -379,115 +379,6 @@ private struct ValueSlider: View {
     }
 }
 
-// 标识预览键帽视觉角色
-private enum PreviewKeyRole {
-    case ordinary
-    case function
-}
-
-// 标识预览键帽内容对齐
-private enum PreviewKeyAlign {
-    case center
-    case leading
-    case trailing
-}
-
-// 描述预览中的单个键帽
-private struct PreviewKeySpec {
-    let title: String
-    let symbol: String?
-    let weight: CGFloat
-    let role: PreviewKeyRole
-    let align: PreviewKeyAlign
-    let fontSize: CGFloat
-    let stackIcon: Bool
-    let arrowPair: Bool
-
-    // 创建预览键帽描述
-    init(
-        _ title: String = "",
-        symbol: String? = nil,
-        weight: CGFloat = 1,
-        role: PreviewKeyRole = .ordinary,
-        align: PreviewKeyAlign = .center,
-        fontSize: CGFloat = 22,
-        stackIcon: Bool = false,
-        arrowPair: Bool = false
-    ) {
-        self.title = title
-        self.symbol = symbol
-        self.weight = weight
-        self.role = role
-        self.align = align
-        self.fontSize = fontSize
-        self.stackIcon = stackIcon
-        self.arrowPair = arrowPair
-    }
-}
-
-// 提供与键盘扩展一致的固定预览键位
-private enum PreviewLayout {
-    static let rows: [[PreviewKeySpec]] = [
-        [
-            PreviewKeySpec("Esc", weight: 1.5, role: .function, align: .leading, fontSize: 17),
-            PreviewKeySpec("F1", symbol: "sun.min", role: .function, fontSize: 13, stackIcon: true),
-            PreviewKeySpec("F2", symbol: "sun.max", role: .function, fontSize: 13, stackIcon: true),
-            PreviewKeySpec("F3", symbol: "rectangle.3.group", role: .function, fontSize: 13, stackIcon: true),
-            PreviewKeySpec("F4", symbol: "magnifyingglass", role: .function, fontSize: 13, stackIcon: true),
-            PreviewKeySpec("F5", symbol: "mic", role: .function, fontSize: 13, stackIcon: true),
-            PreviewKeySpec("F6", symbol: "moon", role: .function, fontSize: 13, stackIcon: true),
-            PreviewKeySpec("F7", symbol: "backward", role: .function, fontSize: 13, stackIcon: true),
-            PreviewKeySpec("F8", symbol: "playpause", role: .function, fontSize: 13, stackIcon: true),
-            PreviewKeySpec("F9", symbol: "forward", role: .function, fontSize: 13, stackIcon: true),
-            PreviewKeySpec("F10", symbol: "speaker.slash", role: .function, fontSize: 13, stackIcon: true),
-            PreviewKeySpec("F11", symbol: "speaker.wave.1", role: .function, fontSize: 13, stackIcon: true),
-            PreviewKeySpec("F12", symbol: "speaker.wave.3", role: .function, fontSize: 13, stackIcon: true),
-            PreviewKeySpec(symbol: "keyboard.chevron.compact.down", role: .function, fontSize: 17),
-        ],
-        [
-            PreviewKeySpec("~\n·"), PreviewKeySpec("!\n1"), PreviewKeySpec("@\n2"), PreviewKeySpec("#\n3"),
-            PreviewKeySpec("¥\n4"), PreviewKeySpec("%\n5"), PreviewKeySpec("……\n6"), PreviewKeySpec("&\n7"),
-            PreviewKeySpec("*\n8"), PreviewKeySpec("(\n9"), PreviewKeySpec(")\n0"), PreviewKeySpec("—\n-"),
-            PreviewKeySpec("+\n="), PreviewKeySpec("delete", weight: 1.7, role: .function, align: .trailing, fontSize: 17),
-        ],
-        [
-            PreviewKeySpec("tab", weight: 1.5, role: .function, align: .leading, fontSize: 17),
-            PreviewKeySpec("q", fontSize: 27), PreviewKeySpec("w", fontSize: 27), PreviewKeySpec("e", fontSize: 27),
-            PreviewKeySpec("r", fontSize: 27), PreviewKeySpec("t", fontSize: 27), PreviewKeySpec("y", fontSize: 27),
-            PreviewKeySpec("u", fontSize: 27), PreviewKeySpec("i", fontSize: 27), PreviewKeySpec("o", fontSize: 27),
-            PreviewKeySpec("p", fontSize: 27), PreviewKeySpec("「\n【"), PreviewKeySpec("」\n】"),
-            PreviewKeySpec("|\n\\", weight: 1.5),
-        ],
-        [
-            PreviewKeySpec("abc", weight: 1.8, role: .function, align: .leading, fontSize: 18),
-            PreviewKeySpec("a", fontSize: 27), PreviewKeySpec("s", fontSize: 27), PreviewKeySpec("d", fontSize: 27),
-            PreviewKeySpec("f", fontSize: 27), PreviewKeySpec("g", fontSize: 27), PreviewKeySpec("h", fontSize: 27),
-            PreviewKeySpec("j", fontSize: 27), PreviewKeySpec("k", fontSize: 27), PreviewKeySpec("l", fontSize: 27),
-            PreviewKeySpec(":\n;"), PreviewKeySpec("\"\n'"),
-            PreviewKeySpec("return", weight: 1.9, role: .function, align: .trailing, fontSize: 17),
-        ],
-        [
-            PreviewKeySpec("shift", weight: 2.25, role: .function, align: .leading, fontSize: 17),
-            PreviewKeySpec("z", fontSize: 27), PreviewKeySpec("x", fontSize: 27), PreviewKeySpec("c", fontSize: 27),
-            PreviewKeySpec("v", fontSize: 27), PreviewKeySpec("b", fontSize: 27), PreviewKeySpec("n", fontSize: 27),
-            PreviewKeySpec("m", fontSize: 27), PreviewKeySpec("《\n，"), PreviewKeySpec("》\n。"), PreviewKeySpec("?\n/"),
-            PreviewKeySpec("shift", weight: 2.25, role: .function, align: .trailing, fontSize: 17),
-        ],
-        [
-            PreviewKeySpec(symbol: "globe", weight: 1.05, role: .function, align: .leading, fontSize: 17),
-            PreviewKeySpec("Ctrl", weight: 1.15, role: .function, align: .leading, fontSize: 17),
-            PreviewKeySpec(symbol: "option", weight: 1.15, role: .function, align: .leading, fontSize: 17),
-            PreviewKeySpec(symbol: "command", weight: 1.25, role: .function, align: .leading, fontSize: 17),
-            PreviewKeySpec("space", weight: 5, role: .ordinary, fontSize: 17),
-            PreviewKeySpec(symbol: "command", weight: 1.25, role: .function, align: .trailing, fontSize: 17),
-            PreviewKeySpec(symbol: "option", weight: 1.15, role: .function, align: .trailing, fontSize: 17),
-            PreviewKeySpec(symbol: "arrowtriangle.left.fill", weight: 0.75, role: .function, fontSize: 12),
-            PreviewKeySpec(weight: 0.75, role: .function, fontSize: 12, arrowPair: true),
-            PreviewKeySpec(symbol: "arrowtriangle.right.fill", weight: 0.75, role: .function, fontSize: 12),
-        ],
-    ]
-}
-
 // 保存预览解析后的动态键盘颜色
 private struct PreviewPalette {
     let board: Color
@@ -529,170 +420,156 @@ private struct PreviewPalette {
     }
 }
 
-// 展示与扩展结构和比例一致的键盘预览
+// 展示紧凑的实际键盘风格预览
 private struct KeyboardPreview: View {
     @Environment(\.colorScheme) private var systemScheme
     let layout: LayoutConfig
     let appearance: AppearanceConfig
-    private let referenceWidth: CGFloat = 1366
 
     var body: some View {
-        GeometryReader { geometry in
-            let scale = geometry.size.width / referenceWidth
-            let height = CGFloat(layout.height) * scale
-            let outerInset = CGFloat(layout.outerInset) * scale
-            let rowGap = CGFloat(layout.verticalGap) * scale
-            let candidateHeight = 44 * scale
-            let rowHeight = max(1, (height - (outerInset * 2) - candidateHeight - (rowGap * 6)) / 6)
-            let palette = PreviewPalette(appearance: appearance, systemScheme: systemScheme)
+        let palette = PreviewPalette(appearance: appearance, systemScheme: systemScheme)
+        let outerInset = CGFloat(layout.outerInset)
+        let rowGap = CGFloat(layout.verticalGap)
 
-            VStack(spacing: rowGap) {
-                PreviewCandidates(palette: palette, scale: scale)
-                    .frame(height: candidateHeight)
-                ForEach(Array(PreviewLayout.rows.enumerated()), id: \.offset) { _, keys in
-                    PreviewRow(
-                        keys: keys,
-                        gap: CGFloat(layout.horizontalGap) * scale,
-                        palette: palette,
-                        scale: scale
-                    )
-                    .frame(height: rowHeight)
-                }
-            }
-            .padding(outerInset)
-            .frame(width: geometry.size.width, height: height)
-            .background(palette.board)
-            .clipShape(RoundedRectangle(cornerRadius: max(8, 18 * scale), style: .continuous))
-            .overlay {
-                RoundedRectangle(cornerRadius: max(8, 18 * scale), style: .continuous)
-                    .stroke(Color(uiColor: .separator).opacity(0.24), lineWidth: 0.5)
-            }
-            .shadow(color: .black.opacity(0.08), radius: 16, y: 8)
+        VStack(spacing: rowGap) {
+            PreviewCandidateBar(palette: palette)
+            PreviewSampleRow(layout: layout, palette: palette)
         }
-        .aspectRatio(referenceWidth / CGFloat(layout.height), contentMode: .fit)
+        .padding(outerInset)
+        .background(palette.board, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .stroke(Color(uiColor: .separator).opacity(0.24), lineWidth: 0.5)
+        }
+        .shadow(color: .black.opacity(0.08), radius: 12, y: 5)
     }
 }
 
-// 展示实际候选栏的预编辑与候选结构
-private struct PreviewCandidates: View {
+// 展示预览候选栏
+private struct PreviewCandidateBar: View {
     let palette: PreviewPalette
-    let scale: CGFloat
 
     var body: some View {
-        HStack(spacing: max(2, 8 * scale)) {
+        HStack(spacing: 8) {
             Text(verbatim: "nihao")
-                .font(.system(size: max(8, 16 * scale), weight: .semibold))
+                .font(.subheadline.weight(.semibold))
                 .foregroundStyle(palette.secondaryText)
-            ForEach(["你好", "你", "拟好", "泥豪"], id: \.self) { candidate in
-                Text(verbatim: candidate)
-                    .font(.system(size: max(8, 16 * scale), weight: .medium))
-                    .foregroundStyle(candidate == "你好" ? palette.accent : palette.text)
-                    .padding(.horizontal, max(3, 10 * scale))
-            }
+            Text(verbatim: "你好")
+                .foregroundStyle(palette.accent)
+            Text(verbatim: "你")
+                .foregroundStyle(palette.text)
+            Text(verbatim: "拟好")
+                .foregroundStyle(palette.text)
             Spacer(minLength: 0)
         }
-        .padding(.vertical, max(1, 3 * scale))
-        .padding(.leading, max(3, 10 * scale))
-        .padding(.trailing, max(3, 8 * scale))
-        .background(palette.candidate, in: RoundedRectangle(cornerRadius: max(3, 9 * scale), style: .continuous))
+        .font(.subheadline.weight(.medium))
+        .padding(.horizontal, 10)
+        .frame(height: 36)
+        .background(palette.candidate, in: RoundedRectangle(cornerRadius: 9, style: .continuous))
         .clipped()
     }
 }
 
-// 按扩展端权重展示单行键帽
-private struct PreviewRow: View {
-    let keys: [PreviewKeySpec]
+// 展示预览示例键行
+private struct PreviewSampleRow: View {
+    let layout: LayoutConfig
+    let palette: PreviewPalette
+
+    var body: some View {
+        let keyGap = CGFloat(layout.horizontalGap)
+
+        HStack(spacing: keyGap) {
+            PreviewKey("Esc", function: true, alignment: .bottomLeading, palette: palette)
+                .frame(width: 54)
+            PreviewKey("a", fontSize: 22, palette: palette)
+                .frame(width: 44)
+            PreviewKey(symbol: "command", function: true, palette: palette)
+                .frame(width: 44)
+            PreviewKey("space", palette: palette)
+                .frame(maxWidth: .infinity)
+            PreviewArrowKeys(gap: keyGap, palette: palette)
+        }
+        .frame(height: rowHeight)
+    }
+
+    private var rowHeight: CGFloat {
+        let available = CGFloat(layout.height)
+            - (CGFloat(layout.outerInset) * 2)
+            - 44
+            - (CGFloat(layout.verticalGap) * 6)
+        return max(40, available / 6)
+    }
+}
+
+// 展示预览方向键簇
+private struct PreviewArrowKeys: View {
     let gap: CGFloat
     let palette: PreviewPalette
-    let scale: CGFloat
 
     var body: some View {
-        GeometryReader { geometry in
-            let contentWidth = max(0, geometry.size.width - gap * CGFloat(max(0, keys.count - 1)))
-            let totalWeight = keys.reduce(CGFloat.zero) { $0 + $1.weight }
-            let unit = totalWeight > 0 ? contentWidth / totalWeight : 0
-
-            HStack(spacing: gap) {
-                ForEach(Array(keys.enumerated()), id: \.offset) { _, key in
-                    if key.arrowPair {
-                        VStack(spacing: max(1, 4 * scale)) {
-                            PreviewKeyCap(
-                                spec: PreviewKeySpec(symbol: "arrowtriangle.up.fill", role: .function, fontSize: 12),
-                                palette: palette,
-                                scale: scale
-                            )
-                            PreviewKeyCap(
-                                spec: PreviewKeySpec(symbol: "arrowtriangle.down.fill", role: .function, fontSize: 12),
-                                palette: palette,
-                                scale: scale
-                            )
-                        }
-                        .frame(width: unit * key.weight)
-                    } else {
-                        PreviewKeyCap(spec: key, palette: palette, scale: scale)
-                            .frame(width: unit * key.weight)
-                    }
-                }
+        HStack(spacing: max(2, gap / 2)) {
+            PreviewKey(symbol: "arrowtriangle.left.fill", function: true, fontSize: 12, palette: palette)
+            VStack(spacing: 3) {
+                PreviewKey(symbol: "arrowtriangle.up.fill", function: true, fontSize: 12, palette: palette)
+                PreviewKey(symbol: "arrowtriangle.down.fill", function: true, fontSize: 12, palette: palette)
             }
+            PreviewKey(symbol: "arrowtriangle.right.fill", function: true, fontSize: 12, palette: palette)
         }
+        .frame(width: 112)
     }
 }
 
-// 展示单个实际风格的预览键帽
-private struct PreviewKeyCap: View {
-    let spec: PreviewKeySpec
+// 展示预览中的单个键帽
+private struct PreviewKey: View {
+    let title: String
+    let symbol: String?
+    let function: Bool
+    let alignment: Alignment
+    let fontSize: CGFloat
     let palette: PreviewPalette
-    let scale: CGFloat
+
+    // 创建紧凑预览键帽
+    init(
+        _ title: String = "",
+        symbol: String? = nil,
+        function: Bool = false,
+        alignment: Alignment = .center,
+        fontSize: CGFloat = 15,
+        palette: PreviewPalette
+    ) {
+        self.title = title
+        self.symbol = symbol
+        self.function = function
+        self.alignment = alignment
+        self.fontSize = fontSize
+        self.palette = palette
+    }
 
     var body: some View {
-        legend
-            .foregroundStyle(palette.text)
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: alignment)
-            .padding(max(1, 4 * scale))
-            .background(fill, in: RoundedRectangle(cornerRadius: max(2, 7 * scale), style: .continuous))
-            .overlay {
-                RoundedRectangle(cornerRadius: max(2, 7 * scale), style: .continuous)
-                    .stroke(palette.border, lineWidth: max(0.25, 0.5 * scale))
-            }
-            .shadow(color: palette.shadow, radius: max(0.25, 0.75 * scale), y: max(0.5, 1.75 * scale))
-    }
-
-    // 展示文字、符号或双层功能图例
-    @ViewBuilder private var legend: some View {
-        if let symbol = spec.symbol, spec.stackIcon {
-            VStack(spacing: max(1, 3 * scale)) {
+        Group {
+            if let symbol {
                 Image(systemName: symbol)
-                    .font(.system(size: max(5, 17 * scale), weight: .regular))
-                Text(verbatim: spec.title)
-                    .font(.system(size: max(5, spec.fontSize * scale), weight: .medium))
+                    .font(.system(size: fontSize, weight: .regular))
+            } else {
+                Text(verbatim: title)
+                    .font(.system(size: fontSize, weight: .medium))
+                    .minimumScaleFactor(0.6)
             }
-        } else if let symbol = spec.symbol {
-            Image(systemName: symbol)
-                .font(.system(size: max(5, spec.fontSize * scale), weight: .regular))
-        } else {
-            Text(verbatim: spec.title)
-                .font(.system(size: max(5, spec.fontSize * scale), weight: .medium))
-                .multilineTextAlignment(.center)
-                .lineLimit(2)
-                .minimumScaleFactor(0.45)
         }
-    }
-
-    // 返回当前键帽角色的填充色
-    private var fill: Color {
-        spec.role == .ordinary ? palette.ordinary : palette.function
-    }
-
-    // 返回当前键帽图例对齐方式
-    private var alignment: Alignment {
-        switch spec.align {
-        case .center: .center
-        case .leading: .bottomLeading
-        case .trailing: .bottomTrailing
+        .foregroundStyle(palette.text)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: alignment)
+        .padding(5)
+        .background(
+            function ? palette.function : palette.ordinary,
+            in: RoundedRectangle(cornerRadius: 7, style: .continuous)
+        )
+        .overlay {
+            RoundedRectangle(cornerRadius: 7, style: .continuous)
+                .stroke(palette.border, lineWidth: 0.5)
         }
+        .shadow(color: palette.shadow, radius: 0.75, y: 1.75)
     }
 }
-
 // 展示反馈与修饰键设置
 private struct FeedbackView: View {
     @Binding var keySound: Bool
