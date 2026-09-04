@@ -5,3 +5,7 @@
 /.codegraph/
 /DESIGN.md
 .DS_Store
+*.exe
+*.log
+*.err
+__pycache__/
