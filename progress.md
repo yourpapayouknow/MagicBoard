@@ -551,3 +551,4 @@
 - Rebuilt and installed Debug on the running iPad simulator; SpringBoard displays the new cyan keyboard icon at Dock size.
 - Re-ran 49/49 shared tests, JSON/plist/Zsh validation, simulator Debug, and arm64 Release/TIPA packaging successfully.
 - Final archive audit passed ZIP integrity, arm64 host/extension, version 1.0.0 (19), bundle IDs, open access, App Group/HID entitlements, IOKit linkage, and compiled icon presence. SHA-256: `b348a53a1051e1e1eb159739bde7946b58abbc527acb5a707d86ad339e722a38`.
+- Created and pushed the public same-name repository at `https://github.com/yourpapayouknow/MagicBoard`; release publication follows the final status commit.

@@ -870,7 +870,7 @@ Unify every ordinary, function, and modifier key behind one `KeyView` visual com
 
 ### Phase 17 — Final Release and remote publication
 
-**Status:** in progress
+**Status:** complete
 
 - Run all tests, design lint, XcodeGen/build checks, and the generic arm64 Release/TIPA flow.
 - Independently inspect archive layout, architecture, versions, extension metadata, entitlements, and hash.
