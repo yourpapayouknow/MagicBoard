@@ -478,16 +478,21 @@ private struct PreviewSampleRow: View {
     var body: some View {
         let keyGap = CGFloat(layout.horizontalGap)
 
-        HStack(spacing: keyGap) {
-            PreviewKey("Esc", function: true, alignment: .bottomLeading, palette: palette)
-                .frame(width: 54)
-            PreviewKey("a", fontSize: 22, palette: palette)
-                .frame(width: 44)
-            PreviewKey(symbol: "command", function: true, palette: palette)
-                .frame(width: 44)
-            PreviewKey("space", palette: palette)
-                .frame(maxWidth: .infinity)
-            PreviewArrowKeys(gap: keyGap, palette: palette)
+        GeometryReader { proxy in
+            let unit = max(0, proxy.size.width - (keyGap * 4)) / 9.6
+
+            HStack(spacing: keyGap) {
+                PreviewKey("Esc", function: true, alignment: .bottomLeading, palette: palette)
+                    .frame(width: unit * 1.2)
+                PreviewKey("a", fontSize: 22, palette: palette)
+                    .frame(width: unit)
+                PreviewKey(symbol: "command", function: true, palette: palette)
+                    .frame(width: unit)
+                PreviewKey("space", palette: palette)
+                    .frame(width: unit * 4)
+                PreviewArrowKeys(gap: keyGap, palette: palette)
+                    .frame(width: unit * 2.4)
+            }
         }
         .frame(height: rowHeight)
     }
@@ -515,7 +520,6 @@ private struct PreviewArrowKeys: View {
             }
             PreviewKey(symbol: "arrowtriangle.right.fill", function: true, fontSize: 12, palette: palette)
         }
-        .frame(width: 112)
     }
 }
 
