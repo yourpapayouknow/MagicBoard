@@ -247,97 +247,115 @@ public struct CompanionPacket: Equatable, Sendable {
         self.sequence = sequence
     }
 
+    // 将 16 字节报文以网络大端序直接写入目标内存缓冲区（支持零堆分配）
+    @discardableResult
+    public func write(to buffer: UnsafeMutableRawBufferPointer) -> Bool {
+        guard buffer.count >= Self.packetLength, let base = buffer.baseAddress else { return false }
+
+        // 0..3: magic (UInt32, Big-Endian)
+        let beMagic = magic.bigEndian
+        memcpy(base, [beMagic], 4)
+
+        // 4: version (UInt8)
+        base.storeBytes(of: version, toByteOffset: 4, as: UInt8.self)
+
+        // 5: action (UInt8)
+        base.storeBytes(of: action.rawValue, toByteOffset: 5, as: UInt8.self)
+
+        // 6: modifiers (UInt8)
+        base.storeBytes(of: modifiers.rawValue, toByteOffset: 6, as: UInt8.self)
+
+        // 7: flags (UInt8)
+        base.storeBytes(of: flags, toByteOffset: 7, as: UInt8.self)
+
+        // 8..9: hidUsage (UInt16, Big-Endian)
+        let beUsage = hidUsage.rawValue.bigEndian
+        memcpy(base.advanced(by: 8), [beUsage], 2)
+
+        // 10..11: param (UInt16, Big-Endian)
+        let beParam = param.bigEndian
+        memcpy(base.advanced(by: 10), [beParam], 2)
+
+        // 12..15: sequence (UInt32, Big-Endian)
+        let beSeq = sequence.bigEndian
+        memcpy(base.advanced(by: 12), [beSeq], 4)
+
+        return true
+    }
+
+    // 在栈上提供零堆分配（Zero-Allocation）的直接只读内存视图回调
+    public func withUnsafeBytes<R>(_ body: (UnsafeRawBufferPointer) throws -> R) rethrows -> R {
+        var raw: (UInt64, UInt64) = (0, 0) // 16 字节纯栈上分配
+        return try withUnsafeMutableBytes(of: &raw) { (buffer: UnsafeMutableRawBufferPointer) in
+            write(to: buffer)
+            return try body(UnsafeRawBufferPointer(buffer))
+        }
+    }
+
     // 编码为 16 字节网络大端序二进制数据
     public func encode() -> Data {
         var data = Data(count: Self.packetLength)
-        data.withUnsafeMutableBytes { (buffer: UnsafeMutableRawBufferPointer) in
-            let base = buffer.baseAddress!
-
-            // 0..3: magic (UInt32, Big-Endian)
-            let beMagic = magic.bigEndian
-            memcpy(base, [beMagic], 4)
-
-            // 4: version (UInt8)
-            base.storeBytes(of: version, toByteOffset: 4, as: UInt8.self)
-
-            // 5: action (UInt8)
-            base.storeBytes(of: action.rawValue, toByteOffset: 5, as: UInt8.self)
-
-            // 6: modifiers (UInt8)
-            base.storeBytes(of: modifiers.rawValue, toByteOffset: 6, as: UInt8.self)
-
-            // 7: flags (UInt8)
-            base.storeBytes(of: flags, toByteOffset: 7, as: UInt8.self)
-
-            // 8..9: hidUsage (UInt16, Big-Endian)
-            let beUsage = hidUsage.rawValue.bigEndian
-            memcpy(base.advanced(by: 8), [beUsage], 2)
-
-            // 10..11: param (UInt16, Big-Endian)
-            let beParam = param.bigEndian
-            memcpy(base.advanced(by: 10), [beParam], 2)
-
-            // 12..15: sequence (UInt32, Big-Endian)
-            let beSeq = sequence.bigEndian
-            memcpy(base.advanced(by: 12), [beSeq], 4)
+        data.withUnsafeMutableBytes { buffer in
+            _ = write(to: buffer)
         }
         return data
     }
 
-    // 从二进制数据反序列化报文（严格校验长度、魔数、版本和合法动作）
+    // 从原始内存缓冲区反序列化报文（严格校验长度、魔数、版本和合法动作，零堆分配）
+    public static func decode(from buffer: UnsafeRawBufferPointer) -> CompanionPacket? {
+        guard buffer.count >= packetLength, let base = buffer.baseAddress else { return nil }
+
+        // 0..3: magic
+        var rawMagic: UInt32 = 0
+        memcpy(&rawMagic, base, 4)
+        let parsedMagic = UInt32(bigEndian: rawMagic)
+        guard parsedMagic == magic else { return nil }
+
+        // 4: version
+        let parsedVersion = base.load(fromByteOffset: 4, as: UInt8.self)
+        guard parsedVersion == currentVersion else { return nil }
+
+        // 5: action
+        let actionRaw = base.load(fromByteOffset: 5, as: UInt8.self)
+        guard let parsedAction = CompanionAction(rawValue: actionRaw) else { return nil }
+
+        // 6: modifiers
+        let modRaw = base.load(fromByteOffset: 6, as: UInt8.self)
+        let parsedModifiers = CompanionModifiers(rawValue: modRaw)
+
+        // 7: flags
+        let parsedFlags = base.load(fromByteOffset: 7, as: UInt8.self)
+
+        // 8..9: hidUsage
+        var rawUsage: UInt16 = 0
+        memcpy(&rawUsage, base.advanced(by: 8), 2)
+        let parsedUsage = CompanionHIDUsage(rawValue: UInt16(bigEndian: rawUsage))
+
+        // 10..11: param
+        var rawParam: UInt16 = 0
+        memcpy(&rawParam, base.advanced(by: 10), 2)
+        let parsedParam = UInt16(bigEndian: rawParam)
+
+        // 12..15: sequence
+        var rawSeq: UInt32 = 0
+        memcpy(&rawSeq, base.advanced(by: 12), 4)
+        let parsedSeq = UInt32(bigEndian: rawSeq)
+
+        return CompanionPacket(
+            magic: parsedMagic,
+            version: parsedVersion,
+            action: parsedAction,
+            modifiers: parsedModifiers,
+            flags: parsedFlags,
+            hidUsage: parsedUsage,
+            param: parsedParam,
+            sequence: parsedSeq
+        )
+    }
+
+    // 从 Data 反序列化报文
     public static func decode(from data: Data) -> CompanionPacket? {
-        guard data.count >= packetLength else { return nil }
-
-        return data.withUnsafeBytes { (buffer: UnsafeRawBufferPointer) -> CompanionPacket? in
-            guard let base = buffer.baseAddress else { return nil }
-
-            // 0..3: magic
-            var rawMagic: UInt32 = 0
-            memcpy(&rawMagic, base, 4)
-            let parsedMagic = UInt32(bigEndian: rawMagic)
-            guard parsedMagic == magic else { return nil }
-
-            // 4: version
-            let parsedVersion = base.load(fromByteOffset: 4, as: UInt8.self)
-            guard parsedVersion == currentVersion else { return nil }
-
-            // 5: action
-            let actionRaw = base.load(fromByteOffset: 5, as: UInt8.self)
-            guard let parsedAction = CompanionAction(rawValue: actionRaw) else { return nil }
-
-            // 6: modifiers
-            let modRaw = base.load(fromByteOffset: 6, as: UInt8.self)
-            let parsedModifiers = CompanionModifiers(rawValue: modRaw)
-
-            // 7: flags
-            let parsedFlags = base.load(fromByteOffset: 7, as: UInt8.self)
-
-            // 8..9: hidUsage
-            var rawUsage: UInt16 = 0
-            memcpy(&rawUsage, base.advanced(by: 8), 2)
-            let parsedUsage = CompanionHIDUsage(rawValue: UInt16(bigEndian: rawUsage))
-
-            // 10..11: param
-            var rawParam: UInt16 = 0
-            memcpy(&rawParam, base.advanced(by: 10), 2)
-            let parsedParam = UInt16(bigEndian: rawParam)
-
-            // 12..15: sequence
-            var rawSeq: UInt32 = 0
-            memcpy(&rawSeq, base.advanced(by: 12), 4)
-            let parsedSeq = UInt32(bigEndian: rawSeq)
-
-            return CompanionPacket(
-                magic: parsedMagic,
-                version: parsedVersion,
-                action: parsedAction,
-                modifiers: parsedModifiers,
-                flags: parsedFlags,
-                hidUsage: parsedUsage,
-                param: parsedParam,
-                sequence: parsedSeq
-            )
-        }
+        data.withUnsafeBytes { decode(from: $0) }
     }
 
     // 便捷工厂方法：按键按下

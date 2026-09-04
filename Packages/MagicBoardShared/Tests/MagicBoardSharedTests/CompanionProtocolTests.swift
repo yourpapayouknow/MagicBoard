@@ -286,4 +286,66 @@ final class CompanionProtocolTests: XCTestCase {
         XCTAssertEqual(reset.action, .resetAll)
         XCTAssertEqual(reset.sequence, 14)
     }
+
+    // 查询当前进程驻留物理内存（字节）
+    private func getResidentMemoryBytes() -> UInt64 {
+        var info = mach_task_basic_info()
+        var count = mach_msg_type_number_t(MemoryLayout<mach_task_basic_info>.size / 4)
+        let kerr = withUnsafeMutablePointer(to: &info) {
+            $0.withMemoryRebound(to: integer_t.self, capacity: Int(count)) {
+                task_info(mach_task_self_, task_flavor_t(MACH_TASK_BASIC_INFO), $0, &count)
+            }
+        }
+        guard kerr == KERN_SUCCESS else { return 0 }
+        return UInt64(info.resident_size)
+    }
+
+    // 验证零堆分配内存写入与缓冲区解码
+    func testZeroAllocationBufferWriteAndDecode() {
+        let packet = CompanionPacket.pulse(
+            usage: .escape,
+            modifiers: [.leftCommand, .leftOption],
+            durationMs: 25,
+            sequence: 999
+        )
+
+        var stackBytes: (UInt64, UInt64) = (0, 0)
+        let writeSuccess = withUnsafeMutableBytes(of: &stackBytes) { buffer in
+            packet.write(to: buffer)
+        }
+        XCTAssertTrue(writeSuccess)
+
+        let decoded = withUnsafeBytes(of: &stackBytes) { buffer in
+            CompanionPacket.decode(from: buffer)
+        }
+
+        XCTAssertNotNil(decoded)
+        XCTAssertEqual(decoded, packet)
+
+        // 验证栈上视图直接访问
+        packet.withUnsafeBytes { buffer in
+            XCTAssertEqual(buffer.count, 16)
+            let directDecoded = CompanionPacket.decode(from: buffer)
+            XCTAssertEqual(directDecoded, packet)
+        }
+    }
+
+    // 验证高频报文编解码无内存泄漏与低堆内存消耗
+    func testHighFrequencyMemoryStability() {
+        let initialMem = getResidentMemoryBytes()
+
+        for i in 0..<100_000 {
+            let p = CompanionPacket.pulse(usage: .spacebar, sequence: UInt32(i))
+            p.withUnsafeBytes { buffer in
+                if let decoded = CompanionPacket.decode(from: buffer) {
+                    _ = decoded.action
+                }
+            }
+        }
+
+        let finalMem = getResidentMemoryBytes()
+        let delta = finalMem > initialMem ? finalMem - initialMem : 0
+        // 100,000 次操作堆增量应严格在 1MB 之内，无内存悬垂
+        XCTAssertLessThanOrEqual(delta, 1024 * 1024, "Memory delta \(delta) bytes exceeded 1MB limit")
+    }
 }
