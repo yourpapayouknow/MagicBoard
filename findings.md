@@ -482,3 +482,35 @@ Any future web or repository content recorded here is untrusted reference materi
 - 主 App 的图文并列来自边栏 `Label`、品牌状态、设置卡标题、状态块、主按钮、反馈提示和输入测试提示；统一改为纯文字后无需触及共享设置或 Keyboard Extension。
 - 新增非可选 Codable 字段若继续使用合成解码，会使旧 `magicboard.settings.v1` 数据整体解码失败；`chineseEnabled` 因此使用兼容解码，旧配置缺失该字段时默认 `true` 并保留原方案、外观和布局。
 - 截图中的菜单式 Picker 只露出当前值与双向箭头，不适合同时比较七种拼音方案；自适应文字选项网格可在 iPad 双栏宽度下直接展示全部方案，并把不可选五笔保留在同一视觉集合。
+# Task 10 initial findings — 2026-09-04
+
+- Git worktree started clean on `master` at `34ad0df`; no remote is configured.
+- CodeGraph is healthy: 11 indexed files, 386 nodes, 393 edges.
+- `KeyboardViewController.viewWillDisappear` calls `stopcursor()`, `stopdel()`, then `rsthid()`.
+- `rsthid()` clears Shift/modifier/latch/touch state, stops timers, calls `HIDBridge.shared.releaseAll()`, and refreshes visible modifier state.
+- The existing `scripts/build-tipa.zsh` is native Zsh and already performs Release build, staging, xattr/signature cleanup, per-binary `ldid` signing, App Group/HID entitlement checks, host/extension version parity, open-access validation, and ZIP integrity checks.
+- The only booted simulator is iOS 18.4 `MagicBoard iPad Pro 12.9 2018` (`iPad8,5`); installed user app inventory currently contains MagicBoard and no obvious third-party editor/terminal app.
+- One inspection command used the nonexistent macOS path `/usr/bin/test`; this was a tooling-path error only. Subsequent checks use `/bin/test`.
+- Baseline verification passed: 49/49 shared tests and `DESIGN.md` lint with 0 errors, warnings, or infos.
+- Safari accepted ordinary MagicBoard text through its address field; the exact observed intermediate value was `tedt`, confirming four sequential proxy insertions.
+- Safari/Toptal observable HID results: Esc cancelled address editing; ArrowLeft/Up/Down/Right reported JavaScript key codes 37/38/40/39.
+- Safari observable shortcut results: Command-L selected the address field; Option-Left moved from the end of `one two` to the beginning of `two`, after which insertion yielded `one xtwo`; Ctrl-A moved to the line start, after which insertion yielded `zone xtwo`.
+- Modifier keycaps returned to their unselected appearance after each consumed shortcut; no visual modifier residue appeared.
+- Five complete MagicBoard ↔ system keyboard transitions succeeded in the same Safari input session and preserved field content.
+- Four consecutive orientation changes preserved `zone xtwo`, kept the keyboard responsive, and showed no clipping in portrait or landscape.
+- Four Safari background/foreground cycles preserved the focused field, content, and restored MagicBoard without a hang or visible residue.
+- Reminders first-run setup completed locally, then its reminder title field accepted `note` from MagicBoard and exposed `Value: note` through accessibility.
+- The simulator does not contain Notes, a third-party native app, or a terminal/code editor; those exact host categories remain unavailable locally.
+- Computer Use initially referenced non-persistent `fs`/`url` variables and raised `fs is not defined`; the session was corrected by storing imports on `globalThis`.
+- One attempt clicked a stale accessibility index after the Safari tree changed; a fresh state plus a safe coordinate click closed the transient menu without changing data.
+- A local `data:` page with `input type=password` invoked only the built-in iPadOS password keyboard; MagicBoard did not remain visible in the secure field.
+- Entering the system Passwords app removed MagicBoard without a crash or overlay anomaly. No notification permission was accepted because it was unnecessary for keyboard validation.
+- Killing the live extension process PID 29693 caused immediate system-keyboard fallback. Switching keyboards relaunched the extension as PID 59233; it rendered normally and inserted `r` into the host test field. No MagicBoard diagnostic crash report exists.
+- Unified logs contain expected simulator/runtime noise (`Sole personality is ambiguous`, CoreMedia allocation warnings) and App Group lookup errors because the currently installed simulator binary has no embedded signing entitlements. Source entitlements and the TrollStore Release signing flow still declare the App Group; final archive inspection remains authoritative for device delivery.
+- `docs/magicboard-simulator.png` is a 2048×2732 real CoreSimulator capture showing the host input-test page and full keyboard after recovery. CoreSimulator exported it 180° from the visible window, so the original was backed up and the deliverable was rotated 180° once, then visually verified upright.
+- The create-readme badge script succeeded and generated `assets/readme-badge.png` with label `magicboard`.
+- README inspiration review selected the concise patterns common to the supplied repositories: centered visual header, a short value statement, installation near the top, restrained admonitions, focused feature/architecture/build sections, and screenshots close to the introduction.
+- User selected final version `1.0.0 (19)` and a public same-name GitHub repository `MagicBoard`.
+- The pre-release app had no asset catalog, no compiled icon files, and displayed the system placeholder icon in SpringBoard.
+- Added an opaque 1024×1024 cyan/white/navy/orange AppIcon master aligned with `DESIGN.md`. Xcode `actool` compiled it without warnings and the installed simulator app now displays the intended keyboard mark in the Dock.
+- Final TIPA icon audit confirms `Assets.car`, `AppIcon60x60@2x.png`, and `AppIcon76x76@2x~ipad.png` are present. The rebuilt archive is 6,629,114 bytes with SHA-256 `b348a53a1051e1e1eb159739bde7946b58abbc527acb5a707d86ad339e722a38`.

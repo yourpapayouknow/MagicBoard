@@ -530,3 +530,24 @@
 - `DESIGN.md` lint 0 findings，iPad 模拟器 Debug 与 arm64 Release 均成功；新 TIPA 为 5,617,945 bytes，SHA-256 `d0a2540bf99bc03719ecaf8e8f7aaf84a9a66f857ccb8338c56171345a921d09`。
 - 概览卡片最终采用 34pt 顶部对齐“初始化”，设置提示/跳转/刷新同处顶部；边栏删除品牌启用状态块并为五项配置五个视觉不同的 SF Symbol。最终 TIPA 为 5,614,971 bytes，SHA-256 `9d4820315a17405938e5005e6efd84e21f597226a67d6513994512d6c7c09519`。
 - 中文输入页新增默认开启的总开关，输入方案改为自适应文字选项网格，五笔以不可选项留在同一网格；关闭后扩展提交当前组合、回到英文并阻止再次进入中文。共享测试 49/49、设计 lint、模拟器 Debug 与 arm64 Release 通过；TIPA 为 5,624,275 bytes，SHA-256 `8bc51ee4fe8b2eb25abe523ab66f49ec206f7ce450f2f6b209808e2b099dbf50`。
+# 2026-09-04 — Task 10 started
+
+- Applied `create-readme`, `planning-with-files`, and `computer-use` skill instructions.
+- Confirmed a clean Git baseline, absent remote, healthy CodeGraph index, booted iPadOS 18.4 simulator, and existing Release/TIPA pipeline.
+- Mapped HID lifecycle cleanup and recorded the simulator/device evidence boundary.
+- Added Task 10 phases 13–17 and verifiable success criteria; no source code has been changed.
+- Ran 49 shared tests and design lint successfully.
+- Completed Safari ordinary-input, Esc, all four arrows, Command-L, Option-Left, and Ctrl-A behavior checks with observable values/key codes.
+- Completed five system-keyboard switch transitions, four orientation transitions, and four foreground/background cycles without a crash, freeze, clipping, lost text, or visible modifier residue.
+- Completed ordinary MagicBoard input in Reminders (`note`). Notes, native third-party, and terminal/editor apps are absent from this simulator image and remain explicit device-only coverage.
+- Verified password-field system-keyboard fallback and safe transition into the system Passwords app.
+- Force-terminated the active keyboard extension, observed system fallback, switched back to a newly launched extension process, and confirmed post-recovery input.
+- Generated and visually verified `docs/magicboard-simulator.png`; preserved the pre-rotation export under the session backup.
+- Generated `assets/readme-badge.png` with the create-readme skill and reviewed all four required README references.
+- Created Chinese `README.md` and equivalent `README_EN.md` with agent quick start, manual TrollStore installation, features, build, verification, structure, platform limits, badge, and simulator screenshot.
+- Updated the shared project version source to `1.0.0 (19)` after user confirmation.
+- Detected that the previous app/TIPA had no AppIcon and showed a SpringBoard placeholder.
+- Generated and integrated the production 1024×1024 AppIcon, updated `DESIGN.md` to version 1.0.0, and confirmed design lint remains clean.
+- Rebuilt and installed Debug on the running iPad simulator; SpringBoard displays the new cyan keyboard icon at Dock size.
+- Re-ran 49/49 shared tests, JSON/plist/Zsh validation, simulator Debug, and arm64 Release/TIPA packaging successfully.
+- Final archive audit passed ZIP integrity, arm64 host/extension, version 1.0.0 (19), bundle IDs, open access, App Group/HID entitlements, IOKit linkage, and compiled icon presence. SHA-256: `b348a53a1051e1e1eb159739bde7946b58abbc527acb5a707d86ad339e722a38`.

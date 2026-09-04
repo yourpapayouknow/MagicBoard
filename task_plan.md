@@ -825,3 +825,63 @@ Unify every ordinary, function, and modifier key behind one `KeyView` visual com
 - 关闭后禁用方案选择、阻止进入中文模式并回到英文。
 - 用自适应文字选项网格替代下拉菜单，将不可选五笔放入同一网格。
 - 49 项共享测试、设计 lint、模拟器 Debug 与 arm64 Release/TIPA 构建通过。
+
+## Task 10 — 兼容性测试与最终发布
+
+### Assumptions and acceptance boundary
+
+- Local acceptance uses the already-running iOS 18.4 `MagicBoard iPad Pro 12.9 2018` Simulator without starting a reload-enabled server.
+- Simulator evidence is valid for UI layout, ordinary text input, app/orientation lifecycle, keyboard switching, and observable HID behavior supported by CoreSimulator.
+- TrollStore installation, real hardware HID dispatch, OS jetsam termination, and third-party apps unavailable in the simulator require target-iPad evidence and must not be reported as simulator-proven.
+- Success means every locally testable item has recorded evidence, regressions found locally are fixed and retested, documentation/build tooling are complete, the Release archive passes independent inspection, and device-only limits are explicit.
+
+### Phase 13 — Baseline, capability matrix, and regression tests
+
+**Status:** complete
+
+- Restore prior evidence, inspect logs/history/Git, confirm CodeGraph health, and map lifecycle/HID cleanup paths.
+- Inventory installed simulator apps and define exact simulator-versus-device coverage for every requested scenario.
+- Run the shared test suite and targeted static checks before any source change.
+
+### Phase 14 — Simulator compatibility matrix
+
+**Status:** complete
+
+- Validate Safari and another available text editor/input surface, system keyboard switching, portrait/landscape repetition, and foreground/background repetition.
+- Exercise Esc, Ctrl, Option, Command, and four arrows in an observable shortcut-aware surface where CoreSimulator forwards them.
+- Capture crash/hang/layout/modifier residue evidence from UI behavior and simulator logs.
+
+### Phase 15 — Surgical fixes and recovery verification
+
+**Status:** complete
+
+- Add only evidence-driven fixes, with focused tests first where the behavior is model-testable.
+- Re-run affected UI scenarios and validate keyboard-extension disappearance/reappearance cleanup using the strongest simulator-supported lifecycle mechanism.
+
+### Phase 16 — Documentation, screenshot, and build tooling
+
+**Status:** complete
+
+- Generate the create-readme badge when Photoshop/template support is available.
+- Create concise Chinese `README.md`, English `README_EN.md`, and one representative simulator screenshot, with quick agent install and traditional manual install sections.
+- Verify the one-command Zsh Release/TIPA script and add only missing release-facing checks or explanation.
+
+**Result:** Existing script already contains the complete one-command build/sign/validate pipeline; no redundant second script was added. Chinese/English READMEs, generated badge, and verified simulator screenshot are complete.
+
+### Phase 17 — Final Release and remote publication
+
+**Status:** in progress
+
+- Run all tests, design lint, XcodeGen/build checks, and the generic arm64 Release/TIPA flow.
+- Independently inspect archive layout, architecture, versions, extension metadata, entitlements, and hash.
+- Commit traceable changes, create the same-name remote repository for the authenticated Git host account, push the final branch, and report any target-iPad-only acceptance items.
+
+### Phase 18 — App icon integration and installed verification
+
+**Status:** complete
+
+- Add opaque 1024-point AppIcon source artwork aligned with the cyan-orange design system.
+- Compile the asset catalog, install the refreshed app, and verify the icon on the simulator Home Screen.
+- Rebuild and independently inspect the final TIPA so the release archive—not only the source tree—contains the compiled icon.
+
+**Result:** The simulator Home Screen displays the cyan keyboard icon at Dock size. Both Debug and Release asset compilation emitted `Assets.car`, `AppIcon60x60@2x.png`, and `AppIcon76x76@2x~ipad.png`; the rebuilt TIPA contains all three.
