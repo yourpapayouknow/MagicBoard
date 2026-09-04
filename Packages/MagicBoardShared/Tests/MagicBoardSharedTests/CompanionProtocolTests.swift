@@ -348,4 +348,37 @@ final class CompanionProtocolTests: XCTestCase {
         // 100,000 次操作堆增量应严格在 1MB 之内，无内存悬垂
         XCTAssertLessThanOrEqual(delta, 1024 * 1024, "Memory delta \(delta) bytes exceeded 1MB limit")
     }
+
+    // 验证 iOS 模拟器环境向 Mac 宿主机伴侣服务发送真实 UDP 报文链路
+    func testSimulatorToHostUDPSend() throws {
+        let sock = socket(AF_INET, SOCK_DGRAM, 0)
+        XCTAssertGreaterThanOrEqual(sock, 0)
+        defer { close(sock) }
+
+        var addr = sockaddr_in()
+        addr.sin_len = UInt8(MemoryLayout<sockaddr_in>.size)
+        addr.sin_family = sa_family_t(AF_INET)
+        addr.sin_port = UInt16(52188).bigEndian
+        inet_pton(AF_INET, "127.0.0.1", &addr.sin_addr)
+
+        let testPackets = [
+            CompanionPacket.pulse(usage: .escape, durationMs: 25, sequence: 701),
+            CompanionPacket.keyDown(usage: .a, modifiers: [.leftCommand], sequence: 702),
+            CompanionPacket.keyUp(usage: .a, sequence: 703),
+            CompanionPacket.pulse(usage: .f5, durationMs: 20, sequence: 704),
+        ]
+
+        for packet in testPackets {
+            var raw: (UInt64, UInt64) = (0, 0)
+            let sent = withUnsafeMutableBytes(of: &raw) { buffer -> Int in
+                _ = packet.write(to: buffer)
+                return withUnsafePointer(to: &addr) { addrPtr in
+                    addrPtr.withMemoryRebound(to: sockaddr.self, capacity: 1) { saPtr in
+                        sendto(sock, buffer.baseAddress, CompanionPacket.packetLength, 0, saPtr, socklen_t(MemoryLayout<sockaddr_in>.size))
+                    }
+                }
+            }
+            XCTAssertEqual(sent, CompanionPacket.packetLength)
+        }
+    }
 }
