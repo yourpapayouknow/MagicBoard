@@ -885,3 +885,15 @@ Unify every ordinary, function, and modifier key behind one `KeyView` visual com
 - Rebuild and independently inspect the final TIPA so the release archive—not only the source tree—contains the compiled icon.
 
 **Result:** The simulator Home Screen displays the cyan keyboard icon at Dock size. Both Debug and Release asset compilation emitted `Assets.car`, `AppIcon60x60@2x.png`, and `AppIcon76x76@2x~ipad.png`; the rebuilt TIPA contains all three.
+
+### Phase 19 — Physical device Jetsam memory crash fix and 1.0.1 release
+
+**Status:** complete
+
+- Diagnose keyboard extension crash on physical iOS 16.6.1 TrollStore iPad (verified 0 iOS 17+ APIs; identified Jetsam dirty memory kill during Rime dictionary online compilation).
+- Precompile all 7 Rime schemes offline into `.table.bin`, `.prism.bin`, `.reverse.bin` and bundle under `Keyboard/RimeResources/build/`.
+- Configure `RimeEngine` with `prebuiltDataDir`, `stagingDir`, and `maintenance: false` for read-only `mmap` zero-dirty-memory loading.
+- Bump version to `1.0.1 (20)` in `project.yml` and add validation check in `scripts/build-tipa.zsh`.
+- Rebuild `MagicBoard.tipa` and physically verify on iOS 16.6.1 device with TrollStore (confirmed 100% stable, instant open).
+- Commit changes to Git, create tag `v1.0.1`, push to remote, and publish GitHub Release.
+

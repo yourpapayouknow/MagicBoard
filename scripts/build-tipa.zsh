@@ -118,5 +118,6 @@ readonly open_access=$(plutil -extract NSExtension.NSExtensionAttributes.Request
 unzip -tq "$artifact" >/dev/null
 unzip -Z1 "$artifact" | rg -q '^Payload/MagicBoard[.]app/Info[.]plist$' || fail "tipa 缺少主 App Info.plist"
 unzip -Z1 "$artifact" | rg -q '^Payload/MagicBoard[.]app/PlugIns/MagicBoardKeyboard[.]appex/Info[.]plist$' || fail "tipa 缺少键盘 Info.plist"
+unzip -Z1 "$artifact" | rg -q '^Payload/MagicBoard[.]app/PlugIns/MagicBoardKeyboard[.]appex/RimeResources/build/luna_pinyin[.]table[.]bin$' || fail "tipa 缺少 Rime 预编译二进制词典"
 
 print -r -- "生成完成：$artifact（${host_version} (${host_build})）"

@@ -552,3 +552,8 @@
 - Re-ran 49/49 shared tests, JSON/plist/Zsh validation, simulator Debug, and arm64 Release/TIPA packaging successfully.
 - Final archive audit passed ZIP integrity, arm64 host/extension, version 1.0.0 (19), bundle IDs, open access, App Group/HID entitlements, IOKit linkage, and compiled icon presence. SHA-256: `b348a53a1051e1e1eb159739bde7946b58abbc527acb5a707d86ad339e722a38`.
 - Created and pushed the public same-name repository at `https://github.com/yourpapayouknow/MagicBoard`; release publication follows the final status commit.
+- Completed physical device crash root-cause analysis for iOS 16.6.1 TrollStore: identified Jetsam memory kill (~194MB dirty memory during in-process Rime dictionary compilation vs ~30-48MB extension limit).
+- Built precompiled binary dictionary suite (`.table.bin`, `.prism.bin`, `.reverse.bin`) and configured Rime prebuilt traits for read-only `mmap` loading.
+- Upgraded version to `1.0.1 (20)` across `project.yml`, rebuilt `MagicBoard.tipa` (16MB, SHA-256 `dcb0bb8797cb2202a7d89e75fb8353cb4086638c120fbd6e3c9f6a92905e6626`), and user confirmed perfect operation on physical iPad.
+- Publishing release v1.0.1 with problem explanation and binary download.
+

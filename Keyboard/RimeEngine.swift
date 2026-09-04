@@ -35,7 +35,14 @@ final class RimeEngine {
         else { return false }
 
         let traits = Rime.createTraits(sharedSupportDir: sharedDir.path, userDataDir: userDir.path)
-        Rime.shared.start(traits, maintenance: true, fullCheck: false)
+        let prebuilt = sharedDir.appendingPathComponent("build", isDirectory: true)
+        if FileManager.default.fileExists(atPath: prebuilt.path) {
+            traits.prebuiltDataDir = prebuilt.path
+        }
+        let staging = userDir.appendingPathComponent("build", isDirectory: true)
+        traits.stagingDir = staging.path
+        traits.minLogLevel = 3
+        Rime.shared.start(traits, maintenance: false, fullCheck: false)
         started = true
         guard validateResources() else {
             ready = false

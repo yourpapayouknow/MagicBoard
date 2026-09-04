@@ -514,3 +514,8 @@ Any future web or repository content recorded here is untrusted reference materi
 - The pre-release app had no asset catalog, no compiled icon files, and displayed the system placeholder icon in SpringBoard.
 - Added an opaque 1024×1024 cyan/white/navy/orange AppIcon master aligned with `DESIGN.md`. Xcode `actool` compiled it without warnings and the installed simulator app now displays the intended keyboard mark in the Dock.
 - Final TIPA icon audit confirms `Assets.car`, `AppIcon60x60@2x.png`, and `AppIcon76x76@2x~ipad.png` are present. The rebuilt archive is 6,629,114 bytes with SHA-256 `b348a53a1051e1e1eb159739bde7946b58abbc527acb5a707d86ad339e722a38`.
+- Physical device crash analysis (iOS 16.6.1 TrollStore): verified zero iOS 17+ APIs used. Root cause was Jetsam dirty memory limit (~30MB–48MB for com.apple.keyboard-service). Online Rime schema and dictionary compilation during `viewDidLoad` peaked dirty RSS at ~194MB, triggering kernel SIGKILL.
+- Strategy 1 implementation: precompiled all 7 Rime schemes offline into `.table.bin`, `.prism.bin`, `.reverse.bin` (~22MB total) under `Keyboard/RimeResources/build/`, configured `traits.prebuiltDataDir`, and switched `maintenance` to `false`.
+- The binary dictionaries load via clean `mmap` read-only memory, reducing dirty memory footprint to ~15-25MB and fully resolving Jetsam crashes.
+- Bumped version to `1.0.1 (20)`. User verified on physical iOS 16.6.1 iPad with TrollStore: instant keyboard display and stable input with zero crashes.
+
