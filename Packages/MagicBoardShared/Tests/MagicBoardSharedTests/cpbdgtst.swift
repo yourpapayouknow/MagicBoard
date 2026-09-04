@@ -272,4 +272,19 @@ final class CompanionBridgeTests: XCTestCase {
             nil
         )
     }
+
+    // 测试实时功能键发包
+    func testlivepls() {
+        let bridge = CompanionBridge.shared
+        bridge.cfg(with: CompanionConfig(enabled: true, host: "127.0.0.1", port: 52088))
+        Thread.sleep(forTimeInterval: 0.15)
+        bridge.sndpls(usage: .f1)
+        bridge.sndpls(usage: .escape)
+        bridge.sndpls(usage: .tab)
+        bridge.sndpls(usage: .a, mods: [.leftCommand])
+        bridge.sndpls(usage: .spacebar, mods: [.leftCommand])
+        bridge.sndpls(usage: .downArrow)
+        bridge.flush()
+        Thread.sleep(forTimeInterval: 0.15)
+    }
 }
