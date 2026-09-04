@@ -53,14 +53,14 @@ macOS 伴侣服务提供**原生编译二进制（推荐）**与**纯 Python 3 �
    ```zsh
    ./build-mac.zsh
    ```
-   *编译产物为 `magicboard-companion-mac`（仅约 120KB，零外部依赖，极低内存消耗）。*
+   *编译产物为 `cpmac`（仅约 103KB，零外部依赖，极低内存消耗）。*
 3. 运行服务（默认监听 UDP `52088` 端口）：
    ```zsh
-   ./magicboard-companion-mac
+   ./cpmac
    ```
    如需自定义端口，可传入参数：
    ```zsh
-   ./magicboard-companion-mac -p 52188
+   ./cpmac -p 52188
    ```
 
 ### 2.2 方式 B：Python 3 零依赖备用脚本
@@ -73,7 +73,7 @@ python3 Companion/macOS/magicboard_companion.py
 macOS 注入按键需要系统辅助功能（Accessibility）授权：
 1. 首次启动时，若终端未获得授权，伴侣将提示并自动弹窗；
 2. 前往 **「系统设置」 $\rightarrow$ 「隐私与安全性」 $\rightarrow$ 「辅助功能」**；
-3. 将您运行伴侣服务的终端应用（如 `Terminal`、`iTerm2`）勾选开启允许；如果将二进制作为独立应用运行，请添加并勾选 `magicboard-companion-mac`。
+3. 将您运行伴侣服务的终端应用（如 `Terminal`、`iTerm2`）勾选开启允许；如果将二进制作为独立应用运行，请添加并勾选 `cpmac`。
 
 ### 2.4 macOS 开机自动后台运行（LaunchAgent 配置）
 若希望电脑开机/登录后自动在后台无感知运行伴侣服务：
@@ -87,7 +87,7 @@ macOS 注入按键需要系统辅助功能（Accessibility）授权：
        <string>com.iwmei.magicboard.companion</string>
        <key>ProgramArguments</key>
        <array>
-           <string>/usr/local/bin/magicboard-companion-mac</string>
+           <string>/usr/local/bin/cpmac</string>
        </array>
        <key>RunAtLoad</key>
        <true/>
@@ -102,7 +102,7 @@ macOS 注入按键需要系统辅助功能（Accessibility）授权：
    ```
 2. 将编译好的二进制复制至系统路径并加载 LaunchAgent：
    ```zsh
-   sudo cp magicboard-companion-mac /usr/local/bin/
+   sudo cp cpmac /usr/local/bin/
    launchctl load -w ~/Library/LaunchAgents/com.iwmei.magicboard.companion.plist
    ```
 
@@ -113,9 +113,9 @@ macOS 注入按键需要系统辅助功能（Accessibility）授权：
 Windows 伴侣服务提供 **C 语言绿色免安装原生版（推荐）** 与 **Python 3 备用脚本**。
 
 ### 3.1 方式 A：C 语言绿色版免安装单文件（推荐）
-1. 文件位置：[`Companion/Windows/magicboard-companion-win.exe`](file:///Users/mac/codexproj/magicboard/Companion/Windows/magicboard-companion-win.exe)（仅约 73KB，纯 Win32 API 编写）；
+1. 文件位置：[`Companion/Windows/cpwin.exe`](file:///Users/mac/codexproj/magicboard/Companion/Windows/cpwin.exe)（编译自 `cpwin.c` 与 `head.h`，纯 Win32 API 编写）；
 2. **以管理员身份运行**：
-   - 右键点击 `magicboard-companion-win.exe`，选择「**以管理员身份运行**」；
+   - 右键点击 `cpwin.exe`，选择「**以管理员身份运行**」；
    - *重要说明*：Windows 存在 UIPI（用户界面特权隔离）机制，非管理员权限进程无法向高权限窗口（如任务管理器、注册表编辑器、以管理员运行的编辑器等）注入键盘事件。以管理员身份运行可确保按键 100% 穿透至任意前台窗口。
 
 ### 3.2 方式 B：Python 3 零依赖备用脚本
@@ -134,7 +134,7 @@ New-NetFirewallRule -DisplayName "MagicBoard Companion" -Direction Inbound -Loca
 通过 Windows 任务计划程序，可以在登录时自动以最高权限在后台启动伴侣服务，且不会弹出 UAC 确认框：
 以管理员身份打开 PowerShell 执行：
 ```powershell
-$Action = New-ScheduledTaskAction -Execute "C:\Path\To\magicboard-companion-win.exe"
+$Action = New-ScheduledTaskAction -Execute "C:\Path\To\cpwin.exe"
 $Trigger = New-ScheduledTaskTrigger -AtLogOn
 $Principal = New-ScheduledTaskPrincipal -UserId $env:USERNAME -LogonType Interactive -RunLevel Highest
 Register-ScheduledTask -TaskName "MagicBoardCompanion" -Action $Action -Trigger $Trigger -Principal $Principal
@@ -158,7 +158,7 @@ Register-ScheduledTask -TaskName "MagicBoardCompanion" -Action $Action -Trigger 
 1. 访问 [tailscale.com](https://tailscale.com) 下载并安装对应系统客户端；
 2. 登录个人账号（支持 Apple、Google、Microsoft 或 GitHub 账号）；
 3. 登录后在 Tailscale 状态栏/托盘图标中查看分配的 IPv4 地址（例如：`100.88.99.2`）；
-4. 确保伴侣服务（`magicboard-companion-mac` 或 `magicboard-companion-win.exe`）已正常启动。
+4. 确保伴侣服务（`cpmac` 或 `cpwin.exe`）已正常启动。
 
 #### 第二步：iPad 端配置
 1. 在 iPad 的 App Store 搜索并安装 **Tailscale** 应用；
@@ -225,4 +225,4 @@ UDP 协议属于无连接传输，在网络极度不稳定或无线抖动时，�
 - **Q3: 网易UU远程中无法穿透 Command/Win 键？**
   - **A**: 请检查 MagicBoard 主 App 中的「远程伴侣」总开关是否为开启状态，并确认「目标系统预设」选择与电脑实际操作系统匹配（macOS 映射 Command，Windows 映射 Win）。
 - **Q4: Windows 上个别软件（如任务管理器）按键无反应？**
-  - **A**: 这是 Windows UIPI 特权隔离保护所致。请务必右键 `magicboard-companion-win.exe` 并选择「以管理员身份运行」。
+  - **A**: 这是 Windows UIPI 特权隔离保护所致。请务必右键 `cpwin.exe` 并选择「以管理员身份运行」。

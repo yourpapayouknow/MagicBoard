@@ -9,3 +9,4 @@
 *.log
 *.err
 __pycache__/
+/Companion/macOS/cpmac

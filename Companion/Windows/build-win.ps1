@@ -10,7 +10,7 @@
 
 [CmdletBinding()]
 param (
-    [string]$Output = "magicboard-companion-win.exe",
+    [string]$Output = "cpwin.exe",
     [switch]$Clean
 )
 
@@ -39,7 +39,7 @@ if (-not $gccPath) {
 
 Write-Host "✅ 找到编译器: $gccPath" -ForegroundColor Green
 
-$Source = Join-Path $ScriptDir "magicboard-companion-win.c"
+$Source = Join-Path $ScriptDir "cpwin.c"
 $Target = Join-Path $ScriptDir $Output
 
 $gccArgs = @(

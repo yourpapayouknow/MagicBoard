@@ -1,7 +1,7 @@
-// 定义 MagicBoard 伴侣二进制通信协议（MBCP）
+// 伴侣二进制通信协议
 import Foundation
 
-// 定义伴侣动作类型
+// 伴侣动作类型
 public enum CompanionAction: UInt8, CaseIterable, Codable, Sendable, CustomStringConvertible {
     case keyDown = 0x01
     case keyUp = 0x02
@@ -20,10 +20,11 @@ public enum CompanionAction: UInt8, CaseIterable, Codable, Sendable, CustomStrin
     }
 }
 
-// 规范 8 位修饰键掩码位图
+// 伴侣修饰键掩码
 public struct CompanionModifiers: OptionSet, Codable, Hashable, Sendable, CustomStringConvertible {
     public let rawValue: UInt8
 
+    // 初始化掩码
     public init(rawValue: UInt8) {
         self.rawValue = rawValue
     }
@@ -37,7 +38,6 @@ public struct CompanionModifiers: OptionSet, Codable, Hashable, Sendable, Custom
     public static let rightOption = CompanionModifiers(rawValue: 1 << 6)
     public static let rightCommand = CompanionModifiers(rawValue: 1 << 7)
 
-    // 常用修饰键快捷别名
     public static let control: CompanionModifiers = .leftControl
     public static let shift: CompanionModifiers = .leftShift
     public static let option: CompanionModifiers = .leftOption
@@ -47,13 +47,12 @@ public struct CompanionModifiers: OptionSet, Codable, Hashable, Sendable, Custom
     public static let rightAlt: CompanionModifiers = .rightOption
     public static let rightWin: CompanionModifiers = .rightCommand
 
-    // 便捷语义判断
     public var hasControl: Bool { contains(.leftControl) || contains(.rightControl) }
     public var hasShift: Bool { contains(.leftShift) || contains(.rightShift) }
     public var hasOption: Bool { contains(.leftOption) || contains(.rightOption) }
     public var hasCommand: Bool { contains(.leftCommand) || contains(.rightCommand) }
 
-    // 从键盘修饰键与输入状态直接创建掩码
+    // 从修饰键与输入状态构建掩码
     public init(modifierState: ModifierState? = nil, inputState: InputState? = nil) {
         var mods: CompanionModifiers = []
         if let modifierState {
@@ -85,22 +84,26 @@ public struct CompanionModifiers: OptionSet, Codable, Hashable, Sendable, Custom
     }
 }
 
-// 采用国际标准 USB HID Usage 16 位编码作为统一按键标识 (Page 0x07)
+// 伴侣HID按键编码
 public struct CompanionHIDUsage: RawRepresentable, Hashable, Codable, Sendable, ExpressibleByIntegerLiteral, CustomStringConvertible {
     public let rawValue: UInt16
 
+    // 初始化键码
     public init(rawValue: UInt16) {
         self.rawValue = rawValue
     }
 
+    // 整数字面量初始化
     public init(integerLiteral value: UInt16) {
         self.rawValue = value
     }
 
+    // 整数初始化
     public init(_ value: UInt16) {
         self.rawValue = value
     }
 
+    // 扩展整数初始化
     public init(_ value: UInt32) {
         self.rawValue = UInt16(value & 0xFFFF)
     }
@@ -109,7 +112,6 @@ public struct CompanionHIDUsage: RawRepresentable, Hashable, Codable, Sendable, 
         String(format: "0x%04X", rawValue)
     }
 
-    // 常用字母键 (0x04 ~ 0x1D)
     public static let a: CompanionHIDUsage = 0x0004
     public static let b: CompanionHIDUsage = 0x0005
     public static let c: CompanionHIDUsage = 0x0006
@@ -137,7 +139,6 @@ public struct CompanionHIDUsage: RawRepresentable, Hashable, Codable, Sendable, 
     public static let y: CompanionHIDUsage = 0x001C
     public static let z: CompanionHIDUsage = 0x001D
 
-    // 数字键 1~0 (0x1E ~ 0x27)
     public static let digit1: CompanionHIDUsage = 0x001E
     public static let digit2: CompanionHIDUsage = 0x001F
     public static let digit3: CompanionHIDUsage = 0x0020
@@ -149,7 +150,6 @@ public struct CompanionHIDUsage: RawRepresentable, Hashable, Codable, Sendable, 
     public static let digit9: CompanionHIDUsage = 0x0026
     public static let digit0: CompanionHIDUsage = 0x0027
 
-    // 常用控制与编辑键
     public static let returnOrEnter: CompanionHIDUsage = 0x0028
     public static let enter: CompanionHIDUsage = .returnOrEnter
     public static let escape: CompanionHIDUsage = 0x0029
@@ -175,7 +175,6 @@ public struct CompanionHIDUsage: RawRepresentable, Hashable, Codable, Sendable, 
     public static let slash: CompanionHIDUsage = 0x0038
     public static let capsLock: CompanionHIDUsage = 0x0039
 
-    // 功能键 F1 ~ F12 (0x3A ~ 0x45)
     public static let f1: CompanionHIDUsage = 0x003A
     public static let f2: CompanionHIDUsage = 0x003B
     public static let f3: CompanionHIDUsage = 0x003C
@@ -189,7 +188,6 @@ public struct CompanionHIDUsage: RawRepresentable, Hashable, Codable, Sendable, 
     public static let f11: CompanionHIDUsage = 0x0044
     public static let f12: CompanionHIDUsage = 0x0045
 
-    // 导航键与箭头
     public static let printScreen: CompanionHIDUsage = 0x0046
     public static let scrollLock: CompanionHIDUsage = 0x0047
     public static let pause: CompanionHIDUsage = 0x0048
@@ -204,7 +202,6 @@ public struct CompanionHIDUsage: RawRepresentable, Hashable, Codable, Sendable, 
     public static let downArrow: CompanionHIDUsage = 0x0051
     public static let upArrow: CompanionHIDUsage = 0x0052
 
-    // 修饰键 HID 编码 (0xE0 ~ 0xE7)
     public static let leftControl: CompanionHIDUsage = 0x00E0
     public static let leftShift: CompanionHIDUsage = 0x00E1
     public static let leftOption: CompanionHIDUsage = 0x00E2
@@ -219,13 +216,10 @@ public struct CompanionHIDUsage: RawRepresentable, Hashable, Codable, Sendable, 
     public static let rightWin: CompanionHIDUsage = .rightCommand
 }
 
-// 伴侣定长二进制通信报文（16 字节固定长度）
+// 伴侣二进制通信报文
 public struct CompanionPacket: Equatable, Sendable {
-    // 协议魔数 ASCII "MBCP" (MagicBoard Companion Protocol)
     public static let magic: UInt32 = 0x4D424350
-    // 当前协议版本
     public static let currentVersion: UInt8 = 1
-    // 固定报文总长度（16 字节）
     public static let packetLength: Int = 16
 
     public var magic: UInt32
@@ -237,7 +231,7 @@ public struct CompanionPacket: Equatable, Sendable {
     public var param: UInt16
     public var sequence: UInt32
 
-    // 创建伴侣报文
+    // 初始化报文
     public init(
         magic: UInt32 = CompanionPacket.magic,
         version: UInt8 = CompanionPacket.currentVersion,
@@ -258,96 +252,77 @@ public struct CompanionPacket: Equatable, Sendable {
         self.sequence = sequence
     }
 
-    // 将 16 字节报文以网络大端序直接写入目标内存缓冲区（支持零堆分配）
+    // 写入内存缓冲
     @discardableResult
-    public func write(to buffer: UnsafeMutableRawBufferPointer) -> Bool {
+    public func wrbuf(to buffer: UnsafeMutableRawBufferPointer) -> Bool {
         guard buffer.count >= Self.packetLength, let base = buffer.baseAddress else { return false }
 
-        // 0..3: magic (UInt32, Big-Endian)
         let beMagic = magic.bigEndian
         memcpy(base, [beMagic], 4)
 
-        // 4: version (UInt8)
         base.storeBytes(of: version, toByteOffset: 4, as: UInt8.self)
-
-        // 5: action (UInt8)
         base.storeBytes(of: action.rawValue, toByteOffset: 5, as: UInt8.self)
-
-        // 6: modifiers (UInt8)
         base.storeBytes(of: modifiers.rawValue, toByteOffset: 6, as: UInt8.self)
-
-        // 7: flags (UInt8)
         base.storeBytes(of: flags, toByteOffset: 7, as: UInt8.self)
 
-        // 8..9: hidUsage (UInt16, Big-Endian)
         let beUsage = hidUsage.rawValue.bigEndian
         memcpy(base.advanced(by: 8), [beUsage], 2)
 
-        // 10..11: param (UInt16, Big-Endian)
         let beParam = param.bigEndian
         memcpy(base.advanced(by: 10), [beParam], 2)
 
-        // 12..15: sequence (UInt32, Big-Endian)
         let beSeq = sequence.bigEndian
         memcpy(base.advanced(by: 12), [beSeq], 4)
 
         return true
     }
 
-    // 在栈上提供零堆分配（Zero-Allocation）的直接只读内存视图回调
-    public func withUnsafeBytes<R>(_ body: (UnsafeRawBufferPointer) throws -> R) rethrows -> R {
-        var raw: (UInt64, UInt64) = (0, 0) // 16 字节纯栈上分配
+    // 访问栈上只读缓冲
+    public func withbytes<R>(_ body: (UnsafeRawBufferPointer) throws -> R) rethrows -> R {
+        var raw: (UInt64, UInt64) = (0, 0)
         return try withUnsafeMutableBytes(of: &raw) { (buffer: UnsafeMutableRawBufferPointer) in
-            write(to: buffer)
+            wrbuf(to: buffer)
             return try body(UnsafeRawBufferPointer(buffer))
         }
     }
 
-    // 编码为 16 字节网络大端序二进制数据
-    public func encode() -> Data {
+    // 编码为二进制数据
+    public func enc() -> Data {
         var data = Data(count: Self.packetLength)
         data.withUnsafeMutableBytes { buffer in
-            _ = write(to: buffer)
+            _ = wrbuf(to: buffer)
         }
         return data
     }
 
-    // 从原始内存缓冲区反序列化报文（严格校验长度、魔数、版本和合法动作，零堆分配）
-    public static func decode(from buffer: UnsafeRawBufferPointer) -> CompanionPacket? {
+    // 解码内存缓冲区报文
+    public static func dec(from buffer: UnsafeRawBufferPointer) -> CompanionPacket? {
         guard buffer.count >= packetLength, let base = buffer.baseAddress else { return nil }
 
-        // 0..3: magic
         var rawMagic: UInt32 = 0
         memcpy(&rawMagic, base, 4)
         let parsedMagic = UInt32(bigEndian: rawMagic)
         guard parsedMagic == magic else { return nil }
 
-        // 4: version
         let parsedVersion = base.load(fromByteOffset: 4, as: UInt8.self)
         guard parsedVersion == currentVersion else { return nil }
 
-        // 5: action
         let actionRaw = base.load(fromByteOffset: 5, as: UInt8.self)
         guard let parsedAction = CompanionAction(rawValue: actionRaw) else { return nil }
 
-        // 6: modifiers
         let modRaw = base.load(fromByteOffset: 6, as: UInt8.self)
         let parsedModifiers = CompanionModifiers(rawValue: modRaw)
 
-        // 7: flags
         let parsedFlags = base.load(fromByteOffset: 7, as: UInt8.self)
 
-        // 8..9: hidUsage
         var rawUsage: UInt16 = 0
         memcpy(&rawUsage, base.advanced(by: 8), 2)
         let parsedUsage = CompanionHIDUsage(rawValue: UInt16(bigEndian: rawUsage))
 
-        // 10..11: param
         var rawParam: UInt16 = 0
         memcpy(&rawParam, base.advanced(by: 10), 2)
         let parsedParam = UInt16(bigEndian: rawParam)
 
-        // 12..15: sequence
         var rawSeq: UInt32 = 0
         memcpy(&rawSeq, base.advanced(by: 12), 4)
         let parsedSeq = UInt32(bigEndian: rawSeq)
@@ -364,13 +339,13 @@ public struct CompanionPacket: Equatable, Sendable {
         )
     }
 
-    // 从 Data 反序列化报文
-    public static func decode(from data: Data) -> CompanionPacket? {
-        data.withUnsafeBytes { decode(from: $0) }
+    // 解码二进制数据报文
+    public static func dec(from data: Data) -> CompanionPacket? {
+        data.withUnsafeBytes { dec(from: $0) }
     }
 
-    // 便捷工厂方法：按键按下
-    public static func keyDown(
+    // 构造按下报文
+    public static func snddn(
         usage: CompanionHIDUsage,
         modifiers: CompanionModifiers = [],
         sequence: UInt32 = 0
@@ -383,8 +358,8 @@ public struct CompanionPacket: Equatable, Sendable {
         )
     }
 
-    // 便捷工厂方法：按键抬起
-    public static func keyUp(
+    // 构造抬起报文
+    public static func sndup(
         usage: CompanionHIDUsage,
         modifiers: CompanionModifiers = [],
         sequence: UInt32 = 0
@@ -397,8 +372,8 @@ public struct CompanionPacket: Equatable, Sendable {
         )
     }
 
-    // 便捷工厂方法：单包脉冲（自动按下并在服务端延时 durationMs 后抬起）
-    public static func pulse(
+    // 构造脉冲报文
+    public static func sndpls(
         usage: CompanionHIDUsage,
         modifiers: CompanionModifiers = [],
         durationMs: UInt16 = 20,
@@ -413,8 +388,8 @@ public struct CompanionPacket: Equatable, Sendable {
         )
     }
 
-    // 便捷工厂方法：状态同步与心跳
-    public static func heartbeat(
+    // 构造心跳报文
+    public static func synchrt(
         modifiers: CompanionModifiers = [],
         sequence: UInt32 = 0
     ) -> CompanionPacket {
@@ -425,8 +400,8 @@ public struct CompanionPacket: Equatable, Sendable {
         )
     }
 
-    // 便捷工厂方法：紧急重置所有按键
-    public static func resetAll(sequence: UInt32 = 0) -> CompanionPacket {
+    // 构造复位报文
+    public static func rstall(sequence: UInt32 = 0) -> CompanionPacket {
         CompanionPacket(
             action: .resetAll,
             sequence: sequence

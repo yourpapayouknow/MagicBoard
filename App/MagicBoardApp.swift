@@ -391,7 +391,7 @@ private struct CompanionView: View {
             SettingCard(title: "连接测试与权限引导") {
                 VStack(alignment: .leading, spacing: 16) {
                     HStack(spacing: 14) {
-                        Button(action: runConnectionTest) {
+                        Button(action: tstconn) {
                             HStack(spacing: 8) {
                                 Image(systemName: "bolt.horizontal.fill")
                                 Text(LocalizedStringKey("发Ping测试"))
@@ -407,7 +407,7 @@ private struct CompanionView: View {
 
                     Divider()
 
-                    // 本地网络权限说明与跳转
+                    // 本地网络权限指引
                     VStack(alignment: .leading, spacing: 10) {
                         HStack(spacing: 10) {
                             Image(systemName: "network.badge.shield.half.filled")
@@ -420,7 +420,7 @@ private struct CompanionView: View {
                             .font(.footnote)
                             .foregroundStyle(.secondary)
 
-                        Button(action: openAppSettings) {
+                        Button(action: openstg) {
                             HStack {
                                 Image(systemName: "gearshape")
                                 Text(LocalizedStringKey("打开应用设置"))
@@ -483,7 +483,8 @@ private struct CompanionView: View {
         }
     }
 
-    private func runConnectionTest() {
+    // 测试伴侣网络连接
+    private func tstconn() {
         let hostStr = companion.host.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !hostStr.isEmpty else {
             testState = .failure(reason: "主机地址不能为空")
@@ -522,8 +523,8 @@ private struct CompanionView: View {
             switch newState {
             case .ready:
                 let seq = UInt32(Date().timeIntervalSince1970)
-                let packet = CompanionPacket.heartbeat(sequence: seq)
-                conn.send(content: packet.encode(), completion: .contentProcessed { error in
+                let packet = CompanionPacket.synchrt(sequence: seq)
+                conn.send(content: packet.enc(), completion: .contentProcessed { error in
                     let elapsed = (CACurrentMediaTime() - startTime) * 1000.0
                     DispatchQueue.main.async {
                         guard !context.isFinished else { return }
@@ -557,7 +558,8 @@ private struct CompanionView: View {
         conn.start(queue: queue)
     }
 
-    private func openAppSettings() {
+    // 打开系统设置
+    private func openstg() {
         guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
         UIApplication.shared.open(url)
     }
