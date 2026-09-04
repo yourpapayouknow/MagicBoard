@@ -75,7 +75,7 @@
 "启用伴侣模式" = "Enable Companion Mode";
 "将键盘按键与修饰键通过局域网分流至目标电脑伴侣" = "Forward keystrokes and modifiers to the companion service on your computer over local network";
 "目标系统预设" = "Target OS";
-"macOS (优先)" = "macOS (Preferred)";
+"macOS" = "macOS";
 "Windows" = "Windows";
 "macOS 预设使用 Command / Option 键映射；Windows 预设自动映射 Win / Alt 键。" = "macOS preset uses Command / Option key mapping; Windows preset maps Win / Alt keys.";
 "工作模式" = "Work Mode";
@@ -89,7 +89,7 @@
 "默认 UDP 监听端口为 52088。" = "Default UDP listening port is 52088.";
 "脉冲时长" = "Pulse Duration";
 "连接测试与权限引导" = "Connection Test & Permissions";
-"测试连接与发送 Ping" = "Test Connection & Send Ping";
+"发Ping测试" = "Send Ping Test";
 "正在测试连接与本地网络通信…" = "Testing connection and local network communication…";
 "本地网络权限指引" = "Local Network Permission Guide";
 "iOS 14+ 要求应用在访问局域网设备前必须获得用户授权。初次点击测试时系统将弹出授权提示；如被拒绝，可前往系统设置开启。" = "iOS 14+ requires user permission to access local network devices. Testing will prompt for authorization; if denied, please enable it in Settings.";

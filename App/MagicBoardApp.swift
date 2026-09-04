@@ -303,7 +303,7 @@ private struct CompanionView: View {
                             Text(LocalizedStringKey("目标系统预设"))
                                 .font(.subheadline.weight(.medium))
                             Picker(LocalizedStringKey("目标系统预设"), selection: $companion.targetOS) {
-                                Text(LocalizedStringKey("macOS (优先)")).tag(CompanionTargetOS.macOS)
+                                Text(LocalizedStringKey("macOS")).tag(CompanionTargetOS.macOS)
                                 Text(LocalizedStringKey("Windows")).tag(CompanionTargetOS.windows)
                             }
                             .pickerStyle(.segmented)
@@ -394,7 +394,7 @@ private struct CompanionView: View {
                         Button(action: runConnectionTest) {
                             HStack(spacing: 8) {
                                 Image(systemName: "bolt.horizontal.fill")
-                                Text(LocalizedStringKey("测试连接与发送 Ping"))
+                                Text(LocalizedStringKey("发Ping测试"))
                             }
                             .frame(maxWidth: .infinity)
                             .frame(height: 38)
