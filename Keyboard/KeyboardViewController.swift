@@ -380,8 +380,14 @@ final class KeyboardViewController: UIInputViewController {
     // 仅由主 RunLoop 触摸生命周期访问
     nonisolated(unsafe) private var deltimer: Timer?
 
-    // 清理扩展计时器
+    // 清理扩展计时器与通知监听
     deinit {
+        CFNotificationCenterRemoveObserver(
+            CFNotificationCenterGetDarwinNotifyCenter(),
+            Unmanaged.passUnretained(self).toOpaque(),
+            CFNotificationName(SharedConfig.configChangedNotification as CFString),
+            nil
+        )
         NotificationCenter.default.removeObserver(self)
         deltimer?.invalidate()
         HIDBridge.shared.releaseAll()
@@ -396,6 +402,23 @@ final class KeyboardViewController: UIInputViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         CompanionBridge.shared.configure(with: settings.companion)
+
+        // 注册来自主 App 的跨进程配置实时变更通知
+        CFNotificationCenterAddObserver(
+            CFNotificationCenterGetDarwinNotifyCenter(),
+            Unmanaged.passUnretained(self).toOpaque(),
+            { _, observer, _, _, _ in
+                guard let observer else { return }
+                let vc = Unmanaged<KeyboardViewController>.fromOpaque(observer).takeUnretainedValue()
+                DispatchQueue.main.async {
+                    vc.reloadcfg()
+                }
+            },
+            SharedConfig.configChangedNotification as CFString,
+            nil,
+            .deliverImmediately
+        )
+
         view.backgroundColor = KeyPalette.board
         view.isMultipleTouchEnabled = true
         view.clipsToBounds = false

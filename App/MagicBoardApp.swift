@@ -1,5 +1,6 @@
 // 展示并同步 MagicBoard 输入法设置
 import MagicBoardShared
+import Network
 import SwiftUI
 import UIKit
 
@@ -16,6 +17,7 @@ struct MagicBoardApp: App {
 // 定义主应用页面
 private enum Page: String, CaseIterable, Identifiable {
     case overview = "概览"
+    case companion = "远程伴侣"
     case input = "中文输入"
     case style = "外观与布局"
     case feedback = "按键体验"
@@ -28,6 +30,7 @@ private enum Page: String, CaseIterable, Identifiable {
     var icon: String {
         switch self {
         case .overview: "square.grid.2x2"
+        case .companion: "desktopcomputer"
         case .input: "character.bubble"
         case .style: "slider.horizontal.3"
         case .feedback: "hand.tap"
@@ -65,6 +68,19 @@ private struct MainView: View {
     @State private var settings = SharedConfig.ldcfg()
     @State private var status = HostStatus.load()
 
+    init() {
+        if CommandLine.arguments.contains("-page-companion") {
+            _page = State(initialValue: .companion)
+        }
+        if CommandLine.arguments.contains("-companion-enabled") {
+            var s = SharedConfig.ldcfg()
+            s.companion.enabled = true
+            s.companion.host = "10.1.1.2"
+            SharedConfig.svcfg(s)
+            _settings = State(initialValue: s)
+        }
+    }
+
     var body: some View {
         NavigationSplitView(columnVisibility: $columns) {
             List(selection: $page) {
@@ -83,7 +99,15 @@ private struct MainView: View {
         } detail: {
             switch page ?? .overview {
             case .overview:
-                OverviewView(status: status, chineseEnabled: settings.chineseEnabled, refresh: refresh)
+                OverviewView(
+                    status: status,
+                    chineseEnabled: settings.chineseEnabled,
+                    companion: settings.companion,
+                    onSelectCompanion: { page = .companion },
+                    refresh: refresh
+                )
+            case .companion:
+                CompanionView(companion: $settings.companion)
             case .input:
                 InputView(chineseEnabled: $settings.chineseEnabled, scheme: $settings.scheme)
             case .style:
@@ -163,12 +187,379 @@ private struct SettingCard<Content: View>: View {
 private struct OverviewView: View {
     let status: HostStatus
     let chineseEnabled: Bool
+    let companion: CompanionConfig
+    let onSelectCompanion: () -> Void
     let refresh: () -> Void
 
     var body: some View {
         PageShell {
             SetupCard(status: status, chineseEnabled: chineseEnabled, refresh: refresh)
+            CompanionOverviewCard(companion: companion, onSelect: onSelectCompanion)
         }
+    }
+}
+
+// 展示远程伴侣概览状态卡
+private struct CompanionOverviewCard: View {
+    let companion: CompanionConfig
+    let onSelect: () -> Void
+
+    var body: some View {
+        SettingCard(title: "远程伴侣状态") {
+            VStack(alignment: .leading, spacing: 14) {
+                HStack {
+                    Label {
+                        Text(LocalizedStringKey("启用伴侣模式"))
+                            .font(.body.weight(.medium))
+                    } icon: {
+                        Image(systemName: "desktopcomputer")
+                            .foregroundStyle(companion.enabled ? .cyan : .secondary)
+                    }
+                    Spacer()
+                    Text(LocalizedStringKey(companion.enabled ? "已启用" : "未启用"))
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(companion.enabled ? .green : .secondary)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 4)
+                        .background(
+                            (companion.enabled ? Color.green : Color.secondary).opacity(0.12),
+                            in: Capsule()
+                        )
+                }
+
+                if companion.enabled {
+                    Divider()
+                    HStack {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(LocalizedStringKey("目标"))
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            Text("\(companion.host):\(String(companion.port)) (\(companion.targetOS.title))")
+                                .font(.subheadline.weight(.medium))
+                        }
+                        Spacer()
+                        VStack(alignment: .trailing, spacing: 4) {
+                            Text(LocalizedStringKey("工作模式"))
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            Text(LocalizedStringKey(companion.workMode.title))
+                                .font(.subheadline.weight(.medium))
+                        }
+                    }
+                }
+
+                Button(action: onSelect) {
+                    HStack {
+                        Text(LocalizedStringKey("远程伴侣配置"))
+                        Spacer()
+                        Image(systemName: "chevron.forward")
+                            .font(.footnote)
+                    }
+                    .font(.subheadline.weight(.medium))
+                }
+                .buttonStyle(.bordered)
+            }
+        }
+    }
+}
+
+// 展示远程伴侣配置与测试页面
+private struct CompanionView: View {
+    @Binding var companion: CompanionConfig
+
+    private enum TestState: Equatable {
+        case idle
+        case testing
+        case success(latencyMs: Double, host: String, port: UInt16)
+        case failure(reason: String)
+
+        var isTesting: Bool {
+            if case .testing = self { return true }
+            return false
+        }
+    }
+
+    @State private var testState: TestState = .idle
+
+    var body: some View {
+        PageShell {
+            SettingCard(title: "远程伴侣配置") {
+                VStack(alignment: .leading, spacing: 18) {
+                    Toggle(isOn: $companion.enabled) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(LocalizedStringKey("启用伴侣模式"))
+                                .font(.body.weight(.medium))
+                            Text(LocalizedStringKey("将键盘按键与修饰键通过局域网分流至目标电脑伴侣"))
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+
+                    if companion.enabled {
+                        Divider()
+
+                        // 目标系统预设选择器
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text(LocalizedStringKey("目标系统预设"))
+                                .font(.subheadline.weight(.medium))
+                            Picker(LocalizedStringKey("目标系统预设"), selection: $companion.targetOS) {
+                                Text(LocalizedStringKey("macOS (优先)")).tag(CompanionTargetOS.macOS)
+                                Text(LocalizedStringKey("Windows")).tag(CompanionTargetOS.windows)
+                            }
+                            .pickerStyle(.segmented)
+                            Text(LocalizedStringKey("macOS 预设使用 Command / Option 键映射；Windows 预设自动映射 Win / Alt 键。"))
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+
+                        Divider()
+
+                        // 工作模式选择器
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text(LocalizedStringKey("工作模式"))
+                                .font(.subheadline.weight(.medium))
+                            Picker(LocalizedStringKey("工作模式"), selection: $companion.workMode) {
+                                Text(LocalizedStringKey("仅功能键分流")).tag(CompanionWorkMode.onlyFunctions)
+                                Text(LocalizedStringKey("全键盘接管")).tag(CompanionWorkMode.fullKeyboard)
+                            }
+                            .pickerStyle(.segmented)
+                            Text(LocalizedStringKey("仅功能键分流：分流 F1~F12、Esc、Tab、修饰键与方向键，文字仍由本地输入法处理；全键盘接管：所有按键与字符完全透传给电脑。"))
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+
+                        Divider()
+
+                        // 被控端 IP / 域名输入框
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text(LocalizedStringKey("被控端 IP / 域名"))
+                                .font(.subheadline.weight(.medium))
+                            TextField(LocalizedStringKey("例如 192.168.1.100、macbook.local 或 10.1.1.2"), text: $companion.host)
+                                .textFieldStyle(.roundedBorder)
+                                .autocorrectionDisabled()
+                                .textInputAutocapitalization(.never)
+                                .keyboardType(.asciiCapable)
+                            Text(LocalizedStringKey("支持 IPv4、IPv6、.local 局域网域名或 Tailscale 虚拟网 IP (100.x.y.z)。"))
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+
+                        Divider()
+
+                        // 端口输入框
+                        VStack(alignment: .leading, spacing: 6) {
+                            HStack {
+                                Text(LocalizedStringKey("端口"))
+                                    .font(.subheadline.weight(.medium))
+                                Spacer()
+                                Button(LocalizedStringKey("恢复默认")) {
+                                    companion.port = 52088
+                                }
+                                .font(.caption)
+                                .buttonStyle(.borderless)
+                            }
+                            TextField("52088", value: $companion.port, format: .number.grouping(.never))
+                                .textFieldStyle(.roundedBorder)
+                                .keyboardType(.numberPad)
+                            Text(LocalizedStringKey("默认 UDP 监听端口为 52088。"))
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+
+                        Divider()
+
+                        // 脉冲时长微调
+                        Stepper(
+                            value: $companion.pulseDurationMs,
+                            in: 10...100,
+                            step: 5
+                        ) {
+                            HStack {
+                                Text(LocalizedStringKey("脉冲时长"))
+                                    .font(.subheadline.weight(.medium))
+                                Spacer()
+                                Text("\(companion.pulseDurationMs) ms")
+                                    .font(.subheadline.monospacedDigit())
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 连接测试与权限引导卡片
+            SettingCard(title: "连接测试与权限引导") {
+                VStack(alignment: .leading, spacing: 16) {
+                    HStack(spacing: 14) {
+                        Button(action: runConnectionTest) {
+                            HStack(spacing: 8) {
+                                Image(systemName: "bolt.horizontal.fill")
+                                Text(LocalizedStringKey("测试连接与发送 Ping"))
+                            }
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 38)
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .disabled(testState.isTesting || !companion.enabled)
+                    }
+
+                    testStatusView
+
+                    Divider()
+
+                    // 本地网络权限说明与跳转
+                    VStack(alignment: .leading, spacing: 10) {
+                        HStack(spacing: 10) {
+                            Image(systemName: "network.badge.shield.half.filled")
+                                .foregroundStyle(.cyan)
+                                .font(.title3)
+                            Text(LocalizedStringKey("本地网络权限指引"))
+                                .font(.subheadline.weight(.semibold))
+                        }
+                        Text(LocalizedStringKey("iOS 14+ 要求应用在访问局域网设备前必须获得用户授权。初次点击测试时系统将弹出授权提示；如被拒绝，可前往系统设置开启。"))
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+
+                        Button(action: openAppSettings) {
+                            HStack {
+                                Image(systemName: "gearshape")
+                                Text(LocalizedStringKey("打开应用设置"))
+                            }
+                            .font(.subheadline)
+                        }
+                        .buttonStyle(.bordered)
+                    }
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var testStatusView: some View {
+        switch testState {
+        case .idle:
+            EmptyView()
+        case .testing:
+            HStack(spacing: 8) {
+                ProgressView()
+                    .controlSize(.small)
+                Text(LocalizedStringKey("正在测试连接与本地网络通信…"))
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
+            .padding(.vertical, 4)
+        case .success(let latency, let host, let port):
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 6) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundStyle(.green)
+                    Text("Ping 探活成功")
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(.green)
+                }
+                Text("已向 \(host):\(port) 发出测试报文 · 耗时 \(String(format: "%.2f", latency)) ms")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            .padding(10)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color.green.opacity(0.1), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+        case .failure(let reason):
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 6) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundStyle(.orange)
+                    Text("测试未完成")
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(.orange)
+                }
+                Text(reason)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            .padding(10)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color.orange.opacity(0.1), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+        }
+    }
+
+    private func runConnectionTest() {
+        let hostStr = companion.host.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !hostStr.isEmpty else {
+            testState = .failure(reason: "主机地址不能为空")
+            return
+        }
+        guard companion.port > 0 else {
+            testState = .failure(reason: "端口号无效")
+            return
+        }
+
+        testState = .testing
+        let startTime = CACurrentMediaTime()
+        let endpointHost = NWEndpoint.Host(hostStr)
+        let endpointPort = NWEndpoint.Port(rawValue: companion.port) ?? NWEndpoint.Port(rawValue: 52088)!
+        let params = NWParameters.udp
+        params.serviceClass = .responsiveData
+
+        final class TestContext: @unchecked Sendable {
+            var isFinished = false
+        }
+        let context = TestContext()
+
+        let conn = NWConnection(host: endpointHost, port: endpointPort, using: params)
+        let queue = DispatchQueue(label: "com.magicboard.app.testping", qos: .userInitiated)
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+            guard !context.isFinished else { return }
+            context.isFinished = true
+            if case .testing = testState {
+                testState = .failure(reason: "连接超时 (2.5 秒)，请检查对端服务是否已启动或防火墙是否放行")
+                conn.cancel()
+            }
+        }
+
+        conn.stateUpdateHandler = { newState in
+            switch newState {
+            case .ready:
+                let seq = UInt32(Date().timeIntervalSince1970)
+                let packet = CompanionPacket.heartbeat(sequence: seq)
+                conn.send(content: packet.encode(), completion: .contentProcessed { error in
+                    let elapsed = (CACurrentMediaTime() - startTime) * 1000.0
+                    DispatchQueue.main.async {
+                        guard !context.isFinished else { return }
+                        context.isFinished = true
+                        if let error {
+                            testState = .failure(reason: "发包失败: \(error.localizedDescription)")
+                        } else {
+                            testState = .success(latencyMs: elapsed, host: hostStr, port: companion.port)
+                        }
+                        conn.cancel()
+                    }
+                })
+            case .failed(let error):
+                DispatchQueue.main.async {
+                    guard !context.isFinished else { return }
+                    context.isFinished = true
+                    let desc = error.localizedDescription
+                    if desc.contains("Operation not permitted") || desc.contains("EPERM") {
+                        testState = .failure(reason: "本地网络权限被系统拒绝，请在「系统设置」中允许 MagicBoard 访问本地网络")
+                    } else {
+                        testState = .failure(reason: "连接失败: \(desc)")
+                    }
+                    conn.cancel()
+                }
+            case .waiting(let error):
+                _ = error
+            default:
+                break
+            }
+        }
+        conn.start(queue: queue)
+    }
+
+    private func openAppSettings() {
+        guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
+        UIApplication.shared.open(url)
     }
 }
 

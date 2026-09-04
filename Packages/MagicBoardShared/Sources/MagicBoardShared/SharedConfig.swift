@@ -732,6 +732,7 @@ public struct GroupState: Equatable, Sendable {
 // 读写共享配置
 public enum SharedConfig {
     public static let groupID = "group.com.iwmei.magicboard"
+    public static let configChangedNotification = "com.iwmei.magicboard.configChanged"
     private static let themeKey = "magicboard.theme"
     private static let settingsKey = "magicboard.settings.v1"
     private static let reportKey = "magicboard.keyboard.report"
@@ -764,6 +765,15 @@ public enum SharedConfig {
             BoardTheme(primary: normalized.appearance.accent, accent: BoardTheme.cyanOrange.accent),
             defaults: defaults
         )
+        #if canImport(CoreFoundation)
+        CFNotificationCenterPostNotification(
+            CFNotificationCenterGetDarwinNotifyCenter(),
+            CFNotificationName(configChangedNotification as CFString),
+            nil,
+            nil,
+            true
+        )
+        #endif
     }
 
     // 读取共享主题

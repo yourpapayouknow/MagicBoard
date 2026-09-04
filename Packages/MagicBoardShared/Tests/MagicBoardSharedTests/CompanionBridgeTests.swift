@@ -229,4 +229,66 @@ final class CompanionBridgeTests: XCTestCase {
             XCTAssertEqual(receivedPackets[i].sequence, receivedPackets[i - 1].sequence + 1)
         }
     }
+
+    // 验证 App Group 伴侣配置持久化与跨进程 Darwin Notification 广播即时同步
+    func testCompanionConfigAppGroupSyncAndNotification() {
+        let suiteName = "test.magicboard.companion.sync.\(UUID().uuidString)"
+        let testDefaults = UserDefaults(suiteName: suiteName)!
+        defer { UserDefaults.standard.removePersistentDomain(forName: suiteName) }
+
+        let expectation = expectation(description: "Darwin notification received")
+        final class ObserverBox: @unchecked Sendable {
+            var received = false
+        }
+        let box = ObserverBox()
+
+        CFNotificationCenterAddObserver(
+            CFNotificationCenterGetDarwinNotifyCenter(),
+            Unmanaged.passUnretained(box).toOpaque(),
+            { _, observerPtr, _, _, _ in
+                guard let observerPtr else { return }
+                let b = Unmanaged<ObserverBox>.fromOpaque(observerPtr).takeUnretainedValue()
+                b.received = true
+            },
+            SharedConfig.configChangedNotification as CFString,
+            nil,
+            .deliverImmediately
+        )
+
+        var newSettings = BoardSettings.standard
+        newSettings.companion = CompanionConfig(
+            enabled: true,
+            host: "100.88.99.1",
+            port: 52099,
+            workMode: .fullKeyboard,
+            targetOS: .windows,
+            pulseDurationMs: 40
+        )
+
+        SharedConfig.svcfg(newSettings, defaults: testDefaults)
+
+        // 验证持久化内容
+        let loaded = SharedConfig.ldcfg(defaults: testDefaults)
+        XCTAssertTrue(loaded.companion.enabled)
+        XCTAssertEqual(loaded.companion.host, "100.88.99.1")
+        XCTAssertEqual(loaded.companion.port, 52099)
+        XCTAssertEqual(loaded.companion.workMode, .fullKeyboard)
+        XCTAssertEqual(loaded.companion.targetOS, .windows)
+        XCTAssertEqual(loaded.companion.pulseDurationMs, 40)
+
+        // 验证收到广播通知
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            XCTAssertTrue(box.received, "Darwin notification was not observed")
+            expectation.fulfill()
+        }
+        wait(for: [expectation], timeout: 1.0)
+
+        CFNotificationCenterRemoveObserver(
+            CFNotificationCenterGetDarwinNotifyCenter(),
+            Unmanaged.passUnretained(box).toOpaque(),
+            CFNotificationName(SharedConfig.configChangedNotification as CFString),
+            nil
+        )
+    }
 }
+
