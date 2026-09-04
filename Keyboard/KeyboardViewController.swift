@@ -1216,7 +1216,11 @@ final class KeyboardViewController: UIInputViewController {
     private func sndfeed(haptic: Bool = true) {
         if settings.keySound { UIDevice.current.playInputClick() }
         guard haptic else { return }
-        speakerPulse.play(enabled: settings.simulatedHaptics, fullAccess: hasFullAccess)
+        speakerPulse.play(
+            enabled: settings.simulatedHaptics,
+            fullAccess: hasFullAccess,
+            intensity: settings.hapticIntensity
+        )
     }
 
     // 显示普通字符键弹出反馈

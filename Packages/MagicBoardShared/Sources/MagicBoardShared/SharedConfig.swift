@@ -185,6 +185,7 @@ public struct BoardSettings: Codable, Equatable, Sendable {
     public var appearance: AppearanceConfig
     public var keySound: Bool
     public var simulatedHaptics: Bool
+    public var hapticIntensity: Double
     public var stickyModifiers: Bool
     public var modifierMode: ModifierMode
 
@@ -197,6 +198,7 @@ public struct BoardSettings: Codable, Equatable, Sendable {
         appearance: AppearanceConfig = .standard,
         keySound: Bool = true,
         simulatedHaptics: Bool = false,
+        hapticIntensity: Double = 0.6,
         stickyModifiers: Bool = true,
         modifierMode: ModifierMode = .mixed
     ) {
@@ -207,6 +209,7 @@ public struct BoardSettings: Codable, Equatable, Sendable {
         self.appearance = appearance
         self.keySound = keySound
         self.simulatedHaptics = simulatedHaptics
+        self.hapticIntensity = hapticIntensity
         self.stickyModifiers = stickyModifiers
         self.modifierMode = modifierMode
     }
@@ -219,6 +222,7 @@ public struct BoardSettings: Codable, Equatable, Sendable {
         case appearance
         case keySound
         case simulatedHaptics
+        case hapticIntensity
         case stickyModifiers
         case modifierMode
     }
@@ -233,6 +237,7 @@ public struct BoardSettings: Codable, Equatable, Sendable {
         appearance = try values.decode(AppearanceConfig.self, forKey: .appearance)
         keySound = try values.decode(Bool.self, forKey: .keySound)
         simulatedHaptics = try values.decode(Bool.self, forKey: .simulatedHaptics)
+        hapticIntensity = try values.decodeIfPresent(Double.self, forKey: .hapticIntensity) ?? 0.6
         stickyModifiers = try values.decode(Bool.self, forKey: .stickyModifiers)
         modifierMode = try values.decode(ModifierMode.self, forKey: .modifierMode)
     }
@@ -249,6 +254,7 @@ public struct BoardSettings: Codable, Equatable, Sendable {
             appearance: appearance.norm(),
             keySound: keySound,
             simulatedHaptics: simulatedHaptics,
+            hapticIntensity: min(1.0, max(0.1, hapticIntensity)),
             stickyModifiers: stickyModifiers,
             modifierMode: modifierMode
         )

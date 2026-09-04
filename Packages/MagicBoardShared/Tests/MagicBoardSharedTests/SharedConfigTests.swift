@@ -36,6 +36,7 @@ final class SharedConfigTests: XCTestCase {
         )
         settings.keySound = false
         settings.simulatedHaptics = true
+        settings.hapticIntensity = 0.85
         settings.stickyModifiers = false
         settings.modifierMode = .toggle
 

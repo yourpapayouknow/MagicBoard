@@ -92,6 +92,7 @@ private struct MainView: View {
                 FeedbackView(
                     keySound: $settings.keySound,
                     simulatedHaptics: $settings.simulatedHaptics,
+                    hapticIntensity: $settings.hapticIntensity,
                     sticky: $settings.stickyModifiers,
                     mode: $settings.modifierMode,
                     fullAccess: status.report?.hasFullAccess == true
@@ -578,6 +579,7 @@ private struct PreviewKey: View {
 private struct FeedbackView: View {
     @Binding var keySound: Bool
     @Binding var simulatedHaptics: Bool
+    @Binding var hapticIntensity: Double
     @Binding var sticky: Bool
     @Binding var mode: ModifierMode
     let fullAccess: Bool
@@ -589,9 +591,21 @@ private struct FeedbackView: View {
                 Divider()
                 Toggle("模拟触觉", isOn: $simulatedHaptics)
                 if simulatedHaptics {
-                    Text(LocalizedStringKey(fullAccess ? "仅内置扬声器；外接音频时自动停用" : "需要允许完全访问"))
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack {
+                            Text("触感强度")
+                            Spacer()
+                            Text("\(Int(hapticIntensity * 100))%")
+                                .font(.footnote.monospacedDigit())
+                                .foregroundStyle(.secondary)
+                        }
+                        Slider(value: $hapticIntensity, in: 0.1 ... 1.0, step: 0.05)
+                    }
+                    .padding(.top, 4)
+
+                    Text(LocalizedStringKey(fullAccess ? "依赖低音单元 请勿长时持续触发" : "需要允许完全访问"))
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
                 }
             }
 

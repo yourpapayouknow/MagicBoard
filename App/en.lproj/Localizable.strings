@@ -49,7 +49,10 @@
 "声音与触感" = "Sound & Haptics";
 "按键音" = "Key Sounds";
 "模拟触觉" = "Simulated Haptics";
+"触感强度" = "Haptic Intensity";
 "仅内置扬声器；外接音频时自动停用" = "Built-in speaker only; disabled for external audio";
+"仅内置扬声器；自适应补偿系统音量，支持独立调节触感" = "Relies on woofer units; avoid continuous prolonged triggering";
+"依赖低音单元 请勿长时持续触发" = "Relies on woofer units; avoid continuous prolonged triggering";
 "需要允许完全访问" = "Allow Full Access to enable this";
 "修饰键" = "Modifiers";
 "Sticky Modifier" = "Sticky Modifier";
