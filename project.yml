@@ -47,6 +47,7 @@ targets:
           - UIInterfaceOrientationPortraitUpsideDown
           - UIInterfaceOrientationLandscapeLeft
           - UIInterfaceOrientationLandscapeRight
+        NSLocalNetworkUsageDescription: "MagicBoard 需要访问局域网以连接被控端电脑伴侣服务并分流键鼠输入。"
     entitlements:
       path: App/MagicBoard.entitlements
       properties:
@@ -90,6 +91,7 @@ targets:
             RequestsOpenAccess: true
           NSExtensionPointIdentifier: com.apple.keyboard-service
           NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).KeyboardViewController
+        NSLocalNetworkUsageDescription: "MagicBoard 需要访问局域网以连接被控端电脑伴侣服务并分流键鼠输入。"
     entitlements:
       path: Keyboard/MagicBoardKeyboard.entitlements
       properties:
