@@ -559,15 +559,15 @@ private struct PreviewKey: View {
         .foregroundStyle(palette.text)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: alignment)
         .padding(5)
-        .background(
-            function ? palette.function : palette.ordinary,
-            in: RoundedRectangle(cornerRadius: 7, style: .continuous)
-        )
+        .background {
+            RoundedRectangle(cornerRadius: 7, style: .continuous)
+                .fill(function ? palette.function : palette.ordinary)
+                .shadow(color: palette.shadow, radius: 0.75, y: 1.75)
+        }
         .overlay {
             RoundedRectangle(cornerRadius: 7, style: .continuous)
                 .stroke(palette.border, lineWidth: 0.5)
         }
-        .shadow(color: palette.shadow, radius: 0.75, y: 1.75)
     }
 }
 // 展示反馈与修饰键设置
