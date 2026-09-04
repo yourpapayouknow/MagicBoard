@@ -1,0 +1,289 @@
+// 验证伴侣通信协议（MBCP）报文编解码与修饰键掩码
+@testable import MagicBoardShared
+import Foundation
+import XCTest
+
+// 测试伴侣通信协议
+final class CompanionProtocolTests: XCTestCase {
+    // 验证协议魔数、版本与定长常量
+    func testConstants() {
+        XCTAssertEqual(CompanionPacket.magic, 0x4D424350) // ASCII "MBCP"
+        XCTAssertEqual(CompanionPacket.currentVersion, 1)
+        XCTAssertEqual(CompanionPacket.packetLength, 16)
+    }
+
+    // 验证动作类型枚举编码与字符串转换
+    func testActionValues() {
+        XCTAssertEqual(CompanionAction.keyDown.rawValue, 0x01)
+        XCTAssertEqual(CompanionAction.keyUp.rawValue, 0x02)
+        XCTAssertEqual(CompanionAction.pulse.rawValue, 0x03)
+        XCTAssertEqual(CompanionAction.heartbeat.rawValue, 0x04)
+        XCTAssertEqual(CompanionAction.resetAll.rawValue, 0x05)
+
+        XCTAssertEqual(CompanionAction.keyDown.description, "keyDown")
+        XCTAssertEqual(CompanionAction.keyUp.description, "keyUp")
+        XCTAssertEqual(CompanionAction.pulse.description, "pulse")
+        XCTAssertEqual(CompanionAction.heartbeat.description, "heartbeat")
+        XCTAssertEqual(CompanionAction.resetAll.description, "resetAll")
+    }
+
+    // 验证 8 位修饰键掩码位图
+    func testModifierMasks() {
+        XCTAssertEqual(CompanionModifiers.leftControl.rawValue, 0x01)
+        XCTAssertEqual(CompanionModifiers.leftShift.rawValue, 0x02)
+        XCTAssertEqual(CompanionModifiers.leftOption.rawValue, 0x04)
+        XCTAssertEqual(CompanionModifiers.leftCommand.rawValue, 0x08)
+        XCTAssertEqual(CompanionModifiers.rightControl.rawValue, 0x10)
+        XCTAssertEqual(CompanionModifiers.rightShift.rawValue, 0x20)
+        XCTAssertEqual(CompanionModifiers.rightOption.rawValue, 0x40)
+        XCTAssertEqual(CompanionModifiers.rightCommand.rawValue, 0x80)
+
+        // 别名一致性
+        XCTAssertEqual(CompanionModifiers.control, .leftControl)
+        XCTAssertEqual(CompanionModifiers.shift, .leftShift)
+        XCTAssertEqual(CompanionModifiers.option, .leftOption)
+        XCTAssertEqual(CompanionModifiers.command, .leftCommand)
+        XCTAssertEqual(CompanionModifiers.alt, .leftOption)
+        XCTAssertEqual(CompanionModifiers.win, .leftCommand)
+        XCTAssertEqual(CompanionModifiers.rightAlt, .rightOption)
+        XCTAssertEqual(CompanionModifiers.rightWin, .rightCommand)
+
+        // 复合掩码与语义判断
+        let combo: CompanionModifiers = [.leftCommand, .rightShift, .leftOption]
+        XCTAssertTrue(combo.hasCommand)
+        XCTAssertTrue(combo.hasShift)
+        XCTAssertTrue(combo.hasOption)
+        XCTAssertFalse(combo.hasControl)
+
+        // 包含与字符串输出
+        XCTAssertTrue(combo.description.contains("LCmd"))
+        XCTAssertTrue(combo.description.contains("RShift"))
+        XCTAssertTrue(combo.description.contains("LOpt"))
+    }
+
+    // 验证从键盘状态转换为伴侣修饰键掩码
+    func testModifiersBridgeFromKeyboardState() {
+        var modState = ModifierState()
+        modState.press(.control)
+        modState.press(.leftCommand)
+
+        var inputState = InputState()
+        inputState.shftdown(.left)
+
+        let mods = CompanionModifiers(modifierState: modState, inputState: inputState)
+        XCTAssertTrue(mods.contains(.leftControl))
+        XCTAssertTrue(mods.contains(.leftCommand))
+        XCTAssertTrue(mods.contains(.leftShift))
+        XCTAssertFalse(mods.contains(.leftOption))
+    }
+
+    // 验证 16 位 USB HID Usage 标识与常量
+    func testHIDUsageConstants() {
+        XCTAssertEqual(CompanionHIDUsage.a.rawValue, 0x0004)
+        XCTAssertEqual(CompanionHIDUsage.z.rawValue, 0x001D)
+        XCTAssertEqual(CompanionHIDUsage.digit1.rawValue, 0x001E)
+        XCTAssertEqual(CompanionHIDUsage.digit0.rawValue, 0x0027)
+        XCTAssertEqual(CompanionHIDUsage.returnOrEnter.rawValue, 0x0028)
+        XCTAssertEqual(CompanionHIDUsage.escape.rawValue, 0x0029)
+        XCTAssertEqual(CompanionHIDUsage.deleteOrBackspace.rawValue, 0x002A)
+        XCTAssertEqual(CompanionHIDUsage.tab.rawValue, 0x002B)
+        XCTAssertEqual(CompanionHIDUsage.spacebar.rawValue, 0x002C)
+        XCTAssertEqual(CompanionHIDUsage.f1.rawValue, 0x003A)
+        XCTAssertEqual(CompanionHIDUsage.f12.rawValue, 0x0045)
+        XCTAssertEqual(CompanionHIDUsage.rightArrow.rawValue, 0x004F)
+        XCTAssertEqual(CompanionHIDUsage.leftArrow.rawValue, 0x0050)
+        XCTAssertEqual(CompanionHIDUsage.downArrow.rawValue, 0x0051)
+        XCTAssertEqual(CompanionHIDUsage.upArrow.rawValue, 0x0052)
+        XCTAssertEqual(CompanionHIDUsage.leftControl.rawValue, 0x00E0)
+        XCTAssertEqual(CompanionHIDUsage.leftCommand.rawValue, 0x00E3)
+
+        // 字面量与格式化
+        let usage: CompanionHIDUsage = 0x0029
+        XCTAssertEqual(usage, .escape)
+        XCTAssertEqual(usage.description, "0x0029")
+
+        // UInt32 桥接截断
+        let truncated = CompanionHIDUsage(UInt32(0x0001004A))
+        XCTAssertEqual(truncated.rawValue, 0x004A)
+    }
+
+    // 验证五种动作类型的完整序列化与反序列化往返
+    func testPacketRoundTrip() {
+        let testCases: [CompanionPacket] = [
+            CompanionPacket(
+                action: .keyDown,
+                modifiers: [.leftCommand],
+                flags: 0,
+                hidUsage: .a,
+                param: 0,
+                sequence: 1
+            ),
+            CompanionPacket(
+                action: .keyUp,
+                modifiers: [],
+                flags: 0,
+                hidUsage: .a,
+                param: 0,
+                sequence: 2
+            ),
+            CompanionPacket(
+                action: .pulse,
+                modifiers: [.leftControl, .leftOption],
+                flags: 0x80,
+                hidUsage: .tab,
+                param: 35,
+                sequence: 100
+            ),
+            CompanionPacket(
+                action: .heartbeat,
+                modifiers: [.leftShift],
+                flags: 0,
+                hidUsage: 0,
+                param: 0,
+                sequence: 101
+            ),
+            CompanionPacket(
+                action: .resetAll,
+                modifiers: [],
+                flags: 0,
+                hidUsage: 0,
+                param: 0,
+                sequence: 102
+            ),
+        ]
+
+        for original in testCases {
+            let encoded = original.encode()
+            XCTAssertEqual(encoded.count, CompanionPacket.packetLength)
+
+            guard let decoded = CompanionPacket.decode(from: encoded) else {
+                XCTFail("Failed to decode packet for action: \(original.action)")
+                continue
+            }
+
+            XCTAssertEqual(decoded.magic, CompanionPacket.magic)
+            XCTAssertEqual(decoded.version, CompanionPacket.currentVersion)
+            XCTAssertEqual(decoded.action, original.action)
+            XCTAssertEqual(decoded.modifiers, original.modifiers)
+            XCTAssertEqual(decoded.flags, original.flags)
+            XCTAssertEqual(decoded.hidUsage, original.hidUsage)
+            XCTAssertEqual(decoded.param, original.param)
+            XCTAssertEqual(decoded.sequence, original.sequence)
+            XCTAssertEqual(decoded, original)
+        }
+    }
+
+    // 验证网络大端序字节排布
+    func testPacketBigEndianByteOrder() {
+        let packet = CompanionPacket(
+            magic: CompanionPacket.magic,
+            version: 1,
+            action: .pulse,
+            modifiers: [.leftControl, .leftOption], // 0x01 | 0x04 = 0x05
+            flags: 0xAA,
+            hidUsage: 0x1234,
+            param: 0x0020, // 32 ms
+            sequence: 0x01020304
+        )
+
+        let data = packet.encode()
+        XCTAssertEqual(data.count, 16)
+
+        // 0..3: magic "MBCP" (0x4D, 0x42, 0x43, 0x50)
+        XCTAssertEqual(data[0], 0x4D)
+        XCTAssertEqual(data[1], 0x42)
+        XCTAssertEqual(data[2], 0x43)
+        XCTAssertEqual(data[3], 0x50)
+
+        // 4: version (1)
+        XCTAssertEqual(data[4], 0x01)
+
+        // 5: action (.pulse = 3)
+        XCTAssertEqual(data[5], 0x03)
+
+        // 6: modifiers (0x05)
+        XCTAssertEqual(data[6], 0x05)
+
+        // 7: flags (0xAA)
+        XCTAssertEqual(data[7], 0xAA)
+
+        // 8..9: hidUsage (0x12, 0x34) 大端序
+        XCTAssertEqual(data[8], 0x12)
+        XCTAssertEqual(data[9], 0x34)
+
+        // 10..11: param (0x00, 0x20) 大端序
+        XCTAssertEqual(data[10], 0x00)
+        XCTAssertEqual(data[11], 0x20)
+
+        // 12..15: sequence (0x01, 0x02, 0x03, 0x04) 大端序
+        XCTAssertEqual(data[12], 0x01)
+        XCTAssertEqual(data[13], 0x02)
+        XCTAssertEqual(data[14], 0x03)
+        XCTAssertEqual(data[15], 0x04)
+    }
+
+    // 验证非法报文拒绝保护
+    func testInvalidPacketsRejected() {
+        // 1. 长度不足 16 字节
+        let shortData = Data(repeating: 0, count: 15)
+        XCTAssertNil(CompanionPacket.decode(from: shortData))
+
+        // 2. 空数据
+        XCTAssertNil(CompanionPacket.decode(from: Data()))
+
+        // 3. 错误魔数
+        var badMagic = CompanionPacket.keyDown(usage: .escape, sequence: 1).encode()
+        badMagic[0] = 0x00
+        XCTAssertNil(CompanionPacket.decode(from: badMagic))
+
+        // 4. 不支持的高版本号
+        var badVersion = CompanionPacket.keyDown(usage: .escape, sequence: 1).encode()
+        badVersion[4] = 2
+        XCTAssertNil(CompanionPacket.decode(from: badVersion))
+
+        // 5. 非法动作枚举
+        var badAction = CompanionPacket.keyDown(usage: .escape, sequence: 1).encode()
+        badAction[5] = 0x00
+        XCTAssertNil(CompanionPacket.decode(from: badAction))
+        badAction[5] = 0x99
+        XCTAssertNil(CompanionPacket.decode(from: badAction))
+
+        // 6. 超过 16 字节的有效数据包（应能成功提取前 16 字节）
+        var longData = CompanionPacket.pulse(usage: .spacebar, sequence: 42).encode()
+        longData.append(contentsOf: [0xFF, 0xEE, 0xDD])
+        let parsedLong = CompanionPacket.decode(from: longData)
+        XCTAssertNotNil(parsedLong)
+        XCTAssertEqual(parsedLong?.action, .pulse)
+        XCTAssertEqual(parsedLong?.hidUsage, .spacebar)
+        XCTAssertEqual(parsedLong?.sequence, 42)
+    }
+
+    // 验证便捷工厂方法
+    func testFactoryMethods() {
+        let kd = CompanionPacket.keyDown(usage: .f5, modifiers: [.leftCommand], sequence: 10)
+        XCTAssertEqual(kd.action, .keyDown)
+        XCTAssertEqual(kd.hidUsage, .f5)
+        XCTAssertEqual(kd.modifiers, [.leftCommand])
+        XCTAssertEqual(kd.sequence, 10)
+
+        let ku = CompanionPacket.keyUp(usage: .f5, modifiers: [.leftCommand], sequence: 11)
+        XCTAssertEqual(ku.action, .keyUp)
+        XCTAssertEqual(ku.hidUsage, .f5)
+        XCTAssertEqual(ku.sequence, 11)
+
+        let pulse = CompanionPacket.pulse(usage: .escape, durationMs: 25, sequence: 12)
+        XCTAssertEqual(pulse.action, .pulse)
+        XCTAssertEqual(pulse.hidUsage, .escape)
+        XCTAssertEqual(pulse.param, 25)
+        XCTAssertEqual(pulse.sequence, 12)
+
+        let hb = CompanionPacket.heartbeat(modifiers: [.leftControl], sequence: 13)
+        XCTAssertEqual(hb.action, .heartbeat)
+        XCTAssertEqual(hb.modifiers, [.leftControl])
+        XCTAssertEqual(hb.sequence, 13)
+
+        let reset = CompanionPacket.resetAll(sequence: 14)
+        XCTAssertEqual(reset.action, .resetAll)
+        XCTAssertEqual(reset.sequence, 14)
+    }
+}

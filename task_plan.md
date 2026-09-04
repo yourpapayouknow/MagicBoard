@@ -899,15 +899,15 @@ Unify every ordinary, function, and modifier key behind one `KeyView` visual com
 
 ## Task 11 — 定义伴侣通信协议与共享配置
 
-**Status:** pending
+**Status:** completed
 
-- 制定无状态超低延迟二进制 UDP 通信协议规范。
-- 规范动作类型（KeyDown、KeyUp、Pulse 单包脉冲、Heartbeat 状态同步、ResetAll 紧急重置）。
-- 规范 8 位修饰键掩码（同步 Ctrl, Shift, Option/Alt, Command/Win 状态）。
-- 采用国际标准 USB HID Usage 16 位编码作为统一按键标识。
-- 在 `MagicBoardShared` 中新增 `CompanionProtocol` 报文编解码模块。
-- 在 `SharedConfig` 中扩展伴侣总开关、主机地址、端口与工作模式配置。
-- 编写共享模块单元测试验证配置存取与报文序列化反序列化。
+- [x] 制定无状态超低延迟二进制 UDP 通信协议规范（docs/companion_protocol.md）。
+- [x] 规范动作类型（KeyDown、KeyUp、Pulse 单包脉冲、Heartbeat 状态同步、ResetAll 紧急重置）。
+- [x] 规范 8 位修饰键掩码（同步 Ctrl, Shift, Option/Alt, Command/Win 状态）。
+- [x] 采用国际标准 USB HID Usage 16 位编码作为统一按键标识。
+- [x] 在 `MagicBoardShared` 中新增 `CompanionProtocol` 报文编解码模块。
+- [x] 在 `SharedConfig` 中扩展伴侣总开关、主机地址、端口与工作模式配置。
+- [x] 编写共享模块单元测试验证配置存取与报文序列化反序列化。
 
 ## Task 12 — 实现 macOS 优先被控端伴侣服务
 

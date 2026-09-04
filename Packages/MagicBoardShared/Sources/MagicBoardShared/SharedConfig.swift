@@ -111,6 +111,79 @@ public enum ModifierMode: String, CaseIterable, Codable, Identifiable, Sendable 
     }
 }
 
+// 定义伴侣工作模式
+public enum CompanionWorkMode: String, CaseIterable, Codable, Identifiable, Sendable {
+    case onlyFunctions
+    case fullKeyboard
+
+    public var id: String { rawValue }
+
+    // 返回工作模式名称
+    public var title: String {
+        switch self {
+        case .onlyFunctions: "仅功能键分流"
+        case .fullKeyboard: "全键盘接管"
+        }
+    }
+}
+
+// 定义伴侣目标操作系统
+public enum CompanionTargetOS: String, CaseIterable, Codable, Identifiable, Sendable {
+    case macOS
+    case windows
+
+    public var id: String { rawValue }
+
+    // 返回操作系统名称
+    public var title: String {
+        switch self {
+        case .macOS: "macOS"
+        case .windows: "Windows"
+        }
+    }
+}
+
+// 保存伴侣远程通信配置
+public struct CompanionConfig: Codable, Equatable, Sendable {
+    public var enabled: Bool
+    public var host: String
+    public var port: UInt16
+    public var workMode: CompanionWorkMode
+    public var targetOS: CompanionTargetOS
+    public var pulseDurationMs: UInt16
+
+    // 创建伴侣配置
+    public init(
+        enabled: Bool = false,
+        host: String = "127.0.0.1",
+        port: UInt16 = 52088,
+        workMode: CompanionWorkMode = .onlyFunctions,
+        targetOS: CompanionTargetOS = .macOS,
+        pulseDurationMs: UInt16 = 20
+    ) {
+        self.enabled = enabled
+        self.host = host
+        self.port = port
+        self.workMode = workMode
+        self.targetOS = targetOS
+        self.pulseDurationMs = pulseDurationMs
+    }
+
+    public static let standard = CompanionConfig()
+
+    // 限制伴侣参数到安全范围
+    fileprivate func norm() -> CompanionConfig {
+        CompanionConfig(
+            enabled: enabled,
+            host: host.trimmingCharacters(in: .whitespacesAndNewlines),
+            port: port == 0 ? 52088 : port,
+            workMode: workMode,
+            targetOS: targetOS,
+            pulseDurationMs: min(500, max(5, pulseDurationMs))
+        )
+    }
+}
+
 // 保存键盘布局参数
 public struct LayoutConfig: Codable, Equatable, Sendable {
     public var height: Double
@@ -188,6 +261,7 @@ public struct BoardSettings: Codable, Equatable, Sendable {
     public var hapticIntensity: Double
     public var stickyModifiers: Bool
     public var modifierMode: ModifierMode
+    public var companion: CompanionConfig
 
     // 创建完整设置
     public init(
@@ -200,7 +274,8 @@ public struct BoardSettings: Codable, Equatable, Sendable {
         simulatedHaptics: Bool = false,
         hapticIntensity: Double = 0.6,
         stickyModifiers: Bool = true,
-        modifierMode: ModifierMode = .mixed
+        modifierMode: ModifierMode = .mixed,
+        companion: CompanionConfig = .standard
     ) {
         self.version = version
         self.chineseEnabled = chineseEnabled
@@ -212,6 +287,7 @@ public struct BoardSettings: Codable, Equatable, Sendable {
         self.hapticIntensity = hapticIntensity
         self.stickyModifiers = stickyModifiers
         self.modifierMode = modifierMode
+        self.companion = companion
     }
 
     private enum CodingKeys: String, CodingKey {
@@ -225,9 +301,10 @@ public struct BoardSettings: Codable, Equatable, Sendable {
         case hapticIntensity
         case stickyModifiers
         case modifierMode
+        case companion
     }
 
-    // 解码旧设置并默认开启中文输入
+    // 解码旧设置并默认开启中文输入与伴侣默认配置
     public init(from decoder: Decoder) throws {
         let values = try decoder.container(keyedBy: CodingKeys.self)
         version = try values.decode(Int.self, forKey: .version)
@@ -240,6 +317,7 @@ public struct BoardSettings: Codable, Equatable, Sendable {
         hapticIntensity = try values.decodeIfPresent(Double.self, forKey: .hapticIntensity) ?? 0.6
         stickyModifiers = try values.decode(Bool.self, forKey: .stickyModifiers)
         modifierMode = try values.decode(ModifierMode.self, forKey: .modifierMode)
+        companion = try values.decodeIfPresent(CompanionConfig.self, forKey: .companion) ?? .standard
     }
 
     public static let standard = BoardSettings()
@@ -256,7 +334,8 @@ public struct BoardSettings: Codable, Equatable, Sendable {
             simulatedHaptics: simulatedHaptics,
             hapticIntensity: min(1.0, max(0.1, hapticIntensity)),
             stickyModifiers: stickyModifiers,
-            modifierMode: modifierMode
+            modifierMode: modifierMode,
+            companion: companion.norm()
         )
     }
 }

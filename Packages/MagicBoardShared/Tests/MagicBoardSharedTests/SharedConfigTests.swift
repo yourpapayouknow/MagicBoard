@@ -39,11 +39,30 @@ final class SharedConfigTests: XCTestCase {
         settings.hapticIntensity = 0.85
         settings.stickyModifiers = false
         settings.modifierMode = .toggle
+        settings.companion = CompanionConfig(
+            enabled: true,
+            host: "192.168.1.188",
+            port: 52099,
+            workMode: .fullKeyboard,
+            targetOS: .windows,
+            pulseDurationMs: 30
+        )
 
         SharedConfig.svcfg(settings, defaults: defaults)
 
         XCTAssertEqual(SharedConfig.ldcfg(defaults: defaults), settings)
         XCTAssertEqual(SharedConfig.ldthm(defaults: defaults).primary, settings.appearance.accent)
+    }
+
+    // 验证伴侣配置默认值
+    func testcompaniondflt() {
+        let config = CompanionConfig.standard
+        XCTAssertFalse(config.enabled)
+        XCTAssertEqual(config.host, "127.0.0.1")
+        XCTAssertEqual(config.port, 52088)
+        XCTAssertEqual(config.workMode, .onlyFunctions)
+        XCTAssertEqual(config.targetOS, .macOS)
+        XCTAssertEqual(config.pulseDurationMs, 20)
     }
 
     // 验证旧设置缺少中文开关时保留原配置并默认开启
@@ -63,6 +82,23 @@ final class SharedConfigTests: XCTestCase {
         XCTAssertEqual(loaded.scheme, .microsoft)
     }
 
+    // 验证旧设置缺少伴侣配置时向后兼容默认配置
+    func testcfgcompanionlegacy() throws {
+        let (defaults, name) = mkdefs()
+        defer { defaults.removePersistentDomain(forName: name) }
+        var settings = BoardSettings.standard
+        settings.chineseEnabled = false
+        let encoded = try JSONEncoder().encode(settings)
+        var object = try XCTUnwrap(JSONSerialization.jsonObject(with: encoded) as? [String: Any])
+        object.removeValue(forKey: "companion")
+        defaults.set(try JSONSerialization.data(withJSONObject: object), forKey: "magicboard.settings.v1")
+
+        let loaded = SharedConfig.ldcfg(defaults: defaults)
+
+        XCTAssertEqual(loaded.companion, .standard)
+        XCTAssertFalse(loaded.chineseEnabled)
+    }
+
     // 验证损坏设置回退
     func testcfgbad() {
         let (defaults, name) = mkdefs()
@@ -72,19 +108,30 @@ final class SharedConfigTests: XCTestCase {
         XCTAssertEqual(SharedConfig.ldcfg(defaults: defaults), .standard)
     }
 
-    // 验证布局与颜色安全归一化
+    // 验证布局、颜色与伴侣参数安全归一化
     func testcfgnorm() {
         let (defaults, name) = mkdefs()
         defer { defaults.removePersistentDomain(forName: name) }
         var settings = BoardSettings.standard
         settings.layout = LayoutConfig(height: 900, horizontalGap: -2, verticalGap: 40, outerInset: 0)
         settings.appearance.accent = ThemeColor(red: -1, green: 0.5, blue: 3, alpha: 2)
+        settings.companion = CompanionConfig(
+            enabled: true,
+            host: "  10.0.0.1 \n",
+            port: 0,
+            workMode: .onlyFunctions,
+            targetOS: .macOS,
+            pulseDurationMs: 2
+        )
 
         SharedConfig.svcfg(settings, defaults: defaults)
         let loaded = SharedConfig.ldcfg(defaults: defaults)
 
         XCTAssertEqual(loaded.layout, LayoutConfig(height: 430, horizontalGap: 3, verticalGap: 12, outerInset: 4))
         XCTAssertEqual(loaded.appearance.accent, ThemeColor(red: 0, green: 0.5, blue: 1, alpha: 1))
+        XCTAssertEqual(loaded.companion.host, "10.0.0.1")
+        XCTAssertEqual(loaded.companion.port, 52088)
+        XCTAssertEqual(loaded.companion.pulseDurationMs, 5) // 下限 5ms
     }
 
     // 验证旧主题迁移为新强调色
