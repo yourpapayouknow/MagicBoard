@@ -2,4 +2,6 @@
 /build/
 /MagicBoard.xcodeproj/
 /Packages/MagicBoardShared/.build/
+/.codegraph/
+/DESIGN.md
 .DS_Store
