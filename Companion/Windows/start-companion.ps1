@@ -11,8 +11,13 @@ $exe = Join-Path $ScriptDir "magicboard-companion-win.exe"
 $log = Join-Path $ScriptDir "live_c.log"
 if (Test-Path $log) { Remove-Item $log -Force }
 
-$proc = Start-Process -FilePath $exe -ArgumentList "-p $Port" -RedirectStandardOutput $log -PassThru
-Start-Sleep -Milliseconds 800
+$psi = [System.Diagnostics.ProcessStartInfo]::new()
+$psi.FileName = $exe
+$psi.Arguments = "-p $Port --log `"$log`""
+$psi.UseShellExecute = $true
+$psi.CreateNoWindow = $true
 
-Write-Host "Process ID: $($proc.Id)"
-Get-NetUDPEndpoint -LocalPort $Port -ErrorAction SilentlyContinue | Select-Object LocalAddress, LocalPort
+$proc = [System.Diagnostics.Process]::Start($psi)
+Start-Sleep -Milliseconds 600
+
+Write-Host "Companion started (PID: $($proc.Id)) listening on UDP $Port"

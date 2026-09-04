@@ -445,12 +445,15 @@ int main(int argc, char *argv[]) {
     setvbuf(stderr, NULL, _IONBF, 0);
 
     int port = DEFAULT_PORT;
+    const char *log_file = NULL;
     BOOL request_elevate = FALSE;
     BOOL request_firewall = FALSE;
 
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "--port") == 0 || strcmp(argv[i], "-p") == 0) {
             if (i + 1 < argc) port = atoi(argv[++i]);
+        } else if (strcmp(argv[i], "--log") == 0 || strcmp(argv[i], "-l") == 0) {
+            if (i + 1 < argc) log_file = argv[++i];
         } else if (strcmp(argv[i], "--elevate") == 0 || strcmp(argv[i], "-e") == 0) {
             request_elevate = TRUE;
         } else if (strcmp(argv[i], "--add-firewall") == 0) {
@@ -461,10 +464,20 @@ int main(int argc, char *argv[]) {
             printf("  magicboard-companion-win.exe [选项]\n\n");
             printf("选项:\n");
             printf("  -p, --port <port>     指定 UDP 监听端口 (默认: 52088)\n");
+            printf("  -l, --log <path>      重定向标准输出与错误到指定日志文件\n");
             printf("  -e, --elevate         若未以管理员运行，自动弹出 UAC 提权窗口\n");
             printf("      --add-firewall    自动添加入站 UDP 防火墙放行规则并退出\n");
             printf("  -h, --help            显示帮助信息\n");
             return 0;
+        }
+    }
+
+    if (log_file != NULL) {
+        FILE *f = freopen(log_file, "a", stdout);
+        if (f) {
+            freopen(log_file, "a", stderr);
+            setvbuf(stdout, NULL, _IONBF, 0);
+            setvbuf(stderr, NULL, _IONBF, 0);
         }
     }
 

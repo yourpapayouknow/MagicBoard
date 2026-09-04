@@ -202,10 +202,14 @@ public struct CompanionHIDUsage: RawRepresentable, Hashable, Codable, Sendable, 
     public static let leftShift: CompanionHIDUsage = 0x00E1
     public static let leftOption: CompanionHIDUsage = 0x00E2
     public static let leftCommand: CompanionHIDUsage = 0x00E3
+    public static let leftGUI: CompanionHIDUsage = .leftCommand
+    public static let leftWin: CompanionHIDUsage = .leftCommand
     public static let rightControl: CompanionHIDUsage = 0x00E4
     public static let rightShift: CompanionHIDUsage = 0x00E5
     public static let rightOption: CompanionHIDUsage = 0x00E6
     public static let rightCommand: CompanionHIDUsage = 0x00E7
+    public static let rightGUI: CompanionHIDUsage = .rightCommand
+    public static let rightWin: CompanionHIDUsage = .rightCommand
 }
 
 // 伴侣定长二进制通信报文（16 字节固定长度）

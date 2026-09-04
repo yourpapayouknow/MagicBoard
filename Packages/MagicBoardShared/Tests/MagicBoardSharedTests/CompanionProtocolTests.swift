@@ -381,4 +381,49 @@ final class CompanionProtocolTests: XCTestCase {
             XCTAssertEqual(sent, CompanionPacket.packetLength)
         }
     }
+
+    // 验证 iOS 模拟器环境向远程 Windows 被控端伴侣服务 (10.1.1.2:52088) 发送真实 UDP 报文链路
+    func testSimulatorToWindowsCompanionUDPSend() throws {
+        let sock = socket(AF_INET, SOCK_DGRAM, 0)
+        XCTAssertGreaterThanOrEqual(sock, 0)
+        defer { close(sock) }
+
+        var addr = sockaddr_in()
+        addr.sin_len = UInt8(MemoryLayout<sockaddr_in>.size)
+        addr.sin_family = sa_family_t(AF_INET)
+        addr.sin_port = UInt16(52088).bigEndian
+
+        let targetHost = ProcessInfo.processInfo.environment["COMPANION_WIN_HOST"] ?? "10.1.1.2"
+        inet_pton(AF_INET, targetHost, &addr.sin_addr)
+
+        let testPackets = [
+            // 1. Win 键脉冲 (HID 0x00E3, 50ms)
+            CompanionPacket.pulse(usage: .leftGUI, durationMs: 50, sequence: 801),
+            // 2. Alt + Tab 组合键 (HID 0x002B, Mods 0x04)
+            CompanionPacket.keyDown(usage: .tab, modifiers: [.leftOption], sequence: 802),
+            CompanionPacket.keyUp(usage: .tab, modifiers: [], sequence: 803),
+            // 3. Escape 脉冲 (HID 0x0029, 25ms)
+            CompanionPacket.pulse(usage: .escape, durationMs: 25, sequence: 804),
+            // 4. F5 刷新脉冲 (HID 0x003E, 20ms)
+            CompanionPacket.pulse(usage: .f5, durationMs: 20, sequence: 805),
+            // 5. Ctrl 修饰键心跳同步
+            CompanionPacket.heartbeat(modifiers: [.leftControl], sequence: 806),
+            // 6. ResetAll 紧急复位
+            CompanionPacket.resetAll(sequence: 807),
+        ]
+
+        for packet in testPackets {
+            var raw: (UInt64, UInt64) = (0, 0)
+            let sent = withUnsafeMutableBytes(of: &raw) { buffer -> Int in
+                _ = packet.write(to: buffer)
+                return withUnsafePointer(to: &addr) { addrPtr in
+                    addrPtr.withMemoryRebound(to: sockaddr.self, capacity: 1) { saPtr in
+                        sendto(sock, buffer.baseAddress, CompanionPacket.packetLength, 0, saPtr, socklen_t(MemoryLayout<sockaddr_in>.size))
+                    }
+                }
+            }
+            XCTAssertEqual(sent, CompanionPacket.packetLength)
+            usleep(25_000) // 25ms 间隔
+        }
+    }
 }
