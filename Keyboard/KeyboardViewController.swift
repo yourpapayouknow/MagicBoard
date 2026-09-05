@@ -1150,12 +1150,14 @@ final class KeyboardViewController: UIInputViewController {
             button.addGestureRecognizer(drag)
         } else if spec.kind == .text {
             button.addTarget(self, action: #selector(prskey(_:)), for: .touchUpInside)
-            let drag = UIPanGestureRecognizer(target: self, action: #selector(dragkey(_:)))
-            drag.maximumNumberOfTouches = 1
-            drag.cancelsTouchesInView = true
-            drag.delaysTouchesBegan = false
-            drag.delaysTouchesEnded = false
-            button.addGestureRecognizer(drag)
+            if !spec.letter || settings.letterSwipeUppercase {
+                let drag = UIPanGestureRecognizer(target: self, action: #selector(dragkey(_:)))
+                drag.maximumNumberOfTouches = 1
+                drag.cancelsTouchesInView = true
+                drag.delaysTouchesBegan = false
+                drag.delaysTouchesEnded = false
+                button.addGestureRecognizer(drag)
+            }
         } else if spec.kind.isArrow {
             button.addTarget(self, action: #selector(arrdown(_:)), for: .touchDown)
             button.addTarget(
@@ -2104,6 +2106,7 @@ final class KeyboardViewController: UIInputViewController {
     // 处理字符键下拖
     @objc private func dragkey(_ sender: UIPanGestureRecognizer) {
         guard let button = sender.view as? KeyView, let spec = button.spec else { return }
+        guard !spec.letter || settings.letterSwipeUppercase else { return }
         let distance = max(sender.translation(in: button).y, 0)
 
         switch sender.state {

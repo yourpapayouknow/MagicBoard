@@ -16,7 +16,10 @@ final class SharedConfigTests: XCTestCase {
         let (defaults, name) = mkdefs()
         defer { defaults.removePersistentDomain(forName: name) }
 
-        XCTAssertEqual(SharedConfig.ldcfg(defaults: defaults), .standard)
+        let settings = SharedConfig.ldcfg(defaults: defaults)
+
+        XCTAssertEqual(settings, .standard)
+        XCTAssertFalse(settings.letterSwipeUppercase)
     }
 
     // 验证完整设置往返
@@ -37,6 +40,7 @@ final class SharedConfigTests: XCTestCase {
         settings.keySound = false
         settings.simulatedHaptics = true
         settings.hapticIntensity = 0.85
+        settings.letterSwipeUppercase = true
         settings.stickyModifiers = false
         settings.modifierMode = .toggle
         settings.companion = CompanionConfig(
@@ -117,6 +121,23 @@ final class SharedConfigTests: XCTestCase {
 
         XCTAssertTrue(loaded.chineseEnabled)
         XCTAssertEqual(loaded.scheme, .microsoft)
+    }
+
+    // 验证旧设置缺少字母滑动开关时默认关闭
+    func testcfgswplegacy() throws {
+        let (defaults, name) = mkdefs()
+        defer { defaults.removePersistentDomain(forName: name) }
+        var settings = BoardSettings.standard
+        settings.keySound = false
+        let encoded = try JSONEncoder().encode(settings)
+        var object = try XCTUnwrap(JSONSerialization.jsonObject(with: encoded) as? [String: Any])
+        object.removeValue(forKey: "letterSwipeUppercase")
+        defaults.set(try JSONSerialization.data(withJSONObject: object), forKey: "magicboard.settings.v1")
+
+        let loaded = SharedConfig.ldcfg(defaults: defaults)
+
+        XCTAssertFalse(loaded.letterSwipeUppercase)
+        XCTAssertFalse(loaded.keySound)
     }
 
     // 验证旧设置缺少伴侣配置时向后兼容默认配置

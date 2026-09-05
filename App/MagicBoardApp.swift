@@ -117,6 +117,7 @@ private struct MainView: View {
                     keySound: $settings.keySound,
                     simulatedHaptics: $settings.simulatedHaptics,
                     hapticIntensity: $settings.hapticIntensity,
+                    letterSwipeUppercase: $settings.letterSwipeUppercase,
                     sticky: $settings.stickyModifiers,
                     mode: $settings.modifierMode,
                     fullAccess: status.report?.hasFullAccess == true
@@ -945,6 +946,7 @@ private struct FeedbackView: View {
     @Binding var keySound: Bool
     @Binding var simulatedHaptics: Bool
     @Binding var hapticIntensity: Double
+    @Binding var letterSwipeUppercase: Bool
     @Binding var sticky: Bool
     @Binding var mode: ModifierMode
     let fullAccess: Bool
@@ -972,6 +974,10 @@ private struct FeedbackView: View {
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                 }
+            }
+
+            SettingCard(title: "输入手势") {
+                Toggle("字母键下滑输入大写", isOn: $letterSwipeUppercase)
             }
 
             SettingCard(title: "修饰键") {

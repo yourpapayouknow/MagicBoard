@@ -298,6 +298,7 @@ public struct BoardSettings: Codable, Equatable, Sendable {
     public var keySound: Bool
     public var simulatedHaptics: Bool
     public var hapticIntensity: Double
+    public var letterSwipeUppercase: Bool
     public var stickyModifiers: Bool
     public var modifierMode: ModifierMode
     public var companion: CompanionConfig
@@ -312,6 +313,7 @@ public struct BoardSettings: Codable, Equatable, Sendable {
         keySound: Bool = true,
         simulatedHaptics: Bool = false,
         hapticIntensity: Double = 0.6,
+        letterSwipeUppercase: Bool = false,
         stickyModifiers: Bool = true,
         modifierMode: ModifierMode = .mixed,
         companion: CompanionConfig = .standard
@@ -324,6 +326,7 @@ public struct BoardSettings: Codable, Equatable, Sendable {
         self.keySound = keySound
         self.simulatedHaptics = simulatedHaptics
         self.hapticIntensity = hapticIntensity
+        self.letterSwipeUppercase = letterSwipeUppercase
         self.stickyModifiers = stickyModifiers
         self.modifierMode = modifierMode
         self.companion = companion
@@ -338,6 +341,7 @@ public struct BoardSettings: Codable, Equatable, Sendable {
         case keySound
         case simulatedHaptics
         case hapticIntensity
+        case letterSwipeUppercase
         case stickyModifiers
         case modifierMode
         case companion
@@ -354,6 +358,7 @@ public struct BoardSettings: Codable, Equatable, Sendable {
         keySound = try values.decode(Bool.self, forKey: .keySound)
         simulatedHaptics = try values.decode(Bool.self, forKey: .simulatedHaptics)
         hapticIntensity = try values.decodeIfPresent(Double.self, forKey: .hapticIntensity) ?? 0.6
+        letterSwipeUppercase = try values.decodeIfPresent(Bool.self, forKey: .letterSwipeUppercase) ?? false
         stickyModifiers = try values.decode(Bool.self, forKey: .stickyModifiers)
         modifierMode = try values.decode(ModifierMode.self, forKey: .modifierMode)
         companion = try values.decodeIfPresent(CompanionConfig.self, forKey: .companion) ?? .standard
@@ -372,6 +377,7 @@ public struct BoardSettings: Codable, Equatable, Sendable {
             keySound: keySound,
             simulatedHaptics: simulatedHaptics,
             hapticIntensity: min(1.0, max(0.1, hapticIntensity)),
+            letterSwipeUppercase: letterSwipeUppercase,
             stickyModifiers: stickyModifiers,
             modifierMode: modifierMode,
             companion: companion.norm()

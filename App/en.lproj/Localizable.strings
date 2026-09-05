@@ -54,6 +54,8 @@
 "仅内置扬声器；自适应补偿系统音量，支持独立调节触感" = "Relies on woofer units; avoid continuous prolonged triggering";
 "依赖低音单元 请勿长时持续触发" = "Relies on woofer units; avoid continuous prolonged triggering";
 "需要允许完全访问" = "Allow Full Access to enable this";
+"输入手势" = "Input Gestures";
+"字母键下滑输入大写" = "Swipe Down for Uppercase";
 "修饰键" = "Modifiers";
 "Sticky Modifier" = "Sticky Modifier";
 "操作模式" = "Modifier Behavior";
@@ -98,4 +100,3 @@
 "已启用" = "Enabled";
 "未启用" = "Disabled";
 "目标" = "Target";
-
