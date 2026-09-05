@@ -16,3 +16,12 @@
 - `DESIGN.md` lint passes with zero findings after the update.
 - Verified native SQLite 3.51.0 and required iOS SDK C APIs; selected an indexed App-Group database to keep large imports out of keyboard-extension memory.
 - Completed Phases 1 and 2; Phase 3 starts with tests for global-to-page-local candidate mapping and dictionary behavior.
+- Added global-to-page-local candidate selection and preserved each button's original engine index after learned reordering.
+- Added App-Group SQLite persistence for scheme-specific personal terms and bounded learning counts, plus Rime YAML/TSV parsing, merge, search, delete, and clear operations.
+- Added the native Custom Dictionary settings page, file importer, manual entry, search/delete list, localized status messages, and learning reset confirmation.
+- Shared-package tests pass 84/84 and the full iOS Simulator Debug build succeeds after the feature implementation.
+- Completed Phases 3 and 4; Phase 5 is validating boundary cases, localization files, final diffs, and the rendered app.
+- Added invalid UTF-8, invalid manual input, and Rime percentage-weight boundary tests; the package now passes 86/86 tests.
+- Validated both localization files, `git diff --check`, unsigned generic simulator build, and signed device-specific simulator build.
+- Opened the new page in the iPad simulator and verified its layout, App-Group availability, manual insertion of `魔法键盘 / mofajianpan / 80`, list rendering, localized success feedback, and delete accessibility label.
+- Completed Phase 5. Physical-device confirmation of a far Rime candidate remains the only environment-dependent acceptance check; the page/local-index conversion itself is covered at indexes 0, 4, 5, and 19.

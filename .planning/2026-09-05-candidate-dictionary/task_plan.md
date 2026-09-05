@@ -37,14 +37,14 @@ Fix selection of every horizontally scrollable candidate, then add a native iPad
 
 ### Phase 3 — Candidate fix
 
-**Status:** in_progress
+**Status:** complete
 
 - Apply the smallest verified fix to candidate selection.
 - Verify early and later candidates, scroll position, composition, and routing-capsule coexistence.
 
 ### Phase 4 — Dictionary import, editing, and learning
 
-**Status:** pending
+**Status:** complete
 
 - Implement the approved importer and personal-term CRUD in the host app.
 - Feed personal terms and learned ranking into the existing candidate pipeline.
@@ -52,7 +52,7 @@ Fix selection of every horizontally scrollable candidate, then add a native iPad
 
 ### Phase 5 — Verification and delivery
 
-**Status:** pending
+**Status:** complete
 
 - Run focused/full tests, design lint, localization validation, simulator Debug, and proportionate interaction checks.
 - Review the final diff, commit in recoverable increments, and report any physical-device-only acceptance item.
@@ -62,3 +62,7 @@ Fix selection of every horizontally scrollable candidate, then add a native iPad
 | Error | Attempt | Resolution |
 |---|---:|---|
 | Zsh reported `no matches found: refrence/rime-*` during a reference scan | 1 | The glob matched no directory; subsequent inspection uses only explicit existing paths and remains on `/bin/zsh`. |
+| A combined candidate patch did not match the current class comment | 1 | No partial edit was applied; the patch was split into exact, smaller hunks. |
+| A combined UI/localization patch targeted the same file twice | 1 | No partial edit was applied; source and localization patches were separated. |
+| `LabeledContent` value overload rejected `LocalizedStringKey` | 1 | Switched both rows to content closures containing localized `Text`. |
+| Existing Jetsam memory benchmark measured 112 KB against its 100 KB limit | 1 | The isolated rerun measured 96 KB and all 86 tests passed; no production code or benchmark threshold was changed. |

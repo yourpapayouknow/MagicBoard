@@ -3,6 +3,7 @@ import MagicBoardShared
 import Network
 import SwiftUI
 import UIKit
+import UniformTypeIdentifiers
 
 // 启动主应用
 @main
@@ -19,6 +20,7 @@ private enum Page: String, CaseIterable, Identifiable {
     case overview = "概览"
     case companion = "远程伴侣"
     case input = "中文输入"
+    case dictionary = "自定义词典"
     case style = "外观与布局"
     case feedback = "按键体验"
     case test = "输入测试"
@@ -32,6 +34,7 @@ private enum Page: String, CaseIterable, Identifiable {
         case .overview: "square.grid.2x2"
         case .companion: "desktopcomputer"
         case .input: "character.bubble"
+        case .dictionary: "text.book.closed"
         case .style: "slider.horizontal.3"
         case .feedback: "hand.tap"
         case .test: "keyboard"
@@ -110,6 +113,8 @@ private struct MainView: View {
                 CompanionView(companion: $settings.companion)
             case .input:
                 InputView(chineseEnabled: $settings.chineseEnabled, scheme: $settings.scheme)
+            case .dictionary:
+                DictionaryView(scheme: settings.scheme)
             case .style:
                 StyleView(layout: $settings.layout, appearance: $settings.appearance)
             case .feedback:
@@ -669,6 +674,207 @@ private struct InputView: View {
                 .disabled(!chineseEnabled)
                 .opacity(chineseEnabled ? 1 : 0.45)
             }
+        }
+    }
+}
+
+// 展示个人词典管理页面
+private struct DictionaryView: View {
+    let scheme: ChineseScheme
+    @State private var dictionary: PersonalDictionary?
+    @State private var terms: [PersonalTerm] = []
+    @State private var text = ""
+    @State private var code = ""
+    @State private var weight = ""
+    @State private var query = ""
+    @State private var showImporter = false
+    @State private var showClearConfirmation = false
+    @State private var message: String?
+
+    private var parsedWeight: Int? {
+        weight.isEmpty ? 0 : Int(weight).flatMap { $0 >= 0 ? $0 : nil }
+    }
+
+    private var canAdd: Bool {
+        !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            && !code.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            && parsedWeight != nil
+    }
+
+    var body: some View {
+        PageShell {
+            SettingCard(title: "添加常用词") {
+                LabeledContent("当前方案") {
+                    Text(LocalizedStringKey(scheme.title))
+                }
+                Divider()
+                TextField("词条", text: $text)
+                    .textFieldStyle(.roundedBorder)
+                TextField("输入编码", text: $code)
+                    .textFieldStyle(.roundedBorder)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                TextField("权重（可选）", text: $weight)
+                    .textFieldStyle(.roundedBorder)
+                    .keyboardType(.numberPad)
+                Button("添加") { add() }
+                    .buttonStyle(.borderedProminent)
+                    .disabled(!canAdd)
+            }
+
+            SettingCard(title: "导入词典") {
+                LabeledContent("导入到") {
+                    Text(LocalizedStringKey(scheme.title))
+                }
+                Text("支持 UTF-8 Rime .dict.yaml 和制表符文本")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                Button("选择词典文件") { showImporter = true }
+                    .buttonStyle(.bordered)
+            }
+
+            SettingCard(title: "已保存词条") {
+                TextField("搜索词条或编码", text: $query)
+                    .textFieldStyle(.roundedBorder)
+                if terms.isEmpty {
+                    Text("暂无词条")
+                        .foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity, minHeight: 60)
+                } else {
+                    LazyVStack(spacing: 0) {
+                        ForEach(terms) { term in
+                            HStack(spacing: 12) {
+                                VStack(alignment: .leading, spacing: 3) {
+                                    Text(term.text)
+                                    HStack(spacing: 0) {
+                                        Text(term.code)
+                                        Text(" · ")
+                                        Text(LocalizedStringKey(term.scheme.title))
+                                        Text(" · \(term.weight)")
+                                    }
+                                        .font(.footnote)
+                                        .foregroundStyle(.secondary)
+                                }
+                                Spacer(minLength: 0)
+                                Button { remove(term) } label: {
+                                    Image(systemName: "trash")
+                                }
+                                .buttonStyle(.plain)
+                                .foregroundStyle(.red)
+                                .frame(width: 44, height: 44)
+                                .accessibilityLabel("删除词条")
+                            }
+                            if term.id != terms.last?.id { Divider() }
+                        }
+                    }
+                }
+            }
+
+            Button("清空学习记录", role: .destructive) {
+                showClearConfirmation = true
+            }
+            .buttonStyle(.bordered)
+
+            if let message {
+                Text(message)
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .task { refresh() }
+        .onChange(of: query) { _ in refresh() }
+        .fileImporter(isPresented: $showImporter, allowedContentTypes: [.plainText, .data]) { result in
+            importFile(result)
+        }
+        .confirmationDialog("确认清空学习记录？", isPresented: $showClearConfirmation) {
+            Button("清空", role: .destructive) { clearLearning() }
+            Button("取消", role: .cancel) {}
+        }
+    }
+
+    // 打开共享词典
+    private func store() throws -> PersonalDictionary {
+        if let dictionary { return dictionary }
+        let opened = try PersonalDictionary()
+        dictionary = opened
+        return opened
+    }
+
+    // 刷新词条列表
+    private func refresh() {
+        do {
+            terms = try store().terms(query: query)
+        } catch {
+            message = localized(error)
+        }
+    }
+
+    // 添加当前词条
+    private func add() {
+        guard let parsedWeight else { return }
+        do {
+            try store().add(text: text, code: code, weight: parsedWeight, scheme: scheme)
+            text = ""
+            code = ""
+            weight = ""
+            message = String(localized: "词条已添加")
+            refresh()
+        } catch {
+            message = localized(error)
+        }
+    }
+
+    // 导入用户选择的词典
+    private func importFile(_ result: Result<URL, Error>) {
+        do {
+            let url = try result.get()
+            let accessed = url.startAccessingSecurityScopedResource()
+            defer { if accessed { url.stopAccessingSecurityScopedResource() } }
+            let data = try Data(contentsOf: url, options: .mappedIfSafe)
+            let count = try store().importData(data, scheme: scheme)
+            message = String(format: String(localized: "已导入 %d 个词条"), count)
+            refresh()
+        } catch {
+            message = localized(error)
+        }
+    }
+
+    // 删除指定词条
+    private func remove(_ term: PersonalTerm) {
+        do {
+            try store().delete(term.id)
+            refresh()
+        } catch {
+            message = localized(error)
+        }
+    }
+
+    // 清除候选学习次数
+    private func clearLearning() {
+        do {
+            try store().clearLearning()
+            message = String(localized: "学习记录已清空")
+        } catch {
+            message = localized(error)
+        }
+    }
+
+    // 本地化词典操作错误
+    private func localized(_ error: Error) -> String {
+        guard let error = error as? PersonalDictionaryError else {
+            return error.localizedDescription
+        }
+        switch error {
+        case .unavailable:
+            return String(localized: "共享词典不可用")
+        case .invalidUTF8:
+            return String(localized: "词典必须使用 UTF-8 编码")
+        case let .invalidLine(line):
+            return String(format: String(localized: "第 %d 行格式不正确"), line)
+        case .invalidTerm:
+            return String(localized: "词条、编码或权重不正确")
+        case let .database(message):
+            return String(format: String(localized: "词典数据库错误：%@"), message)
         }
     }
 }
