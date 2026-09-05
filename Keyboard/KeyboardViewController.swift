@@ -343,6 +343,20 @@ private final class KeyInputView: UIInputView, UIInputViewAudioFeedback {
     var enableInputClicksWhenVisible: Bool { true }
 }
 
+// 保存一个可点击候选的提交来源
+private enum CandidateSource {
+    case engine(Int)
+    case direct
+}
+
+// 保存一个可点击候选
+private struct CandidateChoice {
+    let text: String
+    let input: String
+    let source: CandidateSource
+    let order: Int
+}
+
 // 管理键盘扩展界面
 final class KeyboardViewController: UIInputViewController {
     private let candidateBar = UIStackView()
@@ -351,7 +365,8 @@ final class KeyboardViewController: UIInputViewController {
     private let candidateRow = UIStackView()
     private let routeButton = UIButton(type: .system)
     private var lexicon: [String: [String]] = [:]
-    private var systemCandidates: [String] = []
+    private var candidateChoices: [CandidateChoice] = []
+    private let personalDictionary = try? PersonalDictionary()
     private let rows = UIStackView()
     private let trackpad = UIView()
     private weak var blurView: UIVisualEffectView?
@@ -733,15 +748,25 @@ final class KeyboardViewController: UIInputViewController {
                 ? ime.ready ? settings.scheme.title : "引擎不可用"
                 : "ABC")
 
+        let input = snapshot?.rawInput ?? ""
         let engineCandidates = Array((snapshot?.candidates ?? []).prefix(20))
-        systemCandidates = Array((snapshot.map { syscands($0.rawInput) }?.filter {
-            !engineCandidates.contains($0)
-        } ?? []).prefix(max(0, 20 - engineCandidates.count)))
-        let visible: [(text: String, engineIndex: Int?)] = engineCandidates.enumerated().map {
-            (text: $0.element, engineIndex: $0.offset)
-        } + systemCandidates.map { (text: $0, engineIndex: nil) }
+        var seen = Set(engineCandidates)
+        var choices = engineCandidates.enumerated().map {
+            CandidateChoice(text: $0.element, input: input, source: .engine($0.offset), order: $0.offset)
+        }
+        let personal = (try? personalDictionary?.candidates(input: input, scheme: settings.scheme)) ?? []
+        let supplemental = personal.map(\.text) + syscands(input)
+        for text in supplemental where seen.insert(text).inserted {
+            choices.append(CandidateChoice(text: text, input: input, source: .direct, order: choices.count))
+        }
+        let scores = (try? personalDictionary?.scores(input: input, scheme: settings.scheme)) ?? [:]
+        candidateChoices = Array(choices.sorted {
+            let left = scores[$0.text, default: 0]
+            let right = scores[$1.text, default: 0]
+            return left == right ? $0.order < $1.order : left > right
+        }.prefix(40))
 
-        for (position, choice) in visible.enumerated() {
+        for (position, choice) in candidateChoices.enumerated() {
             var config = UIButton.Configuration.plain()
             config.title = choice.text
             config.baseForegroundColor = settings.appearance.mode == .custom
@@ -754,7 +779,7 @@ final class KeyboardViewController: UIInputViewController {
                 return outgoing
             }
             let button = UIButton(configuration: config)
-            button.tag = choice.engineIndex ?? -(position - engineCandidates.count + 1)
+            button.tag = position
             button.accessibilityLabel = "候选词 \(choice.text)"
             button.addTarget(self, action: #selector(selectCandidate(_:)), for: .touchUpInside)
             candidateRow.addArrangedSubview(button)
@@ -763,18 +788,20 @@ final class KeyboardViewController: UIInputViewController {
         updateCandidateColors()
     }
 
-    // 选择当前页候选并写入文本
+    // 选择候选并记录本地学习次数
     @objc private func selectCandidate(_ sender: UIButton) {
-        if sender.tag >= 0 {
-            guard let snapshot = ime.select(sender.tag) else { return }
+        guard candidateChoices.indices.contains(sender.tag) else { return }
+        let choice = candidateChoices[sender.tag]
+        switch choice.source {
+        case let .engine(index):
+            guard let snapshot = ime.select(index) else { return }
             applySnapshot(snapshot)
-        } else {
-            let index = -sender.tag - 1
-            guard systemCandidates.indices.contains(index) else { return }
+        case .direct:
             ime.reset()
-            textDocumentProxy.insertText(systemCandidates[index])
+            textDocumentProxy.insertText(choice.text)
             renderCandidates(nil)
         }
+        try? personalDictionary?.learn(input: choice.input, text: choice.text, scheme: settings.scheme)
         sndfeed()
     }
 

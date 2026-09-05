@@ -12,7 +12,10 @@ let package = Package(
         .library(name: "MagicBoardShared", targets: ["MagicBoardShared"]),
     ],
     targets: [
-        .target(name: "MagicBoardShared"),
+        .target(
+            name: "MagicBoardShared",
+            linkerSettings: [.linkedLibrary("sqlite3")]
+        ),
         .testTarget(name: "MagicBoardSharedTests", dependencies: ["MagicBoardShared"]),
     ]
 )

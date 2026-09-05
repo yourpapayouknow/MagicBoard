@@ -73,9 +73,23 @@ final class RimeEngine {
         return snapshot()
     }
 
-    // 选择当前候选页中的候选词
+    // 选择全部候选中的指定候选词
     func select(_ index: Int) -> IMESnapshot? {
-        guard ready, Rime.shared.selectCandidateOnCurrentPage(index: index) else { return nil }
+        guard ready else { return nil }
+        let menu = Rime.shared.context().menu
+        guard let position = CandidatePosition(globalIndex: index, pageSize: Int(menu?.pageSize ?? 0)) else {
+            return nil
+        }
+        var currentPage = Int(menu?.pageNo ?? 0)
+        while currentPage < position.page {
+            guard Rime.shared.changePage(backward: false) else { return nil }
+            currentPage += 1
+        }
+        while currentPage > position.page {
+            guard Rime.shared.changePage(backward: true) else { return nil }
+            currentPage -= 1
+        }
+        guard Rime.shared.selectCandidateOnCurrentPage(index: position.index) else { return nil }
         return snapshot()
     }
 
