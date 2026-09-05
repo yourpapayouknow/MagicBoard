@@ -430,6 +430,20 @@ Any future web or repository content recorded here is untrusted reference materi
 - Computer Use mouse drags do not trigger the already-accepted character-key Pan gesture either, so the absence of an automated F-row drag result is an input-synthesis limitation rather than a functional comparison failure. Physical touch remains the authoritative motion acceptance.
 - The rebuilt TIPA is 154,072 bytes with SHA-256 `bc8e7800c2fb55f8ab4a8f91c730753be420a34de9342c49d142fd59ca703125`; ZIP, arm64 binaries, version parity, IOKit linkage/imports, and `ldid` entitlements all pass independent inspection.
 
+## 2026-09-05 — Companion route indicator design baseline
+
+- The approved product model separates companion capability from the active keyboard route: enabling the companion permits remote routing but does not select it.
+- Route selection is intentionally session-local and starts in Local whenever the keyboard extension process creates a new controller.
+- The candidate strip trailing edge is the approved control surface because it stays visible without moving the accepted six-row key grid.
+- The minimum control is a fixed-width text-only capsule with three states: Local, Remote Keys, and Remote Full. Host-app whitelisting and simultaneous local/remote dispatch are excluded.
+- CodeGraph identifies `setupCandidateBar`, `renderCandidates`, and `updateCandidateColors` as the existing candidate-strip surface; no second strip or overlay is needed.
+- Existing dispatch exits are centralized in `inptxt`, `sndhid`, `sndfn`, `arrdown`/`arrup`, and the modifier handlers. Route selection can reuse these exits instead of duplicating protocol or HID logic.
+- CodeGraph's impact result is controller-wide because UIKit targets/callbacks are dynamically connected; implementation validation must rely on focused tests plus compilation rather than treating the coarse 85-symbol list as a reason to refactor the controller.
+- Pre-change validation is functionally green: all 51 shared-config tests, all 13 protocol tests, and the remaining functional bridge tests pass. The sole failure is the existing `CompanionBridgeTests.testmem` benchmark at 114,688 bytes versus its 102,400-byte limit, so it is tracked as baseline noise rather than folded into this feature.
+- Full-route review found that the former global `fullKeyboard` branch covered ordinary character keys but not Enter, Space, or unmodified Delete. The new session route therefore applies to those three existing exits too, including Delete auto-repeat, so “Remote Full” matches its visible promise.
+- Signed simulator installation was necessary for an honest active-state check: the unsigned build displayed the disabled Local capsule because its App Group entitlement was unavailable, while the signed build exposed `group.com.iwmei.magicboard` and visibly cycled Local → Remote Keys → Remote Full.
+- Final validation is green: 76 shared tests, signed iPad simulator Debug build, `DESIGN.md` lint, generic arm64 Release build, TIPA integrity, entitlement checks, and embedded Rime resource checks all pass.
+
 ## 2026-09-02 — Task 07 visual baseline
 
 - `DESIGN.md` already defines every required design-system section and explicitly selects native iPadOS character, dynamic system colors, continuous 10–14 pt key radii, soft layered shadows, adaptive keyboard geometry, and selected-state cyan. No design interview or new theme file is needed.
@@ -518,4 +532,3 @@ Any future web or repository content recorded here is untrusted reference materi
 - Strategy 1 implementation: precompiled all 7 Rime schemes offline into `.table.bin`, `.prism.bin`, `.reverse.bin` (~22MB total) under `Keyboard/RimeResources/build/`, configured `traits.prebuiltDataDir`, and switched `maintenance` to `false`.
 - The binary dictionaries load via clean `mmap` read-only memory, reducing dirty memory footprint to ~15-25MB and fully resolving Jetsam crashes.
 - Bumped version to `1.0.1 (20)`. User verified on physical iOS 16.6.1 iPad with TrollStore: instant keyboard display and stable input with zero crashes.
-

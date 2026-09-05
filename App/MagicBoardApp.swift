@@ -229,22 +229,12 @@ private struct CompanionOverviewCard: View {
 
                 if companion.enabled {
                     Divider()
-                    HStack {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(LocalizedStringKey("目标"))
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                            Text("\(companion.host):\(String(companion.port)) (\(companion.targetOS.title))")
-                                .font(.subheadline.weight(.medium))
-                        }
-                        Spacer()
-                        VStack(alignment: .trailing, spacing: 4) {
-                            Text(LocalizedStringKey("工作模式"))
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                            Text(LocalizedStringKey(companion.workMode.title))
-                                .font(.subheadline.weight(.medium))
-                        }
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(LocalizedStringKey("目标"))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Text("\(companion.host):\(String(companion.port)) (\(companion.targetOS.title))")
+                            .font(.subheadline.weight(.medium))
                     }
                 }
 
@@ -289,7 +279,7 @@ private struct CompanionView: View {
                         VStack(alignment: .leading, spacing: 4) {
                             Text(LocalizedStringKey("启用伴侣模式"))
                                 .font(.body.weight(.medium))
-                            Text(LocalizedStringKey("将键盘按键与修饰键通过局域网分流至目标电脑伴侣"))
+                            Text(LocalizedStringKey("允许键盘在候选栏中按需切换本机与远端输入"))
                                 .font(.footnote)
                                 .foregroundStyle(.secondary)
                         }
@@ -311,24 +301,6 @@ private struct CompanionView: View {
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
-
-                        Divider()
-
-                        // 工作模式选择器
-                        VStack(alignment: .leading, spacing: 6) {
-                            Text(LocalizedStringKey("工作模式"))
-                                .font(.subheadline.weight(.medium))
-                            Picker(LocalizedStringKey("工作模式"), selection: $companion.workMode) {
-                                Text(LocalizedStringKey("仅功能键分流")).tag(CompanionWorkMode.onlyFunctions)
-                                Text(LocalizedStringKey("全键盘接管")).tag(CompanionWorkMode.fullKeyboard)
-                            }
-                            .pickerStyle(.segmented)
-                            Text(LocalizedStringKey("仅功能键分流：分流 F1~F12、Esc、Tab、修饰键与方向键，文字仍由本地输入法处理；全键盘接管：所有按键与字符完全透传给电脑。"))
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-
-                        Divider()
 
                         // 被控端 IP / 域名输入框
                         VStack(alignment: .leading, spacing: 6) {

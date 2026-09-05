@@ -65,6 +65,43 @@ final class SharedConfigTests: XCTestCase {
         XCTAssertEqual(config.pulseDurationMs, 20)
     }
 
+    // 验证伴侣会话路由默认使用本机
+    func testcprtdflt() {
+        let route = CompanionRoute.local
+
+        XCTAssertFalse(route.sendsSpecial)
+        XCTAssertFalse(route.sendsText)
+    }
+
+    // 验证伴侣会话路由的按键分流范围
+    func testcprtscope() {
+        XCTAssertTrue(CompanionRoute.remoteKeys.sendsSpecial)
+        XCTAssertFalse(CompanionRoute.remoteKeys.sendsText)
+        XCTAssertTrue(CompanionRoute.remoteFull.sendsSpecial)
+        XCTAssertTrue(CompanionRoute.remoteFull.sendsText)
+    }
+
+    // 验证伴侣会话路由按三态循环
+    func testcprtnxt() {
+        var route = CompanionRoute.local
+
+        route.nxt(enabled: true)
+        XCTAssertEqual(route, .remoteKeys)
+        route.nxt(enabled: true)
+        XCTAssertEqual(route, .remoteFull)
+        route.nxt(enabled: true)
+        XCTAssertEqual(route, .local)
+    }
+
+    // 验证关闭伴侣时会话路由收敛到本机
+    func testcprtoff() {
+        var route = CompanionRoute.remoteFull
+
+        route.nxt(enabled: false)
+
+        XCTAssertEqual(route, .local)
+    }
+
     // 验证旧设置缺少中文开关时保留原配置并默认开启
     func testcfgzhlegacy() throws {
         let (defaults, name) = mkdefs()

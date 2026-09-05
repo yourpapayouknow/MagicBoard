@@ -557,3 +557,17 @@
 - Upgraded version to `1.0.1 (20)` across `project.yml`, rebuilt `MagicBoard.tipa` (16MB, SHA-256 `dcb0bb8797cb2202a7d89e75fb8353cb4086638c120fbd6e3c9f6a92905e6626`), and user confirmed perfect operation on physical iPad.
 - Publishing release v1.0.1 with problem explanation and binary download.
 
+# 2026-09-05 — Task 17 started
+
+- Applied the existing `DESIGN.md` plus `design-md` and `planning-with-files` instructions.
+- Verified a clean Git baseline before edits and backed up `DESIGN.md`, `task_plan.md`, `findings.md`, and `progress.md` under `/Users/mac/backup/2026-09-05_magicboard_route_indicator/`.
+- Recorded the confirmed three-state, session-local route model and candidate-strip placement; no source code has been changed yet.
+- Phase 1 is in progress with CodeGraph impact analysis next.
+- CodeGraph baseline and impact analysis completed: the candidate strip and centralized input exits are the only intended source surfaces; no protocol or companion-server change is required.
+- Baseline design lint passed cleanly. Shared-package tests were 71/72 green; only the pre-change bridge memory benchmark exceeded its threshold by 12 KB, while every functional test passed.
+- Phase 1 is complete; Phase 2 begins with route-state tests before implementation.
+- Added `CompanionRoute` with Local, Remote Keys, and Remote Full states plus four focused transition/scope tests.
+- Added a fixed 72-point candidate-strip trailing capsule, VoiceOver label/value/next-action hint, session-local default, safe HID reset during switching, and automatic Local reset when companion capability is disabled.
+- Routed functions, arrows, modifiers, modified shortcuts, ordinary characters, Enter, Space, and Delete/auto-repeat according to the selected mode; removed the obsolete persistent work-mode picker from the host app while preserving its stored field for backward-compatible decoding.
+- Visually verified the disabled Local, highlighted Remote Keys, and highlighted Remote Full states on the signed iPad Pro 12.9-inch simulator build without candidate-strip movement.
+- Final verification passed: 76/76 shared tests, signed simulator Debug, `DESIGN.md` lint, generic arm64 Release, TIPA ZIP/resources/version/entitlements. Generated `/Users/mac/codexproj/magicboard/build/MagicBoard.tipa`, version `1.0.2 (21)`, 17,399,764 bytes, SHA-256 `50a56ec9f21f678c996094dcec7074be2627d248a4f35dba9ccdcffd455e48f0`.

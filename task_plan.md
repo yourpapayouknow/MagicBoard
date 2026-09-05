@@ -980,5 +980,67 @@ Unify every ordinary, function, and modifier key behind one `KeyView` visual com
 - 验证长按修饰键、Toggle 锁定与异常断网恢复能力。
 - 输出配套的被控端部署指南与 Tailscale 异地组网操作手册。
 
+## Task 17 — 候选栏伴侣路由指示与会话切换
 
+### Confirmed behavior
 
+- 主 App 的伴侣总开关只授权键盘使用远程能力，不再自动劫持本机功能键。
+- 每次新的 Keyboard Extension 会话从“本机”路由开始，不持久化上次远端状态。
+- 候选词栏右侧常驻一个紧凑文字胶囊，单击循环“本机 → 远端特殊键 → 远端全键盘”。
+- 伴侣总开关关闭时，路由固定为“本机”，不建立或发送远程按键链路。
+- 不实现宿主 App 白名单、私有宿主识别或本机/远端双发。
+
+### Phase 1 — 基线与影响分析
+
+**Status:** complete
+
+- 用 CodeGraph 定位候选栏构建、共享配置、功能键/字符/修饰键/方向键路由和测试覆盖。
+- 确认新增会话状态的最小归属以及现有 `CompanionWorkMode` 的复用边界。
+
+### Baseline verification
+
+- `npx @google/design.md lint DESIGN.md`：0 errors、0 warnings、0 infos。
+- `swift test --package-path Packages/MagicBoardShared`：72 项中 71 项通过；唯一失败是改动前 `CompanionBridgeTests.testmem` 的资源基准波动（114,688 bytes，高于 102,400-byte 阈值），功能测试全部通过。
+
+### Errors encountered
+
+| Error | Attempt | Resolution |
+|---|---:|---|
+| Swift 6 不允许把 `switch` 直接放在三元表达式分支中 | 1 | 先用 `switch` 赋值 `nextHint`，再进行布尔选择 |
+
+### Phase 2 — 路由状态与测试
+
+**Status:** complete
+
+- 先添加本机、远端特殊键、远端全键盘的状态转换和路由判定测试。
+- 实现最小会话级状态，保持已有伴侣配置向后兼容。
+
+### Phase 3 — 候选栏指示与事件分流
+
+**Status:** complete
+
+- 在候选词滚动区右侧加入固定宽度文字胶囊，覆盖正常、不可用与三种路由状态的无障碍语义。
+- 复用现有 `sndhid`、`sndfn`、修饰键、方向键和文本出口，按路由状态选择本机或远端。
+
+### Phase 4 — 验证与交付
+
+**Status:** complete
+
+- 运行共享测试、`DESIGN.md` lint、XcodeGen、目标 iPad 模拟器 Debug 与 arm64 Release/TIPA。
+- 验证候选词布局不跳动、三种模式切换与本机回退，并记录实体 iPad 验收项。
+
+### Task 17 completion checklist
+
+- [x] 新会话默认本机
+- [x] 候选栏右侧显示并可循环切换三种路由
+- [x] 远端特殊键只分流功能键、修饰键和方向键
+- [x] 远端全键盘同时分流字符、Enter、Space 与 Delete 输入
+- [x] 伴侣关闭时固定本机且不发送报文
+- [x] 现有中文候选、Shift、Modifier、HID 与布局行为无回归
+- [x] 测试、设计 lint、模拟器 Debug、arm64 Release/TIPA 全部通过
+
+### Task 17 result
+
+- 共享包 76/76 测试通过，包含 4 项新增会话路由测试；改动前偶发失败的内存基准复跑为 80 KB 并通过。
+- iPad Pro 12.9-inch 模拟器实测候选栏布局稳定，禁用“本机”、青色“远端键”和青色“远端全”三种视觉状态均可见。
+- `MagicBoard.tipa` 已生成并通过 ZIP、arm64、版本一致性、App Group、HID 权限与 Rime 资源检查；实体 iPad 上的真实远端按键验收留给安装后执行。

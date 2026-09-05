@@ -127,6 +127,45 @@ public enum CompanionWorkMode: String, CaseIterable, Codable, Identifiable, Send
     }
 }
 
+// 定义键盘会话的伴侣路由
+public enum CompanionRoute: Equatable, Sendable {
+    case local
+    case remoteKeys
+    case remoteFull
+
+    // 返回候选栏显示名称
+    public var title: String {
+        switch self {
+        case .local: "本机"
+        case .remoteKeys: "远端键"
+        case .remoteFull: "远端全"
+        }
+    }
+
+    // 判断特殊键是否发送至伴侣
+    public var sendsSpecial: Bool {
+        self != .local
+    }
+
+    // 判断字符是否发送至伴侣
+    public var sendsText: Bool {
+        self == .remoteFull
+    }
+
+    // 切换到下一个可用路由
+    public mutating func nxt(enabled: Bool) {
+        guard enabled else {
+            self = .local
+            return
+        }
+        self = switch self {
+        case .local: .remoteKeys
+        case .remoteKeys: .remoteFull
+        case .remoteFull: .local
+        }
+    }
+}
+
 // 定义伴侣目标操作系统
 public enum CompanionTargetOS: String, CaseIterable, Codable, Identifiable, Sendable {
     case macOS

@@ -349,12 +349,14 @@ final class KeyboardViewController: UIInputViewController {
     private let preeditLabel = UILabel()
     private let candidateScroll = UIScrollView()
     private let candidateRow = UIStackView()
+    private let routeButton = UIButton(type: .system)
     private var lexicon: [String: [String]] = [:]
     private var systemCandidates: [String] = []
     private let rows = UIStackView()
     private let trackpad = UIView()
     private weak var blurView: UIVisualEffectView?
     private var settings = SharedConfig.ldcfg()
+    private var companionRoute = CompanionRoute.local
     private var state = InputState()
     private var modifiers = ModifierState()
     private var modifierLatches = ModifierLatchState()
@@ -379,6 +381,16 @@ final class KeyboardViewController: UIInputViewController {
     private var arrshft: Set<ObjectIdentifier> = []
     // 仅由主 RunLoop 触摸生命周期访问
     nonisolated(unsafe) private var deltimer: Timer?
+
+    // 判断特殊键是否发送至伴侣
+    private var sendsRemoteKeys: Bool {
+        settings.companion.enabled && companionRoute.sendsSpecial
+    }
+
+    // 判断字符输入是否发送至伴侣
+    private var sendsRemoteText: Bool {
+        settings.companion.enabled && companionRoute.sendsText
+    }
 
     // 清理扩展计时器与通知监听
     deinit {
@@ -535,6 +547,10 @@ final class KeyboardViewController: UIInputViewController {
         guard current != settings else { return }
         let schemeChanged = current.scheme != settings.scheme
         let enabledChanged = current.chineseEnabled != settings.chineseEnabled
+        if settings.companion.enabled, !current.companion.enabled {
+            rsthid()
+            companionRoute = .local
+        }
         if !current.chineseEnabled, state.language == .chinese {
             if let snapshot = ime.commit() { applySnapshot(snapshot) }
             state.tgllang()
@@ -610,6 +626,12 @@ final class KeyboardViewController: UIInputViewController {
         candidateScroll.alwaysBounceHorizontal = true
         candidateBar.addArrangedSubview(candidateScroll)
 
+        routeButton.setContentHuggingPriority(.required, for: .horizontal)
+        routeButton.setContentCompressionResistancePriority(.required, for: .horizontal)
+        routeButton.widthAnchor.constraint(equalToConstant: 72).isActive = true
+        routeButton.addTarget(self, action: #selector(nxtcprt), for: .touchUpInside)
+        candidateBar.addArrangedSubview(routeButton)
+
         candidateRow.axis = .horizontal
         candidateRow.alignment = .fill
         candidateRow.spacing = 4
@@ -634,6 +656,50 @@ final class KeyboardViewController: UIInputViewController {
         for case let button as UIButton in candidateRow.arrangedSubviews {
             button.configuration?.baseForegroundColor = custom ? settings.appearance.text.uiclr : .label
         }
+        updcprt()
+    }
+
+    // 切换候选栏伴侣路由
+    @objc private func nxtcprt() {
+        var next = companionRoute
+        next.nxt(enabled: settings.companion.enabled)
+        guard next != companionRoute else { return }
+        rsthid()
+        companionRoute = next
+        updcprt()
+    }
+
+    // 刷新候选栏伴侣路由指示
+    private func updcprt() {
+        let active = settings.companion.enabled && companionRoute != .local
+        let accent = settings.appearance.accent.uiclr
+        var config = UIButton.Configuration.tinted()
+        config.title = companionRoute.title
+        config.cornerStyle = .capsule
+        config.contentInsets = .init(top: 4, leading: 8, bottom: 4, trailing: 8)
+        config.baseForegroundColor = active ? accent : .secondaryLabel
+        config.baseBackgroundColor = active ? accent : .tertiarySystemFill
+        config.titleTextAttributesTransformer = UIConfigurationTextAttributesTransformer { incoming in
+            var outgoing = incoming
+            outgoing.font = .systemFont(ofSize: 12, weight: .semibold)
+            return outgoing
+        }
+        routeButton.configuration = config
+        routeButton.isEnabled = settings.companion.enabled
+        routeButton.accessibilityLabel = "伴侣路由"
+        routeButton.accessibilityValue = switch companionRoute {
+        case .local: "本机"
+        case .remoteKeys: "远端特殊键"
+        case .remoteFull: "远端全键盘"
+        }
+        let nextHint = switch companionRoute {
+        case .local: "轻点切换到远端特殊键"
+        case .remoteKeys: "轻点切换到远端全键盘"
+        case .remoteFull: "轻点切换到本机"
+        }
+        routeButton.accessibilityHint = settings.companion.enabled
+            ? nextHint
+            : "请先在 MagicBoard 中启用远程伴侣"
     }
 
     // 读取系统通讯录与文本替换补充词典
@@ -1340,7 +1406,7 @@ final class KeyboardViewController: UIInputViewController {
         case .delete:
             break
         case .enter:
-            if modifiers.isActive {
+            if modifiers.isActive || sendsRemoteText {
                 sndhid(.enter)
             } else if state.language == .chinese,
                       ime.isComposing,
@@ -1350,7 +1416,7 @@ final class KeyboardViewController: UIInputViewController {
                 textDocumentProxy.insertText("\n")
             }
         case .space:
-            if modifiers.isActive {
+            if modifiers.isActive || sendsRemoteText {
                 sndhid(.space)
             } else if state.language == .chinese,
                       ime.isComposing,
@@ -1377,7 +1443,7 @@ final class KeyboardViewController: UIInputViewController {
             return
         }
         // 全键盘接管模式下字符透传至伴侣电脑
-        if CompanionBridge.shared.isEnabled && CompanionBridge.shared.workMode == .fullKeyboard {
+        if sendsRemoteText {
             let shifted = state.shifted
             let output = drag
                 ? state.dragout(spec.output, alternate: spec.alternate, letter: spec.letter)
@@ -1437,7 +1503,7 @@ final class KeyboardViewController: UIInputViewController {
             !button.hidactive,
             let key = button.spec?.kind.hidKey
         else { return }
-        if CompanionBridge.shared.isEnabled {
+        if sendsRemoteKeys {
             let usage = CompanionHIDUsage(UInt16(key.rawValue))
             CompanionBridge.shared.snddn(usage: usage, mods: curcpmods())
             button.hidactive = true
@@ -1460,7 +1526,7 @@ final class KeyboardViewController: UIInputViewController {
     @objc private func arrup(_ sender: UIButton) {
         guard let button = sender as? KeyView else { return }
         let key = button.spec?.kind.hidKey
-        if CompanionBridge.shared.isEnabled {
+        if sendsRemoteKeys {
             if button.hidactive, let key {
                 let usage = CompanionHIDUsage(UInt16(key.rawValue))
                 CompanionBridge.shared.sndup(usage: usage, mods: curcpmods())
@@ -1533,7 +1599,7 @@ final class KeyboardViewController: UIInputViewController {
         guard modifiers.press(modifier) else { return }
         modifierOwned.insert(modifier)
         state.shftuse()
-        if CompanionBridge.shared.isEnabled {
+        if sendsRemoteKeys {
             CompanionBridge.shared.synchrt(mods: curcpmods())
         } else {
             guard HIDBridge.shared.keyDown(key) else {
@@ -1569,7 +1635,7 @@ final class KeyboardViewController: UIInputViewController {
         case .keepOnce, .keepLocked:
             modifierOwned.remove(modifier)
         }
-        if CompanionBridge.shared.isEnabled {
+        if sendsRemoteKeys {
             CompanionBridge.shared.synchrt(mods: curcpmods())
         }
         updmods()
@@ -1585,7 +1651,7 @@ final class KeyboardViewController: UIInputViewController {
         modifierStarts[modifier] = nil
         guard modifierOwned.remove(modifier) != nil else { return }
         guard relmod(modifier, key: key) else { return }
-        if CompanionBridge.shared.isEnabled {
+        if sendsRemoteKeys {
             CompanionBridge.shared.synchrt(mods: curcpmods())
         }
         updmods()
@@ -1594,7 +1660,7 @@ final class KeyboardViewController: UIInputViewController {
     // 释放指定修饰键并收敛 HID 失败
     private func relmod(_ modifier: ModifierKey, key: MBHIDKey) -> Bool {
         guard modifiers.release(modifier) else { return true }
-        if CompanionBridge.shared.isEnabled {
+        if sendsRemoteKeys {
             CompanionBridge.shared.synchrt(mods: curcpmods())
             return true
         }
@@ -1614,7 +1680,7 @@ final class KeyboardViewController: UIInputViewController {
                 consumedAny = true
             }
         }
-        if consumedAny && CompanionBridge.shared.isEnabled {
+        if consumedAny && sendsRemoteKeys {
             CompanionBridge.shared.synchrt(mods: curcpmods())
         }
         updmods()
@@ -1759,7 +1825,7 @@ final class KeyboardViewController: UIInputViewController {
     // 发送一次完整 HID 按键
     @discardableResult
     private func sndhid(_ key: MBHIDKey) -> Bool {
-        if CompanionBridge.shared.isEnabled {
+        if sendsRemoteKeys {
             let usage = CompanionHIDUsage(UInt16(key.rawValue))
             CompanionBridge.shared.sndpls(usage: usage, mods: curcpmods())
             state.shftuse()
@@ -1781,7 +1847,7 @@ final class KeyboardViewController: UIInputViewController {
     // 发送一次完整功能键动作
     @discardableResult
     private func sndfn(_ spec: KeySpec, upper: Bool) -> Bool {
-        if CompanionBridge.shared.isEnabled {
+        if sendsRemoteKeys {
             if let key = spec.kind.hidKey {
                 let usage = CompanionHIDUsage(UInt16(key.rawValue))
                 CompanionBridge.shared.sndpls(usage: usage, mods: curcpmods())
@@ -1968,6 +2034,11 @@ final class KeyboardViewController: UIInputViewController {
             sndhid(.delete)
             return
         }
+        if sendsRemoteText {
+            sndhid(.delete)
+            armdel()
+            return
+        }
         if state.language == .chinese,
            ime.isComposing,
            let snapshot = ime.command(0xFF08) {
@@ -1975,6 +2046,11 @@ final class KeyboardViewController: UIInputViewController {
             return
         }
         textDocumentProxy.deleteBackward()
+        armdel()
+    }
+
+    // 安排 Delete 连续触发延迟
+    private func armdel() {
         let timer = Timer(timeInterval: 0.45, repeats: false) { [weak self] _ in
             Task { @MainActor [weak self] in
                 self?.startdel()
@@ -1988,7 +2064,11 @@ final class KeyboardViewController: UIInputViewController {
     private func startdel() {
         guard deltimer != nil else { return }
         deltimer?.invalidate()
-        textDocumentProxy.deleteBackward()
+        if sendsRemoteText {
+            sndhid(.delete)
+        } else {
+            textDocumentProxy.deleteBackward()
+        }
         sndfeed(haptic: false)
         let timer = Timer(timeInterval: 0.08, repeats: true) { [weak self] _ in
             Task { @MainActor [weak self] in
@@ -2002,7 +2082,11 @@ final class KeyboardViewController: UIInputViewController {
     // 执行 Delete 连续删除
     private func deltick() {
         guard deltimer?.isValid == true else { return }
-        textDocumentProxy.deleteBackward()
+        if sendsRemoteText {
+            sndhid(.delete)
+        } else {
+            textDocumentProxy.deleteBackward()
+        }
         sndfeed(haptic: false)
     }
 
