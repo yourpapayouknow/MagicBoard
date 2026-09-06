@@ -532,3 +532,16 @@ Any future web or repository content recorded here is untrusted reference materi
 - Strategy 1 implementation: precompiled all 7 Rime schemes offline into `.table.bin`, `.prism.bin`, `.reverse.bin` (~22MB total) under `Keyboard/RimeResources/build/`, configured `traits.prebuiltDataDir`, and switched `maintenance` to `false`.
 - The binary dictionaries load via clean `mmap` read-only memory, reducing dirty memory footprint to ~15-25MB and fully resolving Jetsam crashes.
 - Bumped version to `1.0.1 (20)`. User verified on physical iOS 16.6.1 iPad with TrollStore: instant keyboard display and stable input with zero crashes.
+
+# Task 13–16 final acceptance findings — 2026-09-06
+
+- Git baseline is clean on `master`.
+- The only available simulator is booted: `MagicBoard iPad Pro 12.9 2018`, iOS 18.4, UDID `73860E49-6DDF-450B-B505-F0E0A09F764B`.
+- MagicBoard host and keyboard-extension processes are already running in that simulator.
+- SSH config contains one unambiguous Windows target: alias `windows`, host `10.1.1.2`, port 22, key authentication.
+- Existing local verification already passes 86/86 shared tests, bridge latency 0.0048 ms average, 80 KB memory delta, design lint with zero findings, 13/13 cross-platform Windows Python tests, and TIPA ZIP integrity.
+- Missing evidence remains Windows-host `SendInput` execution/UIPI state and the complete simulator-to-Windows/macOS live key matrices.
+- Windows SSH read-only inventory confirms Windows 11 build 26200, PowerShell 7.6.5, Python 3.11, MSVC 14.44, and MinGW GCC are available; UDP 52088 is currently free.
+- The first complex SSH `-Command` call exposed a remote argument-reparsing issue around `gsudo status`; its admin-state field is discarded, while the independently returned OS/tool/listener fields remain usable.
+- The corrected PowerShell 7 `-EncodedCommand` check confirms the SSH identity is already an administrator at High integrity and the `gsudo` credential cache is available.
+- No existing `magicboard` directory was found under the Windows user profile or shallow D:/F: search, so validation files must be copied into a new isolated target directory.

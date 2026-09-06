@@ -111,6 +111,8 @@ Build a traceable iPadOS project containing the MagicBoard host app, keyboard ex
 | Task 02B simulator Debug build rejected `Timer?` access from nonisolated controller `deinit` | 2 | The timer is confined to the main RunLoop; mark only this stored property `nonisolated(unsafe)` so deinit can invalidate it without weakening other UIKit isolation |
 | Final entitlement inspection used a dotted `plutil -extract` key path that split the entitlement key incorrectly | 1 | The archive and package-time PlistBuddy checks already passed; read the exported entitlement plists with `/usr/libexec/PlistBuddy` for the independent verification |
 | Down-drag visual Debug build inferred local `27 / 22` reset scale as `Int` | 1 | Give the local scale an explicit `CGFloat` type; the interpolation expression already inferred correctly from its `CGFloat` progress operand |
+| Windows SSH 多语句清单中的 `gsudo status` 输出被远端命令行重新解析并产生 `ParserError` | 1 | 主体只读清单仍返回；后续改用 PowerShell 7 官方 `-EncodedCommand`，不重复直接传递复杂 `-Command` |
+| JavaScript 编排环境不提供浏览器全局函数 `btoa`，首次内存生成 PowerShell EncodedCommand 失败 | 1 | 未执行远端命令；改由本机 Python 标准库只做 UTF-16LE Base64 编码，随后 `-EncodedCommand` 正常返回 |
 
 ## Completion checklist
 
@@ -1044,3 +1046,39 @@ Unify every ordinary, function, and modifier key behind one `KeyView` visual com
 - 共享包 76/76 测试通过，包含 4 项新增会话路由测试；改动前偶发失败的内存基准复跑为 80 KB 并通过。
 - iPad Pro 12.9-inch 模拟器实测候选栏布局稳定，禁用“本机”、青色“远端键”和青色“远端全”三种视觉状态均可见。
 - `MagicBoard.tipa` 已生成并通过 ZIP、arm64、版本一致性、App Group、HID 权限与 Rime 资源检查；实体 iPad 上的真实远端按键验收留给安装后执行。
+
+## Task 13–16 — 模拟器与 Windows SSH 最终验收
+
+### 验收目标
+
+把 Task 13–16 从“实现存在”提升到“可勾选完成”：以当前 iPad 模拟器作为 UDP 发送端，分别对 macOS 与 SSH 主机 `windows` 做端到端验证，并重新核验共享测试、设计 lint、Debug/Release 构建、TIPA 与部署文档。
+
+### Phase 1 — 环境与证据基线
+
+**Status:** in_progress
+
+- 确认 Git 工作区干净、iPad 模拟器已启动、MagicBoard 与键盘扩展正在运行。
+- 确认 SSH 主机 `windows` 可连接，并记录 Windows/PowerShell/Python/编译器与现有伴侣进程状态。
+- 不把 mock、单元测试或“UDP 已发送”误记为 Windows `SendInput` 实机成功。
+
+### Phase 2 — Task 13 Windows 服务验收
+
+**Status:** pending
+
+- 在 Windows 上运行 Python 与 C 原生服务测试，验证 HID 映射、pulse、看门狗、resetAll、防火墙指引和管理员/UIPI 状态。
+- 从模拟器经真实 UDP 链路发送 Win、Alt、Ctrl、Esc、Tab、F1–F12，并在 Windows 端保留接收/注入证据。
+
+### Phase 3 — Task 14–15 iPad 桥接与设置验收
+
+**Status:** pending
+
+- 运行共享桥接延迟/内存/路由测试并确认关闭时回退本地 HID。
+- 在模拟器核对主 App 地址、端口、系统预设、Ping、本地网络说明与候选栏三态即时生效。
+
+### Phase 4 — Task 16 双平台综合验收
+
+**Status:** pending
+
+- 在 macOS 与 Windows 端核对完整按键矩阵、修饰键保持/锁定、resetAll 与异常断网恢复。
+- 重新运行设计 lint、XcodeGen、模拟器 Debug、arm64 Release/TIPA 及独立归档检查。
+- 所有可自动核对项通过后，仅保留远控软件画面层必须由用户目视确认的最小步骤。

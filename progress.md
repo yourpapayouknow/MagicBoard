@@ -571,3 +571,13 @@
 - Routed functions, arrows, modifiers, modified shortcuts, ordinary characters, Enter, Space, and Delete/auto-repeat according to the selected mode; removed the obsolete persistent work-mode picker from the host app while preserving its stored field for backward-compatible decoding.
 - Visually verified the disabled Local, highlighted Remote Keys, and highlighted Remote Full states on the signed iPad Pro 12.9-inch simulator build without candidate-strip movement.
 - Final verification passed: 76/76 shared tests, signed simulator Debug, `DESIGN.md` lint, generic arm64 Release, TIPA ZIP/resources/version/entitlements. Generated `/Users/mac/codexproj/magicboard/build/MagicBoard.tipa`, version `1.0.2 (21)`, 17,399,764 bytes, SHA-256 `50a56ec9f21f678c996094dcec7074be2627d248a4f35dba9ccdcffd455e48f0`.
+
+# 2026-09-06 — Task 13–16 final acceptance started
+
+- Applied the `planning-with-files` workflow and restored the existing plan, findings, and progress context.
+- Verified a clean Git baseline, the booted iPad Pro 2018 simulator, running MagicBoard host/extension processes, and the unique SSH alias `windows` at `10.1.1.2`.
+- Backed up `task_plan.md`, `findings.md`, and `progress.md` under `/Users/mac/backup/2026-09-06_1747_MagicBoard_13-16验收/` before recording the acceptance matrix.
+- Phase 1 is in progress; next step is a read-only Windows SSH capability and process inventory before starting either companion service.
+- Enabled the Windows `gsudo` cache successfully over SSH. The first complex read-only inventory returned the OS/tool/listener data but reparsed `gsudo status` output as PowerShell source; logged the error and will use `-EncodedCommand` for all subsequent multi-statement Windows calls.
+- A first in-memory Base64 attempt failed because the JavaScript orchestration isolate has no `btoa`; no remote action occurred. Python standard-library UTF-16LE Base64 generation produced a valid PowerShell `-EncodedCommand` on the next approach.
+- Confirmed the Windows SSH session is Admin/High integrity with an active `gsudo` cache. No existing Windows MagicBoard checkout was found, so Phase 1 will use a fresh user-owned validation directory.
