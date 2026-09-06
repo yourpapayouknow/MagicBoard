@@ -372,14 +372,28 @@ final class CompanionProtocolTests: XCTestCase {
         let targetHost = ProcessInfo.processInfo.environment["COMPANION_WIN_HOST"] ?? "10.1.1.2"
         inet_pton(AF_INET, targetHost, &addr.sin_addr)
 
+        // 构造完整 Windows 跨机验收报文
         let testPackets = [
             CompanionPacket.sndpls(usage: .leftGUI, durationMs: 50, sequence: 801),
-            CompanionPacket.snddn(usage: .tab, modifiers: [.leftOption], sequence: 802),
-            CompanionPacket.sndup(usage: .tab, modifiers: [], sequence: 803),
-            CompanionPacket.sndpls(usage: .escape, durationMs: 25, sequence: 804),
-            CompanionPacket.sndpls(usage: .f5, durationMs: 20, sequence: 805),
-            CompanionPacket.synchrt(modifiers: [.leftControl], sequence: 806),
-            CompanionPacket.rstall(sequence: 807),
+            CompanionPacket.sndpls(usage: .leftControl, durationMs: 50, sequence: 802),
+            CompanionPacket.sndpls(usage: .leftOption, durationMs: 50, sequence: 803),
+            CompanionPacket.snddn(usage: .tab, modifiers: [.leftOption], sequence: 804),
+            CompanionPacket.sndup(usage: .tab, modifiers: [], sequence: 805),
+            CompanionPacket.sndpls(usage: .escape, durationMs: 25, sequence: 806),
+            CompanionPacket.sndpls(usage: .f1, durationMs: 20, sequence: 807),
+            CompanionPacket.sndpls(usage: .f2, durationMs: 20, sequence: 808),
+            CompanionPacket.sndpls(usage: .f3, durationMs: 20, sequence: 809),
+            CompanionPacket.sndpls(usage: .f4, durationMs: 20, sequence: 810),
+            CompanionPacket.sndpls(usage: .f5, durationMs: 20, sequence: 811),
+            CompanionPacket.sndpls(usage: .f6, durationMs: 20, sequence: 812),
+            CompanionPacket.sndpls(usage: .f7, durationMs: 20, sequence: 813),
+            CompanionPacket.sndpls(usage: .f8, durationMs: 20, sequence: 814),
+            CompanionPacket.sndpls(usage: .f9, durationMs: 20, sequence: 815),
+            CompanionPacket.sndpls(usage: .f10, durationMs: 20, sequence: 816),
+            CompanionPacket.sndpls(usage: .f11, durationMs: 20, sequence: 817),
+            CompanionPacket.sndpls(usage: .f12, durationMs: 20, sequence: 818),
+            CompanionPacket.synchrt(modifiers: [.leftControl], sequence: 819),
+            CompanionPacket.rstall(sequence: 820),
         ]
 
         for packet in testPackets {

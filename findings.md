@@ -545,3 +545,39 @@ Any future web or repository content recorded here is untrusted reference materi
 - The first complex SSH `-Command` call exposed a remote argument-reparsing issue around `gsudo status`; its admin-state field is discarded, while the independently returned OS/tool/listener fields remain usable.
 - The corrected PowerShell 7 `-EncodedCommand` check confirms the SSH identity is already an administrator at High integrity and the `gsudo` credential cache is available.
 - No existing `magicboard` directory was found under the Windows user profile or shallow D:/F: search, so validation files must be copied into a new isolated target directory.
+- Static inspection found a real filename mismatch: `build-win.ps1` generated `cpwin.exe`, while `run-tests.ps1` and start/stop scripts still referenced `magicboard-companion-win.exe`; the user approved a surgical unification to `cpwin.exe`.
+- Windows built the native service successfully with MinGW GCC; `cpwin.exe` is 69.86 KB.
+- On the actual Windows host, all 13 unit tests passed. Both native C and zero-dependency Python services received and injected Win, Esc, Alt+Tab, Ctrl, Shift, F1–F12, Space, Enter, and Backspace; ResetAll and the 1.5-second watchdog also fired successfully.
+- The Python service startup log independently confirms Admin / High Integrity, so the local Windows run satisfies the UIPI privilege condition.
+- The real iPad simulator-to-Windows test succeeded. Windows `cpwin.exe` logged sequence 801–805: Win pulse, Alt+Tab down/up, Esc pulse, F5 pulse, and ResetAll received from the simulator network path.
+- No explicit `MagicBoard Companion` firewall rule exists, but the simulator traffic reached UDP 52088; adding a broad inbound rule is therefore unnecessary for this host and was not performed.
+- The existing simulator-to-Windows test sends only Win, Alt+Tab, Esc, F5, one Ctrl heartbeat, and ResetAll. It must be extended to F1–F12 plus explicit Ctrl/Alt/Win packets before claiming the complete Task 13 matrix.
+- `CompanionHIDUsage` already defines native HID usages for left Control, left Option/Alt, left GUI/Win, Esc, Tab, and F1–F12, so the complete matrix can reuse existing protocol constants without production changes.
+- The extended simulator matrix passed and Windows logged every packet: Win `00E3`, Ctrl `00E0`, Alt `00E2`, Tab down/up, Esc `0029`, F1 `003A` through F12 `0045`, then ResetAll.
+- Simulator UI is live with both the MagicBoard host app and keyboard extension. The input-test screen shows the complete keyboard and the candidate-strip route capsule currently reads `本机`.
+- The remote-companion page correctly hides/disables dependent controls while its master switch is off, then exposes and enables all controls when turned on.
+- Visible Task 15 controls include macOS/Windows preset, host field with IPv4/IPv6/.local/Tailscale guidance, port 52088 plus reset, 20 ms pulse control, Ping, and iOS local-network permission guidance/settings action.
+- The simulator's target-system segmented control visibly switched from macOS to Windows, establishing the intended Win/Alt mapping preset before live Ping/routing verification.
+- Simulator accepted host `10.1.1.2`, preserved port 52088, and displayed `Ping 探活成功` with 4.64 ms after the Ping action; no local-network permission prompt appeared, indicating permission is already available in this simulator.
+- Windows `live_c.log` recorded ResetAll at 18:02:28 immediately after the host-app Ping, proving the UI action reached the actual remote service rather than merely completing a local send call.
+- Reopening the keyboard after enabling companion capability and selecting Windows still starts in `本机`, confirming the session-local safety default and local-HID fallback rather than automatic remote capture.
+- One capsule tap visibly changed the active keyboard to `远端键`. Tapping the actual F5 key then produced Windows log entry `Pulse: 0x003E (20ms, seq: 7)`, proving live App Group reload and the real `sndfn` UI routing path.
+- A second capsule tap visibly changed the route to `远端全`. Tapping Q left the simulator host text field empty, proving the local text-proxy path was suppressed; remote log confirmation is the next assertion.
+- Windows then logged `Pulse: 0x0014 (20ms, seq: 9)`, confirming Q reached the remote HID path. A third capsule tap visibly returned the keyboard to `本机`.
+- In `本机`, tapping Q inserted `q` into the simulator text field and produced no additional remote Q packet. The only new Windows entry was the expected route-switch ResetAll, so local fallback is proven rather than inferred.
+- macOS already has a user service `cpmac` PID 13242 listening on UDP 52088. Validation must preserve it and use isolated port 52188.
+- Both macOS Python harnesses referenced obsolete binary name `magicboard-companion-mac`; the simulator E2E harness also referenced obsolete XCTest name `testSimulatorToHostUDPSend`. The live binary and test are now `cpmac` and `testsimmac`.
+- On isolated UDP 52188, both Swift C and Python macOS services passed Command+A, Control, Option-bearing Return, Esc, Tab, Space, F1–F12, four arrows, heartbeat, ResetAll, and watchdog tests with Accessibility permission confirmed.
+- The Swift harness's only noisy result was a false readiness timeout: `cpmac` says `正在监听`, while the harness only accepted `已就绪`. User approved accepting both existing success markers.
+- The clean native macOS rerun passed every matrix/reset/watchdog assertion with no readiness warning. The separate simulator E2E harness contained the same stale single-marker predicate and requires the identical one-line correction.
+- After the identical predicate correction, the isolated simulator-to-macOS E2E passed: `cpmac` confirmed Accessibility permission and received Esc, Command+A down/up, and F5 from the iOS simulator; the harness reported 100% success.
+- Final local gate so far: 86/86 shared tests, bridge average 0.0043 ms/max 0.0117 ms, memory delta 96 KB, zero design-lint findings, successful XcodeGen, and successful Debug build for the named iPad Pro simulator.
+- Release/TIPA script completed successfully and produced 17,482,595-byte `MagicBoard.tipa`, SHA-256 `f08af16c5eaf68c76a47e9053affcc0310fb86506f3385c5f493ecf78a75a253`.
+- Independent archive checks confirm ZIP integrity, arm64 host/extension, matching 1.0.2 (21), expected bundle IDs, and `RequestsOpenAccess=true`.
+- Apple `codesign` reports no conventional signature/invalid entitlement blob on the ldid-signed archive. Because TrollStore packaging intentionally uses ldid, entitlement acceptance must be checked with `ldid -e` before concluding.
+- `ldid -e` confirms the host has only App Group and the keyboard has App Group plus HID dispatch entitlement. `nm -u` confirms the keyboard imports IOHID event creation, sender-ID, and dispatch symbols.
+- The Windows E2E harness still used an obsolete test selector and `shell=True`; keeping it would prevent a reliable one-command revalidation under the project's mandatory shell policy.
+- The corrected Windows E2E harness initially reported a false failure because `xcodebuild -quiet` suppresses the success banner and the native C log records HID usages rather than the Python fallback's Virtual-Key details.
+- The final harness now treats `xcodebuild` exit code 0 as simulator success and validates the native C log's complete HID matrix. It passed Win, Ctrl, Alt, Alt+Tab, Esc, F1–F12, and ResetAll end to end from the iPad simulator to Windows UDP 52088.
+- The Windows service stopped after validation, UDP 52088 is free, and `gsudo cache off -k` invalidated all task credentials.
+- Tasks 13–16 meet their acceptance conditions and can be checked complete. The final archive remains `/Users/mac/codexproj/magicboard/build/MagicBoard.tipa`, version 1.0.2 (21), SHA-256 `f08af16c5eaf68c76a47e9053affcc0310fb86506f3385c5f493ecf78a75a253`.

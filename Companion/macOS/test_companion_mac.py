@@ -75,7 +75,7 @@ def run_tests(binary_path: str, port: int = 52188):
     # 等待服务就绪标志
     start_wait = time.time()
     while time.time() - start_wait < 5.0:
-        if any("已就绪" in l for l in output_lines):
+        if any("已就绪" in l or "正在监听" in l for l in output_lines):
             break
         time.sleep(0.05)
     else:
@@ -196,7 +196,7 @@ if __name__ == "__main__":
     if args.python:
         target = os.path.join(script_dir, "magicboard_companion.py")
     else:
-        target = os.path.join(script_dir, "magicboard-companion-mac")
+        target = os.path.join(script_dir, "cpmac")
         if not os.path.exists(target):
             print(f"⚠️ 未找到二进制 {target}，正在执行自动编译...")
             subprocess.run(["/bin/zsh", os.path.join(script_dir, "build-mac.zsh")], check=True)

@@ -581,3 +581,38 @@
 - Enabled the Windows `gsudo` cache successfully over SSH. The first complex read-only inventory returned the OS/tool/listener data but reparsed `gsudo status` output as PowerShell source; logged the error and will use `-EncodedCommand` for all subsequent multi-statement Windows calls.
 - A first in-memory Base64 attempt failed because the JavaScript orchestration isolate has no `btoa`; no remote action occurred. Python standard-library UTF-16LE Base64 generation produced a valid PowerShell `-EncodedCommand` on the next approach.
 - Confirmed the Windows SSH session is Admin/High integrity with an active `gsudo` cache. No existing Windows MagicBoard checkout was found, so Phase 1 will use a fresh user-owned validation directory.
+- User approved fixing the proven Windows executable-name mismatch. Updated build documentation, start/stop/test scripts, and the Windows README to use `cpwin.exe`; copied the validation bundle to `C:\Users\yourp\MagicBoardCompanion`.
+- Windows native build succeeded (`cpwin.exe`, 69.86 KB). The actual Windows host passed 13/13 unit tests plus live C and Python SendInput runs for Win, Esc, Alt+Tab, Ctrl, Shift, F1–F12, Space, Enter, Backspace, ResetAll, and watchdog recovery.
+- Phase 1 is complete. Phase 2 continues with the iPad simulator-to-Windows network path rather than loopback traffic.
+- Started `cpwin.exe` on Windows at `0.0.0.0:52088`, ran the iOS simulator-only `testsimwin`, and received Win, Alt+Tab, Esc, F5, and ResetAll in the Windows live log; then stopped the service cleanly.
+- A non-blocking `rg` path typo occurred before the successful xcodebuild because the working directory was already the Swift package. It is logged and will not be repeated.
+- No firewall rule was added: the actual cross-host UDP path already succeeds. Phase 2 now expands the simulator matrix to every Task 13 key before completion.
+- CodeGraph did not index the XCTest method `testsimwin`; read the exact known test file instead. The method currently covers only the representative remote subset, confirming the need for a test-only matrix expansion.
+- Expanded only `testsimwin` to send explicit Win, Ctrl, Alt, Alt+Tab, Esc, F1–F12, Ctrl heartbeat, and ResetAll packets. Production protocol and routing code remain unchanged.
+- Re-ran the expanded test from the iPad Pro simulator against Windows `cpwin.exe`; xcodebuild exited 0 and the Windows log contains the entire expected sequence 801–820. Stopped the remote service cleanly afterward.
+- Connected to the running Simulator UI and visually confirmed the MagicBoard input-test page, complete keyboard extension, sidebar remote-companion entry, and `本机` session-route state.
+- Opened the remote-companion settings page in the simulator and toggled the master switch off→on. Verified the expected disabled/enabled dependency behavior and every Task 15 configuration/permission control visually.
+- Started Windows `cpwin.exe` again for live App/UI validation and visibly selected the Windows preset in the simulator.
+- Set the simulator host field to `10.1.1.2` and triggered Ping. The UI reported success to `10.1.1.2:52088` in 4.64 ms; Windows-log confirmation remains the authoritative next check.
+- Pulled the still-running Windows log and confirmed the host-app Ping arrived as ResetAll at 18:02:28. Returned to the input-test page; the keyboard dismissed normally on navigation and will be reopened by focusing the test field.
+- Reopened the MagicBoard extension and visually confirmed its route capsule defaults to `本机` with companion enabled. Tapped the capsule once to enter remote-keys mode; the cursor obscured the resulting label, so the next UI observation will move it away before acceptance.
+- Moved the cursor away and visibly confirmed `远端键`. Tapped F5 on the rendered keyboard; Windows `cpwin.exe` received HID `0x003E` at 18:04:18, sequence 7.
+- Switched the live keyboard to `远端全`, tapped Q, and confirmed the local input field remained empty. The next Windows-log read will distinguish successful remote routing from packet loss.
+- Windows received Q as HID `0x0014`, sequence 9. Cycled the capsule back to `本机`; the final local-fallback assertion will require local text insertion with no additional remote Q entry.
+- Tapped Q in `本机`; the simulator field displayed `q` and Windows logged no new Q packet. Stopped `cpwin.exe` cleanly.
+- Phase 2 and Phase 3 are complete: Task 13, Task 14, and Task 15 now have Windows-host, simulator-network, and live UI evidence. Phase 4 begins with the macOS matrix and final build/package checks.
+- Found active user-owned macOS companion PID 13242 on UDP 52088 and left it untouched. The confirmation prompt for the macOS filename repair returned no selection, so continued with the recommended isolated 52188 approach.
+- Updated only the macOS harness references from `magicboard-companion-mac` to `cpmac` and from obsolete XCTest name to `testsimmac`.
+- Rebuilt `cpmac` and ran the full isolated 52188 suite against both Swift C and Python services. Every event/reset/watchdog assertion passed and both services confirmed Accessibility permission; the existing 52088 process remained untouched.
+- User approved removing the Swift harness's false readiness-timeout warning. Updated the predicate to accept either `已就绪` or `正在监听` before the clean rerun.
+- Re-ran the native 52188 suite cleanly: all assertions passed without the false warning. The following simulator E2E stopped on the identical stale predicate in its own file; applied the same approved correction and will rerun only that failed stage.
+- Re-ran the simulator-to-macOS E2E successfully on isolated port 52188. The iOS simulator test passed and `cpmac` received Esc, Command+A, and F5 with Accessibility permission confirmed; the user-owned 52088 service remained active and untouched.
+- Phase 4 proceeds to the final shared-test, lint, simulator Debug, arm64 Release/TIPA, and archive audit gate.
+- Final gate first half passed: 86/86 shared tests, latency and memory thresholds, zero design findings, XcodeGen, and the explicit iPad Pro simulator Debug build.
+- `build-tipa.zsh` completed Release and produced MagicBoard.tipa 1.0.2 (21). A first cleanup-bearing audit command was rejected before execution; the safe no-delete rerun passed ZIP/arm64/version/bundle/open-access checks.
+- Apple `codesign` cannot validate the ldid/TrollStore entitlement blob, so Phase 4 remains open pending `ldid -e` and symbol-table verification rather than treating the wrong verifier as authoritative.
+- Verified the TrollStore signature with the correct `ldid -e` tool and confirmed required HID symbols. Updated the Windows E2E harness to avoid the default shell, explicitly use PowerShell 7 EncodedCommand, and select current `testsimwin`.
+- Corrected the harness-only success assertions for quiet `xcodebuild` output and native C HID logs, then reran the complete simulator-to-Windows path successfully.
+- Final Windows evidence includes Win, Ctrl, Alt, Alt+Tab, Esc, F1–F12, and ResetAll on sequences 801–818; the harness exited 0 and stopped `cpwin.exe`.
+- Confirmed Windows UDP 52088 is no longer listening and invalidated all `gsudo` credential-cache sessions.
+- Marked Tasks 13, 14, 15, and 16 completed after all simulator UI, cross-host injection, shared-test, lint, Debug, Release/TIPA, entitlement, version, and symbol gates passed.

@@ -31,13 +31,13 @@ Write-Host "✅ 单元测试全部通过！" -ForegroundColor Green
 
 Write-Host ""
 Write-Host "================================================================" -ForegroundColor Cyan
-Write-Host "🎹 [Phase 2/3] 实测 C 原生伴侣服务 (magicboard-companion-win.exe)..." -ForegroundColor Cyan
+Write-Host "🎹 [Phase 2/3] 实测 C 原生伴侣服务 (cpwin.exe)..." -ForegroundColor Cyan
 Write-Host "================================================================" -ForegroundColor Cyan
 
-$cExe = Join-Path $ScriptDir "magicboard-companion-win.exe"
+$cExe = Join-Path $ScriptDir "cpwin.exe"
 if (-not (Test-Path $cExe)) {
     Write-Host "⚠️ 未检测到可执行文件，正在先执行编译..." -ForegroundColor Yellow
-    & pwsh -File (Join-Path $ScriptDir "build-win.ps1")
+    & pwsh.exe -NoProfile -File (Join-Path $ScriptDir "build-win.ps1")
 }
 
 $cLog = Join-Path $ScriptDir "companion_c.log"
@@ -92,6 +92,6 @@ Write-Host ""
 Write-Host "================================================================" -ForegroundColor Green
 Write-Host "🎉 恭喜！MagicBoard Windows 伴侣服务全部测试通过！" -ForegroundColor Green
 Write-Host "   - 单元测试: 全部 13 项通过" -ForegroundColor Green
-Write-Host "   - C 原生版 (magicboard-companion-win.exe): Live UDP 注入与看门狗通过" -ForegroundColor Green
+Write-Host "   - C 原生版 (cpwin.exe): Live UDP 注入与看门狗通过" -ForegroundColor Green
 Write-Host "   - Python 版 (magicboard_companion.py): Live UDP 注入与看门狗通过" -ForegroundColor Green
 Write-Host "================================================================" -ForegroundColor Green

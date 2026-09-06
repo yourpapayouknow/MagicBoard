@@ -4,7 +4,7 @@
 
 流程：
 1. 在 macOS 本机启动伴侣服务子进程 (端口 52188)；
-2. 调度 iOS 模拟器 (iPad Pro 12.9 2018) 执行针对性单元测试 testSimulatorToHostUDPSend；
+2. 调度 iOS 模拟器 (iPad Pro 12.9 2018) 执行针对性单元测试 testsimmac；
 3. iOS 模拟器内部的测试进程向 127.0.0.1:52188 发送真实 MBCP UDP 报文 (Pulse Esc, KeyDown/Up Cmd+A, Pulse F5)；
 4. macOS 伴侣服务接收报文并转换为 CGKeyCode 注入 macOS 系统队列；
 5. 验证双向通信成功与测试通过。
@@ -18,7 +18,7 @@ import subprocess
 def main():
     script_dir = os.path.dirname(os.path.abspath(__file__))
     project_root = os.path.dirname(os.path.dirname(script_dir))
-    binary_path = os.path.join(script_dir, "magicboard-companion-mac")
+    binary_path = os.path.join(script_dir, "cpmac")
     port = 52188
 
     print("==================================================")
@@ -51,7 +51,7 @@ def main():
     # 等待伴侣就绪
     start_time = time.time()
     while time.time() - start_time < 5.0:
-        if any("已就绪" in l for l in companion_logs):
+        if any("已就绪" in l or "正在监听" in l for l in companion_logs):
             break
         time.sleep(0.05)
     else:
@@ -66,7 +66,7 @@ def main():
         "xcodebuild", "test",
         "-scheme", "MagicBoardShared",
         "-destination", "platform=iOS Simulator,id=73860E49-6DDF-450B-B505-F0E0A09F764B",
-        "-only-testing:MagicBoardSharedTests/CompanionProtocolTests/testSimulatorToHostUDPSend"
+        "-only-testing:MagicBoardSharedTests/CompanionProtocolTests/testsimmac"
     ]
 
     sim_res = subprocess.run(

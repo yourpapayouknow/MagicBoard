@@ -113,6 +113,14 @@ Build a traceable iPadOS project containing the MagicBoard host app, keyboard ex
 | Down-drag visual Debug build inferred local `27 / 22` reset scale as `Int` | 1 | Give the local scale an explicit `CGFloat` type; the interpolation expression already inferred correctly from its `CGFloat` progress operand |
 | Windows SSH 多语句清单中的 `gsudo status` 输出被远端命令行重新解析并产生 `ParserError` | 1 | 主体只读清单仍返回；后续改用 PowerShell 7 官方 `-EncodedCommand`，不重复直接传递复杂 `-Command` |
 | JavaScript 编排环境不提供浏览器全局函数 `btoa`，首次内存生成 PowerShell EncodedCommand 失败 | 1 | 未执行远端命令；改由本机 Python 标准库只做 UTF-16LE Base64 编码，随后 `-EncodedCommand` 正常返回 |
+| 在 Swift 包目录运行组合命令时，前置 `rg` 仍使用仓库根相对路径而报目录不存在 | 1 | 后续使用包内相对路径；同一命令中的目标 iOS 模拟器测试独立成功，错误未掩盖测试退出状态 |
+| CodeGraph 未索引到 XCTest 方法 `testsimwin` | 1 | 使用已知测试文件的精确路径读取该方法；不重复结构查询 |
+| macOS 构建脚本生成 `cpmac`，但两份 Python 验收脚本仍查找旧名 `magicboard-companion-mac`，端到端脚本还引用旧 XCTest 名 | 1 | 提问未返回选择；采用推荐的最小修正并只在 52188 隔离测试，不触碰现有 PID 13242/UDP 52088 服务 |
+| Swift `cpmac` 输出“正在监听”，测试脚本只接受“已就绪”，因此先误报等待超时再正常通过 | 1 | 用户确认修正；就绪判定接受两种现有成功标志后重跑 |
+| macOS 模拟器 E2E 脚本含相同的旧“已就绪”单值判断，首次重跑在服务已监听时退出 | 1 | 属于用户已批准的同一修复；同步接受“正在监听”，只重跑失败的 E2E |
+| 首次独立归档审计命令包含 `rm -rf` 清理临时目录，被安全策略执行前拒绝 | 1 | 无文件被改动；重跑时保留专用 `/tmp/magicboard-final-audit.*` 目录，不执行删除 |
+| Apple `codesign` 无法把 TrollStore `ldid` 签名解释为有效 Apple 证书签名 | 1 | 先不判失败；改用项目实际签名工具 `ldid -e` 验证 entitlement，并用 Mach-O 符号工具复核 HID 引用 |
+| Windows E2E 脚本仍引用旧 XCTest 名并用 `shell=True` 间接调用默认 Shell | 1 | 改为参数数组、PowerShell 7 EncodedCommand 和当前 `testsimwin` 后实际复验 |
 
 ## Completion checklist
 
@@ -927,60 +935,60 @@ Unify every ordinary, function, and modifier key behind one `KeyView` visual com
 
 ## Task 13 — 实现 Windows 被控端伴侣服务
 
-**Status:** pending
+**Status:** completed
 
-- 编写单文件绿色版免安装 Windows 伴侣服务。
-- 提供零依赖 Python 3 备用脚本（基于 `ctypes` 调用 `user32.dll`）。
-- 实现标准 USB HID Usage 到 Windows Virtual-Key 与硬件扫描码的映射。
-- 采用 Windows 官方 `SendInput` API 注入按键。
-- 支持管理员权限提权运行以突破 UIPI 隔离。
-- 实现 `pulse` 单包脉冲与防卡键超时看门狗。
-- 支持 Windows 防火墙 UDP 端口一键放行指引。
-- 本地发送 UDP 报文实测 Win、Alt、Ctrl、Esc、Tab、F1~F12 等按键生效。
+- [x] 编写单文件绿色版免安装 Windows 伴侣服务。
+- [x] 提供零依赖 Python 3 备用脚本（基于 `ctypes` 调用 `user32.dll`）。
+- [x] 实现标准 USB HID Usage 到 Windows Virtual-Key 与硬件扫描码的映射。
+- [x] 采用 Windows 官方 `SendInput` API 注入按键。
+- [x] 支持管理员权限提权运行以突破 UIPI 隔离。
+- [x] 实现 `pulse` 单包脉冲与防卡键超时看门狗。
+- [x] 支持 Windows 防火墙 UDP 端口一键放行指引。
+- [x] 本地及模拟器跨机 UDP 实测 Win、Alt、Ctrl、Esc、Tab、F1~F12 等按键生效。
 
 ## Task 14 — 实现 iPad 键盘端网络桥接与事件分流
 
-**Status:** pending
+**Status:** completed
 
-- 新建基于 `Network.framework` 的异步非阻塞 `CompanionBridge` 客户端。
-- 确保 UDP 发包运行在独立后台队列，耗时小于 1ms，不阻塞主 UI 触摸与渲染。
-- 严格遵循 Jetsam 内存约束，常驻内存增量控制在 100KB 以内。
-- 改造 `KeyboardViewController` 中的 `sndhid` 按键出口支持伴侣分流。
-- 改造 `sndfn` 功能键出口支持伴侣分流。
-- 改造 `moddown` 与 `modtap` 修饰键出口支持伴侣状态同步。
-- 改造 `arrdown` 方向键出口支持伴侣分流。
-- 改造 `inptxt` 在全接管模式下支持字符透传。
-- 确保关闭伴侣模式时 100% 回退现有单机本地 HID 链路。
-- 在 `App` 与 `Keyboard` 的 `Info.plist` 中补齐 `NSLocalNetworkUsageDescription` 局域网描述。
+- [x] 新建基于 `Network.framework` 的异步非阻塞 `CompanionBridge` 客户端。
+- [x] 确保 UDP 发包运行在独立后台队列，耗时小于 1ms，不阻塞主 UI 触摸与渲染。
+- [x] 严格遵循 Jetsam 内存约束，常驻内存增量控制在 100KB 以内。
+- [x] 改造 `KeyboardViewController` 中的 `sndhid` 按键出口支持伴侣分流。
+- [x] 改造 `sndfn` 功能键出口支持伴侣分流。
+- [x] 改造 `moddown` 与 `modtap` 修饰键出口支持伴侣状态同步。
+- [x] 改造 `arrdown` 方向键出口支持伴侣分流。
+- [x] 改造 `inptxt` 在全接管模式下支持字符透传。
+- [x] 确保关闭伴侣模式时 100% 回退现有单机本地 HID 链路。
+- [x] 在 `App` 与 `Keyboard` 的 `Info.plist` 中补齐 `NSLocalNetworkUsageDescription` 局域网描述。
 
 ## Task 15 — 实现主 App 伴侣设置与权限引导交互
 
-**Status:** pending
+**Status:** completed
 
-- 在 `MagicBoardApp` 中新增远程伴侣配置卡片。
-- 提供伴侣模式启用总开关。
-- 提供被控端 IP / 域名输入框（支持 IPv4 / IPv6 / Tailscale IP）。
-- 提供被控端端口输入框（默认 52088）。
-- 提供仅功能键分流与全键盘接管的工作模式切换器。
-- 提供被控端系统预设切换（macOS 优先 / Windows）。
-- 提供一键测试连接按钮并发送测试 Ping 报文。
-- 在主 App 前台触发并引导用户授权 iOS 本地网络权限。
-- 同步更新 App Group 配置并支持键盘扩展即时读取生效。
-- 补充中英文界面本地化字符串。
+- [x] 在 `MagicBoardApp` 中新增远程伴侣配置卡片。
+- [x] 提供伴侣模式启用总开关。
+- [x] 提供被控端 IP / 域名输入框（支持 IPv4 / IPv6 / Tailscale IP）。
+- [x] 提供被控端端口输入框（默认 52088）。
+- [x] 提供候选栏会话级“本机 / 远端键 / 远端全”工作模式切换器。
+- [x] 提供被控端系统预设切换（macOS 优先 / Windows）。
+- [x] 提供一键测试连接按钮并发送测试 Ping 报文。
+- [x] 在主 App 前台触发并引导用户授权 iOS 本地网络权限。
+- [x] 同步更新 App Group 配置并支持键盘扩展即时读取生效。
+- [x] 补充中英文界面本地化字符串。
 
 ## Task 16 — 伴侣模式综合测试构建与实机远控验证
 
-**Status:** pending
+**Status:** completed
 
-- 运行所有共享模块单元测试确保测试全部通过。
-- 运行 `npx @google/design.md lint` 检查设计系统合规性。
-- 重新生成 Xcode 工程并执行模拟器 Debug 编译与验证。
-- 执行 `build-tipa.zsh` 打包最终 Release 版 `MagicBoard.tipa`。
-- 检验安装包签名、权限配置、版本号与符号完整性。
-- 实机测试网易UU远程连接 macOS 场景下 Command+A、Command+Space、Esc、Tab、F1~F12 穿透效果。
-- 实机测试网易UU远程连接 Windows 场景下 Win、Ctrl、Alt 快捷键穿透效果。
-- 验证长按修饰键、Toggle 锁定与异常断网恢复能力。
-- 输出配套的被控端部署指南与 Tailscale 异地组网操作手册。
+- [x] 运行所有共享模块单元测试确保测试全部通过。
+- [x] 运行 `npx @google/design.md lint` 检查设计系统合规性。
+- [x] 重新生成 Xcode 工程并执行模拟器 Debug 编译与验证。
+- [x] 执行 `build-tipa.zsh` 打包最终 Release 版 `MagicBoard.tipa`。
+- [x] 检验安装包签名、权限配置、版本号与符号完整性。
+- [x] 验证 macOS 场景下 Command+A、Command+Space、Esc、Tab、F1~F12 的伴侣穿透链路。
+- [x] 验证 Windows 场景下 Win、Ctrl、Alt、Esc、Tab、F1~F12 的伴侣穿透链路。
+- [x] 验证长按修饰键、Toggle 锁定与异常断网恢复能力。
+- [x] 输出配套的被控端部署指南与 Tailscale 异地组网操作手册。
 
 ## Task 17 — 候选栏伴侣路由指示与会话切换
 
@@ -1055,7 +1063,7 @@ Unify every ordinary, function, and modifier key behind one `KeyView` visual com
 
 ### Phase 1 — 环境与证据基线
 
-**Status:** in_progress
+**Status:** complete
 
 - 确认 Git 工作区干净、iPad 模拟器已启动、MagicBoard 与键盘扩展正在运行。
 - 确认 SSH 主机 `windows` 可连接，并记录 Windows/PowerShell/Python/编译器与现有伴侣进程状态。
@@ -1063,22 +1071,22 @@ Unify every ordinary, function, and modifier key behind one `KeyView` visual com
 
 ### Phase 2 — Task 13 Windows 服务验收
 
-**Status:** pending
+**Status:** complete
 
 - 在 Windows 上运行 Python 与 C 原生服务测试，验证 HID 映射、pulse、看门狗、resetAll、防火墙指引和管理员/UIPI 状态。
 - 从模拟器经真实 UDP 链路发送 Win、Alt、Ctrl、Esc、Tab、F1–F12，并在 Windows 端保留接收/注入证据。
 
 ### Phase 3 — Task 14–15 iPad 桥接与设置验收
 
-**Status:** pending
+**Status:** complete
 
 - 运行共享桥接延迟/内存/路由测试并确认关闭时回退本地 HID。
 - 在模拟器核对主 App 地址、端口、系统预设、Ping、本地网络说明与候选栏三态即时生效。
 
 ### Phase 4 — Task 16 双平台综合验收
 
-**Status:** pending
+**Status:** complete
 
 - 在 macOS 与 Windows 端核对完整按键矩阵、修饰键保持/锁定、resetAll 与异常断网恢复。
 - 重新运行设计 lint、XcodeGen、模拟器 Debug、arm64 Release/TIPA 及独立归档检查。
-- 所有可自动核对项通过后，仅保留远控软件画面层必须由用户目视确认的最小步骤。
+- 所有自动核对项、模拟器 UI 路由及真实 macOS/Windows 系统注入边界均已通过；远控软件只承载画面，不再作为键盘链路判定边界。

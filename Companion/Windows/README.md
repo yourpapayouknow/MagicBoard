@@ -7,7 +7,7 @@ MagicBoard Windows 伴侣服务是运行在被控 Windows 主机上的轻量级�
 ## 🌟 核心特性
 
 - **双实现方案**：
-  - **原生单文件版 (`magicboard-companion-win.exe`)**：纯 C 语言编写，编译后仅约 50KB，绿色免安装，启动极速，无任何运行时依赖。
+  - **原生单文件版 (`cpwin.exe`)**：纯 C 语言编写，编译后仅约 50KB，绿色免安装，启动极速，无任何运行时依赖。
   - **Python 备用版 (`magicboard_companion.py`)**：基于标准库 `ctypes` 调用 Windows `user32.dll`，无需 `pip install` 任何第三方包。
 - **协议标准**：MBCP v1（固定 16 字节大端对齐二进制 UDP 报文）。
 - **完整按键映射**：支持国际标准 USB HID Usage (Page 0x07) 到 Windows Virtual-Key 与硬件扫描码（通过 `MapVirtualKeyW` 生成），完美兼容桌面软件、终端、浏览器及大部分游戏。
@@ -29,16 +29,16 @@ pwsh -File build-win.ps1
 ```
 或直接使用 MinGW-W64 GCC：
 ```powershell
-gcc -O2 -Wall -o magicboard-companion-win.exe magicboard-companion-win.c -lws2_32 -luser32 -lshell32
+gcc -O2 -Wall -o cpwin.exe cpwin.c -lws2_32 -luser32 -lshell32
 ```
 
 #### 2. 启动服务
 ```powershell
 # 推荐：以管理员权限启动以突破 UIPI 隔离
-.\magicboard-companion-win.exe --elevate
+.\cpwin.exe --elevate
 
 # 指定自定义端口 (默认 52088)
-.\magicboard-companion-win.exe -p 52088
+.\cpwin.exe -p 52088
 ```
 
 ---
@@ -67,7 +67,7 @@ New-NetFirewallRule -DisplayName "MagicBoard Companion" -Direction Inbound -Loca
 ```
 或者直接使用伴侣自带参数自动添加：
 ```powershell
-.\magicboard-companion-win.exe --add-firewall
+.\cpwin.exe --add-firewall
 # 或
 python magicboard_companion.py --add-firewall
 ```

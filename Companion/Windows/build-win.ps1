@@ -4,7 +4,7 @@
     编译 MagicBoard Windows 原生伴侣服务单文件可执行文件
 
 .DESCRIPTION
-    使用 MinGW-W64 GCC 编译生成独立的绿色免安装可执行程序 magicboard-companion-win.exe。
+    使用 MinGW-W64 GCC 编译生成独立的绿色免安装可执行程序 cpwin.exe。
     无额外运行时依赖，链接 ws2_32, user32, shell32。
 #>
 

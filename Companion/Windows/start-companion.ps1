@@ -5,9 +5,9 @@ $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Definition
 Set-Location $ScriptDir
 
 # 停止已有的 companion 进程
-Get-Process -Name "magicboard-companion-win" -ErrorAction SilentlyContinue | Stop-Process -Force
+Get-Process -Name "cpwin" -ErrorAction SilentlyContinue | Stop-Process -Force
 
-$exe = Join-Path $ScriptDir "magicboard-companion-win.exe"
+$exe = Join-Path $ScriptDir "cpwin.exe"
 $log = Join-Path $ScriptDir "live_c.log"
 if (Test-Path $log) { Remove-Item $log -Force }
 
