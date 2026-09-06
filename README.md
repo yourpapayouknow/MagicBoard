@@ -44,6 +44,34 @@ MagicBoard 是一个 iPadOS Keyboard Extension。它提供六行 Mac 风格布�
 - Modifier 按住、切换与混合模式，并在键盘离场、宿主后台或扩展重启时统一释放。
 - 离线 Rime 全拼与六种双拼方案，候选栏和系统词典补充候选。
 - 可配置按键音、内置扬声器模拟触觉、强调色和键盘外观。
+- 可选远程伴侣模式，把功能键、修饰键或完整键盘输入转发到 macOS/Windows 被控端。
+
+## 远程伴侣
+
+远程桌面软件无法传递 iPad 第三方键盘产生的全部 HID 按键时，可以在被控电脑上运行 MagicBoard 伴侣。键盘通过局域网 UDP 把标准 HID Usage 发送给伴侣，再由 macOS 原生事件接口或 Windows `SendInput` 注入被控系统。
+
+从最新 [GitHub Release](../../releases/latest) 下载对应平台的单文件程序：
+
+- macOS（Apple Silicon）：[`cpmac`](https://github.com/yourpapayouknow/MagicBoard/releases/latest/download/cpmac)
+- Windows 11 x64：[`cpwin.exe`](https://github.com/yourpapayouknow/MagicBoard/releases/latest/download/cpwin.exe)
+
+macOS 首次运行时，在“系统设置 > 隐私与安全性 > 辅助功能”中允许当前终端或 `cpmac` 控制电脑：
+
+```zsh
+chmod +x ./cpmac
+./cpmac --port 52088
+```
+
+Windows 推荐在 PowerShell 7 中启动；若当前窗口不是管理员权限，`--elevate` 会请求 UAC 提权：
+
+```powershell
+.\cpwin.exe --elevate --port 52088
+```
+
+然后在 iPad 的 MagicBoard 主 App 中打开“远程伴侣”，选择目标系统，填写被控端局域网地址、`.local` 域名或 Tailscale IP，保持相同端口并点击 Ping。连接成功后，键盘候选栏右侧的路由胶囊可在“本机 → 远端键 → 远端全”之间切换；每个新键盘会话始终从“本机”开始。
+
+> [!WARNING]
+> MBCP v1 使用无认证、无加密的 UDP 报文。只应在可信局域网或 Tailscale 私有网络中使用，不要把 52088 端口直接暴露到公网。若 Windows Ping 不通，请仅为当前可信网络放行 UDP 52088。
 
 ## 从源码构建
 
@@ -78,6 +106,7 @@ npx @google/design.md lint DESIGN.md
 | `App/` | SwiftUI 设置主 App |
 | `Keyboard/` | UIKit Keyboard Extension、HID 桥、Rime 与资源 |
 | `Packages/MagicBoardShared/` | 主 App/扩展共享配置、输入状态与测试 |
+| `Companion/` | macOS 与 Windows 远程伴侣源码、构建和验收脚本 |
 | `project.yml` | XcodeGen 项目、版本、依赖与 entitlement 定义 |
 | `scripts/build-tipa.zsh` | 一键 Release 构建与 TrollStore `.tipa` 打包 |
 | `DESIGN.md` | 界面设计系统与组件约束 |
@@ -88,5 +117,5 @@ npx @google/design.md lint DESIGN.md
 - 键盘扩展：UIKit + Objective-C HID bridge
 - 中文引擎：LibrimeKit / Rime，本地资源固定随扩展打包
 - 配置同步：App Group `group.com.iwmei.magicboard`
+- 远程协议：MBCP v1，UDP 52088，标准 USB HID Usage
 - 发布产物：arm64、iPad-only、TrollStore `.tipa`
-

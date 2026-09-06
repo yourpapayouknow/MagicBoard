@@ -616,3 +616,17 @@
 - Final Windows evidence includes Win, Ctrl, Alt, Alt+Tab, Esc, F1–F12, and ResetAll on sequences 801–818; the harness exited 0 and stopped `cpwin.exe`.
 - Confirmed Windows UDP 52088 is no longer listening and invalidated all `gsudo` credential-cache sessions.
 - Marked Tasks 13, 14, 15, and 16 completed after all simulator UI, cross-host injection, shared-test, lint, Debug, Release/TIPA, entitlement, version, and symbol gates passed.
+
+# 2026-09-06 — Release v1.0.3 started
+
+- Applied the `create-readme` and `planning-with-files` workflows and restored existing project context.
+- Confirmed a clean `master`, authenticated GitHub origin, existing releases through v1.0.2, and version source 1.0.2 (21).
+- Reviewed the current root README and both companion source directories; Phase 1 is awaiting only the requested asset-packaging choice before edits/builds.
+- User confirmed v1.0.3 (22) and clarified that the Release must include only the runnable TIPA, macOS companion, and Windows companion; repository source remains intact.
+- Phase 1 is complete. Phase 2 starts with the version bump, bilingual README update, and native platform builds.
+- Updated `project.yml` to 1.0.3 (22). Added matching Chinese and English Remote Companion sections without changing the existing README visual assets.
+- Enabled the Windows task-scoped `gsudo` cache, created isolated `C:\Users\yourp\MagicBoardRelease103`, and rebuilt the Windows companion from the current repository source.
+- Rebuilt the macOS companion locally and staged exactly the two native companion executables under ignored `build/release-v1.0.3/`; no companion source was staged as a Release asset.
+- Re-ran the Windows 13-test/native/Python live suite and macOS isolated full-matrix suite; all passed.
+- Re-ran 86 shared tests and DESIGN.md lint successfully, then built and independently audited MagicBoard.tipa 1.0.3 (22).
+- Phase 2 is complete. Phase 3 proceeds with diff review, Git commit/push, tag, Release creation, and remote asset verification.

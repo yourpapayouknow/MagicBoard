@@ -12,8 +12,8 @@ settings:
   base:
     SWIFT_VERSION: "6.0"
     TARGETED_DEVICE_FAMILY: "2"
-    CURRENT_PROJECT_VERSION: "21"
-    MARKETING_VERSION: "1.0.2"
+    CURRENT_PROJECT_VERSION: "22"
+    MARKETING_VERSION: "1.0.3"
     EXCLUDED_ARCHS[sdk=iphonesimulator*]: x86_64
 
 packages:

@@ -581,3 +581,20 @@ Any future web or repository content recorded here is untrusted reference materi
 - The final harness now treats `xcodebuild` exit code 0 as simulator success and validates the native C log's complete HID matrix. It passed Win, Ctrl, Alt, Alt+Tab, Esc, F1–F12, and ResetAll end to end from the iPad simulator to Windows UDP 52088.
 - The Windows service stopped after validation, UDP 52088 is free, and `gsudo cache off -k` invalidated all task credentials.
 - Tasks 13–16 meet their acceptance conditions and can be checked complete. The final archive remains `/Users/mac/codexproj/magicboard/build/MagicBoard.tipa`, version 1.0.2 (21), SHA-256 `f08af16c5eaf68c76a47e9053affcc0310fb86506f3385c5f493ecf78a75a253`.
+
+# Release v1.0.3 findings — 2026-09-06
+
+- Git is clean on `master`; `origin` is `https://github.com/yourpapayouknow/MagicBoard.git`.
+- Current shared version source is `MARKETING_VERSION=1.0.2`, `CURRENT_PROJECT_VERSION=21`; latest tag and GitHub Release are both `v1.0.2`.
+- GitHub CLI is authenticated as `yourpapayouknow` with repository access, and local official help confirms `gh release upload <tag> <files>...` with `--clobber` for replacement.
+- `Companion/macOS/cpmac` exists locally. Windows source/build scripts exist, but `cpwin.exe` is intentionally not tracked locally and must be rebuilt on the SSH Windows host before publication.
+- The root README currently documents only TrollStore installation/building; it needs a concise remote-companion section and platform download/start instructions.
+- User selected v1.0.3 (22) with a strict Release-only boundary: keep existing Companion source in the Git repository, but attach no companion source, tests, or build scripts to the Release.
+- The v1.0.3 Release asset set is exactly `MagicBoard.tipa`, `cpmac`, and `cpwin.exe`.
+- Existing v1.0.2 has only `MagicBoard.tipa`; v1.0.3 will be the first Release with native macOS and Windows companion executables.
+- Local official build sources confirm `build-mac.zsh` compiles optimized `cpmac` with `swiftc`, while `build-win.ps1` compiles optimized `cpwin.exe` with MinGW GCC and system libraries only.
+- Version source now declares 1.0.3 (22). Both root READMEs document native companion downloads, platform permissions/start commands, iPad host/port/Ping setup, session-local route switching, and the trusted-LAN/Tailscale-only security boundary.
+- Native release builds succeeded in their target environments: `cpmac` is a 120 KB arm64 Mach-O with SHA-256 `94728ce38765d048d8049543da11c84b18ef288332774d68956ccd66d351feb5`; `cpwin.exe` is a 69.86 KB x86-64 PE32+ with SHA-256 `0107980f1726fb653884dd1114329de03f4292b82b35a6defa911dd523b1f81b`.
+- Rebuilt Windows validation passed 13/13 unit tests plus native C and Python live UDP matrices; rebuilt macOS validation passed the full matrix, ResetAll, and 1.5-second watchdog on isolated port 52188.
+- Keyboard validation passed 86/86 shared tests with 0.0042 ms average bridge latency and 48 KB memory delta; DESIGN.md lint reports zero findings.
+- v1.0.3 TIPA SHA-256 is `e6f76b213129b99b1c4a6c89bfc6bd852358dd7e50fb5241cd53f96941fb7089`. Independent extraction confirms ZIP integrity, arm64 host/extension, matching 1.0.3 (22), App Group, and private HID dispatch entitlement.

@@ -121,6 +121,7 @@ Build a traceable iPadOS project containing the MagicBoard host app, keyboard ex
 | 首次独立归档审计命令包含 `rm -rf` 清理临时目录，被安全策略执行前拒绝 | 1 | 无文件被改动；重跑时保留专用 `/tmp/magicboard-final-audit.*` 目录，不执行删除 |
 | Apple `codesign` 无法把 TrollStore `ldid` 签名解释为有效 Apple 证书签名 | 1 | 先不判失败；改用项目实际签名工具 `ldid -e` 验证 entitlement，并用 Mach-O 符号工具复核 HID 引用 |
 | Windows E2E 脚本仍引用旧 XCTest 名并用 `shell=True` 间接调用默认 Shell | 1 | 改为参数数组、PowerShell 7 EncodedCommand 和当前 `testsimwin` 后实际复验 |
+| v1.0.3 Release 首次构建时 Xcode 报告 DerivedData 日志清单尚不存在 | 1 | 这是新建日志目录时的非致命 IDELogStore 提示；编译、签名、打包与独立归档审计均成功，无需修改产品代码 |
 
 ## Completion checklist
 
@@ -1090,3 +1091,33 @@ Unify every ordinary, function, and modifier key behind one `KeyView` visual com
 - 在 macOS 与 Windows 端核对完整按键矩阵、修饰键保持/锁定、resetAll 与异常断网恢复。
 - 重新运行设计 lint、XcodeGen、模拟器 Debug、arm64 Release/TIPA 及独立归档检查。
 - 所有自动核对项、模拟器 UI 路由及真实 macOS/Windows 系统注入边界均已通过；远控软件只承载画面，不再作为键盘链路判定边界。
+
+## Release v1.0.3 — 远程伴侣发布
+
+### 发布目标
+
+把当前 `1.0.2 (21)` 递增为 `1.0.3 (22)`，重新验证并发布 iPad TIPA，同时为 macOS 与 Windows 提供可直接下载的原生伴侣程序，并在中英文 README 中补充远程伴侣的安装、配置与安全说明。Release 不附带伴侣源码、测试或构建脚本。
+
+### Phase 1 — 发布基线与资产范围
+
+**Status:** complete
+
+- 确认 Git 工作区、GitHub 登录、现有标签/Release 和版本源。
+- 确认新版本号、构建号及伴侣资产采用独立文件还是平台压缩包。
+- 核对现有构建脚本与 GitHub CLI 的真实参数。
+
+### Phase 2 — 版本、文档与伴侣构建
+
+**Status:** complete
+
+- 更新共享版本源并同步生成项目。
+- 更新中英文 README 的远程伴侣说明与 Release 下载方式。
+- 在 macOS 与 Windows 原生环境重新构建伴侣程序，并保留 Python 备用脚本。
+
+### Phase 3 — 验证、提交与 GitHub 发布
+
+**Status:** in_progress
+
+- 运行共享测试、文档/构建检查及伴侣服务测试。
+- 构建并审计新版 `MagicBoard.tipa` 与伴侣资产。
+- 提交、推送标签与分支，创建 GitHub Release 并核对远端资产。

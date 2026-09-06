@@ -44,6 +44,34 @@ Install this repository and install the latest MagicBoard.tipa on my connected T
 - Hold, toggle, and mixed modifier modes with centralized release on keyboard dismissal, host backgrounding, or extension restart.
 - Offline Rime full Pinyin and six double-Pinyin schemes, candidate bar, and supplemental system lexicon candidates.
 - Configurable key sounds, speaker-based tactile simulation, accent color, and keyboard appearance.
+- Optional remote companion mode that forwards special keys, modifiers, or the complete keyboard to a macOS or Windows host.
+
+## Remote Companion
+
+When remote-desktop software does not carry every HID key produced by an iPad third-party keyboard, run the MagicBoard companion on the controlled computer. The keyboard sends standard HID usages over local UDP; the companion injects them through native macOS events or Windows `SendInput`.
+
+Download the single-file program for the controlled computer from the latest [GitHub Release](../../releases/latest):
+
+- macOS (Apple Silicon): [`cpmac`](https://github.com/yourpapayouknow/MagicBoard/releases/latest/download/cpmac)
+- Windows 11 x64: [`cpwin.exe`](https://github.com/yourpapayouknow/MagicBoard/releases/latest/download/cpwin.exe)
+
+On first launch on macOS, allow the current terminal or `cpmac` under System Settings > Privacy & Security > Accessibility:
+
+```zsh
+chmod +x ./cpmac
+./cpmac --port 52088
+```
+
+On Windows, PowerShell 7 is recommended. If the current window is not elevated, `--elevate` requests administrator access through UAC:
+
+```powershell
+.\cpwin.exe --elevate --port 52088
+```
+
+In the MagicBoard host app on iPad, open Remote Companion, choose the target OS, enter the controlled computer's LAN address, `.local` name, or Tailscale IP, keep the same port, and tap Ping. After it connects, use the route capsule on the keyboard candidate bar to cycle Local → Remote Keys → Remote Full. Every new keyboard session starts in Local mode.
+
+> [!WARNING]
+> MBCP v1 uses unauthenticated, unencrypted UDP packets. Use it only on a trusted LAN or private Tailscale network. Never expose port 52088 directly to the public Internet. If Windows Ping fails, allow inbound UDP 52088 only on the current trusted network.
 
 ## Build from Source
 
@@ -78,6 +106,7 @@ Before a final release, repeat native third-party app, terminal/code editor, res
 | `App/` | SwiftUI settings host app |
 | `Keyboard/` | UIKit Keyboard Extension, HID bridge, Rime engine, and resources |
 | `Packages/MagicBoardShared/` | Shared configuration, input state, and tests |
+| `Companion/` | macOS and Windows remote-companion sources, builds, and acceptance tools |
 | `project.yml` | XcodeGen targets, versions, dependencies, and entitlements |
 | `scripts/build-tipa.zsh` | One-command Release build and TrollStore `.tipa` packaging |
 | `DESIGN.md` | UI design system and component constraints |
@@ -88,5 +117,5 @@ Before a final release, repeat native third-party app, terminal/code editor, res
 - Keyboard extension: UIKit + Objective-C HID bridge
 - Chinese engine: LibrimeKit / Rime with resources bundled locally
 - Configuration sync: App Group `group.com.iwmei.magicboard`
+- Remote protocol: MBCP v1 over UDP 52088 with standard USB HID usages
 - Distribution artifact: arm64, iPad-only TrollStore `.tipa`
-
