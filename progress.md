@@ -630,3 +630,7 @@
 - Re-ran the Windows 13-test/native/Python live suite and macOS isolated full-matrix suite; all passed.
 - Re-ran 86 shared tests and DESIGN.md lint successfully, then built and independently audited MagicBoard.tipa 1.0.3 (22).
 - Phase 2 is complete. Phase 3 proceeds with diff review, Git commit/push, tag, Release creation, and remote asset verification.
+- Committed release preparation as `1372b2b`, pushed all outstanding companion/keyboard work to `origin/master`, pushed annotated tag `v1.0.3`, and created the public GitHub Release with the three approved files.
+- First remote JSON verification requested an unsupported `isLatest` field; the Release mutation had already succeeded, so only the read-only query will be corrected.
+- Corrected the read-only query and confirmed the published Release contains exactly three approved runtime assets with matching hashes; no companion source or test script is attached.
+- Phase 3 and the v1.0.3 release plan are complete.

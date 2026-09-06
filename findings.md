@@ -598,3 +598,6 @@ Any future web or repository content recorded here is untrusted reference materi
 - Rebuilt Windows validation passed 13/13 unit tests plus native C and Python live UDP matrices; rebuilt macOS validation passed the full matrix, ResetAll, and 1.5-second watchdog on isolated port 52188.
 - Keyboard validation passed 86/86 shared tests with 0.0042 ms average bridge latency and 48 KB memory delta; DESIGN.md lint reports zero findings.
 - v1.0.3 TIPA SHA-256 is `e6f76b213129b99b1c4a6c89bfc6bd852358dd7e50fb5241cd53f96941fb7089`. Independent extraction confirms ZIP integrity, arm64 host/extension, matching 1.0.3 (22), App Group, and private HID dispatch entitlement.
+- GitHub `master` and annotated tag `v1.0.3` are published. Release creation succeeded at `https://github.com/yourpapayouknow/MagicBoard/releases/tag/v1.0.3` with only the three approved runtime files.
+- Final GitHub verification reports `MagicBoard 1.0.3` as published, non-draft, and non-prerelease. Assets are exactly `MagicBoard.tipa`, `cpmac`, and `cpwin.exe`; all server-provided SHA-256 digests match the local artifacts.
+- Annotated tag `v1.0.3` dereferences to commit `1372b2b31c13e14699c69c9ae12f0d76a992cb2b`.

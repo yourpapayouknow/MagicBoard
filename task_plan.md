@@ -122,6 +122,7 @@ Build a traceable iPadOS project containing the MagicBoard host app, keyboard ex
 | Apple `codesign` 无法把 TrollStore `ldid` 签名解释为有效 Apple 证书签名 | 1 | 先不判失败；改用项目实际签名工具 `ldid -e` 验证 entitlement，并用 Mach-O 符号工具复核 HID 引用 |
 | Windows E2E 脚本仍引用旧 XCTest 名并用 `shell=True` 间接调用默认 Shell | 1 | 改为参数数组、PowerShell 7 EncodedCommand 和当前 `testsimwin` 后实际复验 |
 | v1.0.3 Release 首次构建时 Xcode 报告 DerivedData 日志清单尚不存在 | 1 | 这是新建日志目录时的非致命 IDELogStore 提示；编译、签名、打包与独立归档审计均成功，无需修改产品代码 |
+| `gh release view` 不支持请求的 `isLatest` JSON 字段 | 1 | Release 已成功创建；按 CLI 返回的支持字段移除 `isLatest` 后重新核对远端资产 |
 
 ## Completion checklist
 
@@ -1116,8 +1117,15 @@ Unify every ordinary, function, and modifier key behind one `KeyView` visual com
 
 ### Phase 3 — 验证、提交与 GitHub 发布
 
-**Status:** in_progress
+**Status:** complete
 
 - 运行共享测试、文档/构建检查及伴侣服务测试。
 - 构建并审计新版 `MagicBoard.tipa` 与伴侣资产。
 - 提交、推送标签与分支，创建 GitHub Release 并核对远端资产。
+
+### 发布结果
+
+- GitHub Release：`https://github.com/yourpapayouknow/MagicBoard/releases/tag/v1.0.3`
+- `MagicBoard.tipa`：17,482,595 bytes，SHA-256 `e6f76b213129b99b1c4a6c89bfc6bd852358dd7e50fb5241cd53f96941fb7089`
+- `cpmac`：122,472 bytes，SHA-256 `94728ce38765d048d8049543da11c84b18ef288332774d68956ccd66d351feb5`
+- `cpwin.exe`：71,540 bytes，SHA-256 `0107980f1726fb653884dd1114329de03f4292b82b35a6defa911dd523b1f81b`
