@@ -123,6 +123,7 @@ Build a traceable iPadOS project containing the MagicBoard host app, keyboard ex
 | Windows E2E 脚本仍引用旧 XCTest 名并用 `shell=True` 间接调用默认 Shell | 1 | 改为参数数组、PowerShell 7 EncodedCommand 和当前 `testsimwin` 后实际复验 |
 | v1.0.3 Release 首次构建时 Xcode 报告 DerivedData 日志清单尚不存在 | 1 | 这是新建日志目录时的非致命 IDELogStore 提示；编译、签名、打包与独立归档审计均成功，无需修改产品代码 |
 | `gh release view` 不支持请求的 `isLatest` JSON 字段 | 1 | Release 已成功创建；按 CLI 返回的支持字段移除 `isLatest` 后重新核对远端资产 |
+| 发布记录推送成功后，尾部只读复核遇到 GitHub EOF 与 LibreSSL `SSL_ERROR_SYSCALL` | 1 | 本地输出已确认 push 成功；停止重复相同查询，改用 GitHub REST API 分别核对分支和 Release |
 
 ## Completion checklist
 

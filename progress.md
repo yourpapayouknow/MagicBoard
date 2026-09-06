@@ -634,3 +634,5 @@
 - First remote JSON verification requested an unsupported `isLatest` field; the Release mutation had already succeeded, so only the read-only query will be corrected.
 - Corrected the read-only query and confirmed the published Release contains exactly three approved runtime assets with matching hashes; no companion source or test script is attached.
 - Phase 3 and the v1.0.3 release plan are complete.
+- Pushed final publication record commit `2c9cebd` successfully. Subsequent read-only release-list/ls-remote checks hit transient GitHub EOF/TLS errors; no write failed, and verification will switch to REST API calls.
+- GitHub REST API verification succeeded: remote master matched `2c9cebd`, Latest Release was v1.0.3, and all three runtime asset names, sizes, and hashes matched.
