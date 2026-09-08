@@ -428,6 +428,7 @@ final class KeyboardViewController: UIInputViewController {
     // 构建键盘容器
     override func viewDidLoad() {
         super.viewDidLoad()
+        state = InputState(language: settings.chineseEnabled ? SharedConfig.ldlang() : .english)
         CompanionBridge.shared.cfg(with: settings.companion)
 
         // 注册来自主 App 的跨进程配置实时变更通知
@@ -551,6 +552,7 @@ final class KeyboardViewController: UIInputViewController {
     // 停止离场触摸任务
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
+        svlang()
         stopcursor()
         stopdel()
         rsthid()
@@ -569,6 +571,7 @@ final class KeyboardViewController: UIInputViewController {
         if !current.chineseEnabled, state.language == .chinese {
             if let snapshot = ime.commit() { applySnapshot(snapshot) }
             state.tgllang()
+            SharedConfig.svlang(.english)
             renderCandidates(nil)
         }
         settings = current
@@ -1429,6 +1432,7 @@ final class KeyboardViewController: UIInputViewController {
                 applySnapshot(snapshot)
             }
             state.tgllang()
+            svlang()
             if state.language == .chinese { ime.start(scheme: settings.scheme) }
             renderCandidates(nil)
             bldkbd()
@@ -1930,6 +1934,11 @@ final class KeyboardViewController: UIInputViewController {
         HIDBridge.shared.releaseAll()
         rfrshft()
         updmods()
+    }
+
+    // 保存当前可用的键盘语言
+    private func svlang() {
+        SharedConfig.svlang(settings.chineseEnabled ? state.language : .english)
     }
 
     // 结束触控板状态并恢复键盘

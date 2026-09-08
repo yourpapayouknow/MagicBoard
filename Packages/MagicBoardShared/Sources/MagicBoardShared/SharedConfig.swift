@@ -402,7 +402,7 @@ public struct KeyboardReport: Codable, Equatable, Sendable {
 }
 
 // 表示当前输入语言
-public enum BoardLang: Equatable, Sendable {
+public enum BoardLang: String, Equatable, Sendable {
     case english
     case chinese
 }
@@ -781,6 +781,7 @@ public enum SharedConfig {
     private static let themeKey = "magicboard.theme"
     private static let settingsKey = "magicboard.settings.v1"
     private static let reportKey = "magicboard.keyboard.report"
+    private static let languageKey = "magicboard.keyboard.language"
     private static let checkKey = "magicboard.check"
 
     // 读取完整共享设置
@@ -854,6 +855,20 @@ public enum SharedConfig {
     public static func svrpt(_ report: KeyboardReport, defaults: UserDefaults? = UserDefaults(suiteName: groupID)) {
         guard let data = try? JSONEncoder().encode(report) else { return }
         defaults?.set(data, forKey: reportKey)
+    }
+
+    // 读取上次关闭时的键盘语言
+    public static func ldlang(defaults: UserDefaults? = UserDefaults(suiteName: groupID)) -> BoardLang {
+        guard
+            let value = defaults?.string(forKey: languageKey),
+            let language = BoardLang(rawValue: value)
+        else { return .english }
+        return language
+    }
+
+    // 保存当前键盘语言
+    public static func svlang(_ language: BoardLang, defaults: UserDefaults? = UserDefaults(suiteName: groupID)) {
+        defaults?.set(language.rawValue, forKey: languageKey)
     }
 
     // 检查共享容器

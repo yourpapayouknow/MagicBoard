@@ -224,6 +224,27 @@ final class SharedConfigTests: XCTestCase {
         XCTAssertEqual(SharedConfig.ldrpt(defaults: defaults), report)
     }
 
+    // 验证键盘语言状态锁默认值与往返
+    func testlanglock() {
+        let (defaults, name) = mkdefs()
+        defer { defaults.removePersistentDomain(forName: name) }
+
+        XCTAssertEqual(SharedConfig.ldlang(defaults: defaults), .english)
+
+        SharedConfig.svlang(.chinese, defaults: defaults)
+
+        XCTAssertEqual(SharedConfig.ldlang(defaults: defaults), .chinese)
+    }
+
+    // 验证损坏的键盘语言状态回退英文
+    func testlanglockbad() {
+        let (defaults, name) = mkdefs()
+        defer { defaults.removePersistentDomain(forName: name) }
+        defaults.set("unknown", forKey: "magicboard.keyboard.language")
+
+        XCTAssertEqual(SharedConfig.ldlang(defaults: defaults), .english)
+    }
+
     // 验证空配置回退
     func testdflt() {
         let (defaults, name) = mkdefs()
